@@ -1,177 +1,438 @@
+/* ============================================================
+   HIKMA — حكمة  |  GLOBAL DESIGN SYSTEM
+   Wusool Moodboard: Forest green chrome + Maroon arrival rail
+   WCAG AA compliant across all five themes
+   ============================================================ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* ── Google Fonts are loaded in index.html ── */
 
+/* ============================================================
+   DESIGN TOKENS — Light theme (default)
+   ============================================================ */
+@layer base {
+  :root,
+  [data-theme="light"] {
+    /* Forest green palette (moodboard chrome) */
+    --forest:          28 70 32;        /* #1E4620 */
+    --forest-deep:     22 50 24;        /* #163218 */
+    --forest-mid:      45 100 55;       /* #2D6437 */
+    --forest-light:    237 240 237;     /* #EDF0ED */
+
+    /* Maroon arrival rail (build-prompt brand) */
+    --maroon:          124 18 48;       /* #7C1230 */
+    --maroon-deep:     90 10 30;        /* #5A0A1E */
+    --maroon-light:    250 235 238;     /* #FAEAEE */
+
+    /* Clay — audio/read-aloud accent */
+    --clay:            136 90 68;       /* #88564A */
+    --clay-light:      201 153 126;     /* #C9997E */
+
+    /* Neutrals */
+    --sage:            237 240 229;     /* #EDF0E5 */
+    --cream:           250 248 243;     /* #FAF8F3 */
+    --canvas:          255 255 255;     /* #FFFFFF */
+    --ink:             22 22 22;        /* #161616 */
+    --ink-muted:       80 80 80;        /* #505050 */
+    --ink-faint:       140 140 140;     /* #8C8C8C */
+    --border:          220 220 215;     /* #DCDCD7 */
+    --border-strong:   180 180 175;     /* #B4B4AF */
+
+    /* Semantic tokens */
+    --background:      var(--canvas);
+    --foreground:      var(--ink);
+    --card:            255 255 255;
+    --card-foreground: var(--ink);
+    --popover:         255 255 255;
+    --popover-foreground: var(--ink);
+    --primary:         var(--forest);
+    --primary-foreground: 255 255 255;
+    --secondary:       var(--sage);
+    --secondary-foreground: var(--ink);
+    --muted:           var(--sage);
+    --muted-foreground: var(--ink-muted);
+    --accent:          var(--maroon);
+    --accent-foreground: 255 255 255;
+    --destructive:     220 38 38;
+    --destructive-foreground: 255 255 255;
+    --success:         22 163 74;
+    --success-foreground: 255 255 255;
+    --warning:         202 138 4;
+    --warning-foreground: 255 255 255;
+    --ring:            var(--forest);
+    --radius: 0.5rem;
+
+    /* Hikma-specific tokens */
+    --arrival-rail:    var(--maroon);
+    --audio-accent:    var(--clay);
+    --focus-dim:       0 0 0;          /* overlay for focus mode */
+    --earcon-color:    var(--clay);
+    --progress-fill:   var(--forest);
+    --progress-track:  var(--sage);
+    --lesson-surface:  var(--cream);
+    --nav-bg:          var(--forest-deep);
+    --nav-fg:          255 255 255;
+    --nav-active:      var(--maroon);
+    --accessibility-bar: var(--forest-deep);
+
+    /* Typography scale */
+    --font-scale:      1;
+    --user-line-height: 1.7;
+    --user-letter-spacing: 0em;
+    --user-word-spacing: 0em;
+    --user-measure:    65ch;
+
+    /* Motion */
+    --duration-fast:   120ms;
+    --duration-base:   200ms;
+    --duration-slow:   350ms;
+    --ease-out:        cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out:     cubic-bezier(0.77, 0, 0.175, 1);
+  }
+
+  /* ── DARK THEME ── */
+  [data-theme="dark"] {
+    --background:      15 17 15;
+    --foreground:      240 240 235;
+    --card:            22 28 22;
+    --card-foreground: 240 240 235;
+    --popover:         22 28 22;
+    --popover-foreground: 240 240 235;
+    --primary:         80 140 85;
+    --primary-foreground: 255 255 255;
+    --secondary:       35 45 35;
+    --secondary-foreground: 200 210 200;
+    --muted:           35 45 35;
+    --muted-foreground: 140 155 140;
+    --accent:          180 60 80;
+    --accent-foreground: 255 255 255;
+    --border:          50 60 50;
+    --border-strong:   80 90 80;
+    --ink:             240 240 235;
+    --ink-muted:       160 170 160;
+    --ink-faint:       100 110 100;
+    --nav-bg:          10 14 10;
+    --lesson-surface:  18 24 18;
+  }
+
+  /* ── CREAM THEME — dyslexia-friendly warm off-white ── */
+  [data-theme="cream"] {
+    --background:      250 248 243;
+    --foreground:      30 25 20;
+    --card:            255 253 248;
+    --card-foreground: 30 25 20;
+    --border:          220 210 195;
+    --border-strong:   180 165 145;
+    --muted:           242 238 228;
+    --muted-foreground: 100 90 75;
+    --lesson-surface:  255 253 248;
+    --ink:             30 25 20;
+    --ink-muted:       100 90 75;
+  }
+
+  /* ── CALM THEME — focus mode, reduced stimulation ── */
+  [data-theme="calm"] {
+    --background:      242 244 242;
+    --foreground:      35 40 35;
+    --card:            248 250 248;
+    --card-foreground: 35 40 35;
+    --primary:         60 100 65;
+    --primary-foreground: 255 255 255;
+    --border:          210 215 210;
+    --border-strong:   170 175 170;
+    --muted:           235 238 235;
+    --muted-foreground: 90 100 90;
+    --lesson-surface:  248 250 248;
+    --arrival-rail:    90 10 30;
+  }
+
+  /* ── HIGH CONTRAST THEME — WCAG AAA ── */
+  [data-theme="high_contrast"] {
+    --background:      0 0 0;
+    --foreground:      255 255 255;
+    --card:            0 0 0;
+    --card-foreground: 255 255 255;
+    --primary:         0 255 0;
+    --primary-foreground: 0 0 0;
+    --secondary:       30 30 30;
+    --secondary-foreground: 255 255 255;
+    --muted:           20 20 20;
+    --muted-foreground: 200 200 200;
+    --accent:          255 255 0;
+    --accent-foreground: 0 0 0;
+    --border:          255 255 255;
+    --border-strong:   255 255 255;
+    --ring:            255 255 0;
+    --arrival-rail:    255 255 0;
+    --nav-bg:          0 0 0;
+    --nav-fg:          255 255 255;
+    --lesson-surface:  0 0 0;
+    --ink:             255 255 255;
+    --ink-muted:       200 200 200;
+  }
+
+  /* ── FONT FAMILY OVERRIDES ── */
+  [data-font="atkinson"] {
+    --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
+    --font-display: "Atkinson Hyperlegible", system-ui, sans-serif;
+  }
+  [data-font="plex"] {
+    --font-body: "IBM Plex Sans", system-ui, sans-serif;
+    --font-display: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  [data-font="opendyslexic"] {
+    --font-body: "OpenDyslexic", system-ui, sans-serif;
+    --font-display: "OpenDyslexic", system-ui, sans-serif;
+  }
+  [data-font="naskh"] {
+    --font-body: "Noto Naskh Arabic", "Amiri", serif;
+    --font-display: "Amiri", "Noto Naskh Arabic", serif;
+  }
+
+  /* ── OVERLAY TINTS ── */
+  [data-overlay="blue"]   { --overlay-color: 173 216 230; }
+  [data-overlay="yellow"] { --overlay-color: 255 255 180; }
+  [data-overlay="peach"]  { --overlay-color: 255 218 185; }
+  [data-overlay="green"]  { --overlay-color: 200 230 200; }
+  [data-overlay="grey"]   { --overlay-color: 200 200 200; }
+}
+
+/* ============================================================
+   TAILWIND THEME EXTENSION
+   ============================================================ */
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-background: oklch(from rgb(var(--background)) l c h);
+  --color-foreground: oklch(from rgb(var(--foreground)) l c h);
+  --color-card: oklch(from rgb(var(--card)) l c h);
+  --color-card-foreground: oklch(from rgb(var(--card-foreground)) l c h);
+  --color-popover: oklch(from rgb(var(--popover)) l c h);
+  --color-popover-foreground: oklch(from rgb(var(--popover-foreground)) l c h);
+  --color-primary: oklch(from rgb(var(--primary)) l c h);
+  --color-primary-foreground: oklch(from rgb(var(--primary-foreground)) l c h);
+  --color-secondary: oklch(from rgb(var(--secondary)) l c h);
+  --color-secondary-foreground: oklch(from rgb(var(--secondary-foreground)) l c h);
+  --color-muted: oklch(from rgb(var(--muted)) l c h);
+  --color-muted-foreground: oklch(from rgb(var(--muted-foreground)) l c h);
+  --color-accent: oklch(from rgb(var(--accent)) l c h);
+  --color-accent-foreground: oklch(from rgb(var(--accent-foreground)) l c h);
+  --color-destructive: oklch(from rgb(var(--destructive)) l c h);
+  --color-destructive-foreground: oklch(from rgb(var(--destructive-foreground)) l c h);
+  --color-border: oklch(from rgb(var(--border)) l c h);
+  --color-input: oklch(from rgb(var(--border)) l c h);
+  --color-ring: oklch(from rgb(var(--ring)) l c h);
+  --color-forest: oklch(from rgb(var(--forest)) l c h);
+  --color-maroon: oklch(from rgb(var(--maroon)) l c h);
+  --color-clay: oklch(from rgb(var(--clay)) l c h);
+  --color-cream: oklch(from rgb(var(--cream)) l c h);
+  --color-sage: oklch(from rgb(var(--sage)) l c h);
+  --color-arrival: oklch(from rgb(var(--arrival-rail)) l c h);
+  --color-audio: oklch(from rgb(var(--audio-accent)) l c h);
+  --color-nav-bg: oklch(from rgb(var(--nav-bg)) l c h);
+  --color-lesson: oklch(from rgb(var(--lesson-surface)) l c h);
+
+  --font-sans: var(--font-body, "Atkinson Hyperlegible", system-ui, sans-serif);
+  --font-display: var(--font-display, "Atkinson Hyperlegible", system-ui, sans-serif);
+  --font-arabic: "Noto Naskh Arabic", "Amiri", serif;
+  --font-mono: "IBM Plex Mono", "Fira Code", monospace;
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-full: 9999px;
 }
 
-:root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
-}
-
-.dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
-}
-
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    box-sizing: border-box;
+    border-color: rgb(var(--border));
   }
+
+  html {
+    font-size: calc(var(--font-scale, 1) * 16px);
+    scroll-behavior: smooth;
+    text-size-adjust: none;
+    -webkit-text-size-adjust: none;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+    font-family: var(--font-body, "Atkinson Hyperlegible", system-ui, sans-serif);
+    line-height: var(--user-line-height, 1.7);
+    letter-spacing: var(--user-letter-spacing, 0em);
+    word-spacing: var(--user-word-spacing, 0em);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
-  button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]),
-  [type="button"]:not(:disabled),
-  [type="submit"]:not(:disabled),
-  [type="reset"]:not(:disabled),
-  a[href],
-  select:not(:disabled),
-  input[type="checkbox"]:not(:disabled),
-  input[type="radio"]:not(:disabled) {
-    @apply cursor-pointer;
+
+  /* RTL typography adjustments */
+  [dir="rtl"] body,
+  [dir="rtl"] {
+    font-family: "Noto Naskh Arabic", "Amiri", var(--font-body, system-ui), sans-serif;
+    text-align: right;
   }
+
+  /* ── FOCUS RING — WCAG 2.4.11 (MADA compliant) ── */
+  :focus-visible {
+    outline: 3px solid rgb(var(--ring));
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  /* High-contrast focus ring override */
+  [data-theme="high_contrast"] :focus-visible {
+    outline: 4px solid rgb(var(--ring));
+    outline-offset: 4px;
+  }
+
+  /* ── SCREEN-READER ONLY ── */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* ── READING RULER OVERLAY ── */
+  .reading-ruler {
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 2.5em;
+    background: rgba(var(--overlay-color, 255 255 180), 0.35);
+    pointer-events: none;
+    z-index: 100;
+    transition: top 50ms linear;
+  }
+
+  /* ── COLOUR OVERLAY (dyslexia tint) ── */
+  .colour-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(var(--overlay-color, 255 255 180), var(--overlay-opacity, 0.35));
+    pointer-events: none;
+    z-index: 99;
+    mix-blend-mode: multiply;
+  }
+
+  /* ── FOCUS MODE DIM ── */
+  .focus-dim {
+    position: fixed;
+    inset: 0;
+    background: rgba(0 0 0 / 0.6);
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  .focus-dim-active {
+    position: relative;
+    z-index: 51;
+  }
+
+  /* ── TYPOGRAPHY SCALE ── */
+  h1, .h1 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 700; line-height: 1.2; }
+  h2, .h2 { font-size: clamp(1.5rem, 3.5vw, 2rem); font-weight: 700; line-height: 1.3; }
+  h3, .h3 { font-size: clamp(1.25rem, 2.5vw, 1.5rem); font-weight: 600; line-height: 1.4; }
+  h4, .h4 { font-size: 1.125rem; font-weight: 600; line-height: 1.5; }
+  p, .body { font-size: 1rem; line-height: var(--user-line-height, 1.7); }
+  .caption { font-size: 0.875rem; line-height: 1.5; }
+  .label { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* Max measure for readability */
+  .prose-hikma {
+    max-width: var(--user-measure, 65ch);
+    line-height: var(--user-line-height, 1.7);
+    letter-spacing: var(--user-letter-spacing, 0em);
+    word-spacing: var(--user-word-spacing, 0em);
+  }
+
+  /* Syllable split helper */
+  .syllable-split .syllable { border-bottom: 1px dotted rgb(var(--clay)); }
+
+  /* ── ARRIVAL RAIL ── */
+  .arrival-rail {
+    background: rgb(var(--arrival-rail));
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── GROWTH RING MOTIF ── */
+  .growth-ring {
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    opacity: 0.6;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-hikma {
+    height: 6px;
+    background: rgb(var(--progress-track));
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+  .progress-hikma-fill {
+    height: 100%;
+    background: rgb(var(--progress-fill));
+    border-radius: var(--radius-full);
+    transition: width var(--duration-slow) var(--ease-out);
+  }
+
+  /* ── EARCON PULSE ── */
+  @keyframes earcon-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+  }
+  .earcon-pulse { animation: earcon-pulse 1.5s ease-in-out infinite; }
+
+  /* ── ARRIVAL ANIMATION ── */
+  @keyframes arrive {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-arrive { animation: arrive var(--duration-base) var(--ease-out) both; }
+    .animate-arrive-delay-1 { animation-delay: 60ms; }
+    .animate-arrive-delay-2 { animation-delay: 120ms; }
+    .animate-arrive-delay-3 { animation-delay: 180ms; }
+  }
+
+  /* ── BUTTON PRESS FEEDBACK ── */
+  button:active:not(:disabled), [role="button"]:active:not([aria-disabled="true"]) {
+    transform: scale(0.97);
+    transition: transform 160ms var(--ease-out);
+  }
+
+  /* ── CUSTOM SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: rgb(var(--muted)); }
+  ::-webkit-scrollbar-thumb { background: rgb(var(--border-strong)); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgb(var(--ink-muted)); }
+
+  /* ── FLEX MIN-SIZE FIX ── */
+  .flex { min-width: 0; min-height: 0; }
+
+  /* ── CONTAINER ── */
+  .container { width: 100%; margin-inline: auto; padding-inline: 1rem; }
+  @media (min-width: 640px)  { .container { max-width: 640px; padding-inline: 1.5rem; } }
+  @media (min-width: 768px)  { .container { max-width: 768px; } }
+  @media (min-width: 1024px) { .container { max-width: 1024px; padding-inline: 2rem; } }
+  @media (min-width: 1280px) { .container { max-width: 1280px; } }
+  @media (min-width: 1536px) { .container { max-width: 1536px; } }
 }
 
-@layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
-  .container {
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
-    padding-right: 1rem;
-  }
-
-  .flex {
-    min-height: 0;
-    min-width: 0;
-  }
-
-  @media (min-width: 640px) {
-    .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
-      padding-right: 1.5rem;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .container {
-      padding-left: 2rem; /* 32px - desktop padding */
-      padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
-    }
-  }
-}
