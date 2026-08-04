@@ -19,7 +19,9 @@ import SettingsPage from "./pages/SettingsPage";
 import ShortcutsPage from "./pages/ShortcutsPage";
 import ECCPage from "./pages/ECCPage";
 import TeacherDashboard from "./pages/TeacherDashboard";
-import GuardianDashboard from "./pages/GuardianDashboard";
+import CurriculumPage from "@/pages/CurriculumPage";
+import ClassJoinPage from "@/pages/ClassJoinPage";
+import GuardianDashboard from "@/pages/GuardianDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ExamSkillsPage from "./pages/ExamSkillsPage";
 import TopicsPage from "./pages/TopicsPage";
@@ -46,7 +48,9 @@ function Router() {
         <Route path="/admin" component={AdminDashboard} />
         <Route path="/exam-skills" component={ExamSkillsPage} />
         <Route path="/check/:lessonId" component={CheckPage} />
-        <Route path="/404" component={NotFound} />
+      <Route path="/curriculum" component={CurriculumPage} />
+      <Route path="/class/join" component={ClassJoinPage} />
+      <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
     </AppShell>

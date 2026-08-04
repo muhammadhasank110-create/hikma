@@ -39,8 +39,8 @@
 - [x] /dashboard — continue card + curricula grid + quick links
 - [x] /subjects/:curriculumId — subject cards
 - [x] /subjects/:curriculumId/topics/:subjectId — collapsible topic accordion with lessons
-- [ ] /curriculum — spec coverage view (stub)
-- [ ] /class/join — join with school code (stub)
+- [x] /curriculum — spec coverage view (real subjectCoverage data from DB)
+- [x] /class/join — join with school code (full backend: lookup, duplicate check, enrolment)
 
 ## Phase 5: Lesson Engine — Reading Mode
 - [x] /lesson/:id — core lesson screen
@@ -98,7 +98,7 @@
 - [ ] Tactile-graphic SVG export (future)
 
 ## Phase 10: Accessible Assessment
-- [ ] /check/:id — one item per screen (future)
+- [x] /check/:id — one item per screen, AI-generated questions, MCQ/TF/short-answer, voice, TTS, score
 - [ ] Answer by voice, typing, or selection (future)
 - [x] No time limits, no speed scoring (by design)
 - [x] Command-word coaching (/exam-skills page)

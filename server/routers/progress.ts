@@ -1,6 +1,6 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { mastery, parkedThoughts, progress, sessionStates } from "../../drizzle/schema";
+import { lessons, mastery, parkedThoughts, progress, sessionStates, topics } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -95,4 +95,25 @@ export const progressRouter = router({
     if (!db) return [];
     return db.select().from(mastery).where(eq(mastery.userId, ctx.user.id));
   }),
+
+  subjectCoverage: protectedProcedure
+    .input(z.object({ subjectId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return { totalLessons: 0, completedLessons: 0, coveragePct: 0 };
+      const subjectTopics = await db.select({ id: topics.id }).from(topics)
+        .where(eq(topics.subjectId, input.subjectId));
+      if (subjectTopics.length === 0) return { totalLessons: 0, completedLessons: 0, coveragePct: 0 };
+      const topicIds = subjectTopics.map(t => t.id);
+      const allLessons = await db.select({ id: lessons.id }).from(lessons)
+        .where(inArray(lessons.topicId, topicIds));
+      if (allLessons.length === 0) return { totalLessons: 0, completedLessons: 0, coveragePct: 0 };
+      const lessonIds = allLessons.map(l => l.id);
+      const completedProgress = await db.select({ lessonId: progress.lessonId }).from(progress)
+        .where(and(eq(progress.userId, ctx.user.id), inArray(progress.lessonId, lessonIds)));
+      const completedSet = new Set(completedProgress.map(p => p.lessonId));
+      const completedLessons = lessonIds.filter(id => completedSet.has(id)).length;
+      const totalLessons = lessonIds.length;
+      return { totalLessons, completedLessons, coveragePct: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0 };
+    }),
 });
