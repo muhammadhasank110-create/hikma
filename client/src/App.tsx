@@ -23,6 +23,7 @@ import GuardianDashboard from "./pages/GuardianDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ExamSkillsPage from "./pages/ExamSkillsPage";
 import TopicsPage from "./pages/TopicsPage";
+import CheckPage from "./pages/CheckPage";
 
 function Router() {
   return (
@@ -44,6 +45,7 @@ function Router() {
         <Route path="/guardian" component={GuardianDashboard} />
         <Route path="/admin" component={AdminDashboard} />
         <Route path="/exam-skills" component={ExamSkillsPage} />
+        <Route path="/check/:lessonId" component={CheckPage} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
