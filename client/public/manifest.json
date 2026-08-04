@@ -1,0 +1,34 @@
+{
+  "name": "Hikma — حكمة | Adaptive Learning",
+  "short_name": "Hikma",
+  "description": "The adaptive AI learning companion for blind, dyslexic, and ADHD learners. Accessibility is the architecture, not an add-on.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1E4620",
+  "theme_color": "#1E4620",
+  "orientation": "any",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "accessibility"],
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Go to your learning dashboard",
+      "url": "/dashboard"
+    },
+    {
+      "name": "AI Tutor",
+      "short_name": "Tutor",
+      "description": "Open the AI tutor",
+      "url": "/tutor"
+    }
+  ]
+}

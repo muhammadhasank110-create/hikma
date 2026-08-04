@@ -135,8 +135,10 @@
 - [x] RTL/Arabic layout (direction switching, Amiri font, Arabic numerals toggle)
 - [x] prefers-reduced-motion (in settings)
 - [x] High contrast mode (toggle in nav bar)
-- [ ] 400% zoom / 320px viewport reflow (QA needed)
+- [x] 320px viewport reflow (verified at 320x568 for landing, dashboard, tutor, settings)
+- [ ] 400% browser zoom QA (future — requires manual browser testing)
 - [ ] Windows High Contrast Mode (QA needed)
-- [ ] PWA manifest + offline caching (future)
+- [x] PWA manifest.json (name, icons, shortcuts, theme-color, manifest link in index.html)
+- [ ] PWA offline caching / service worker (future)
 - [ ] LCP < 2.5s performance audit (future)
 - [x] Vitest: auth.logout test passes
