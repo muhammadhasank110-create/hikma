@@ -76,14 +76,16 @@ export default function Home() {
             </div>
           </div>
           <div className="hidden md:flex flex-col items-end gap-3 animate-arrive animate-arrive-delay-2">
-            <img
-              src="/manus-storage/hikma-logo-wordmark_78dd37d4.png"
-              alt="Hikma — حكمة"
-              className="w-80 object-contain drop-shadow-2xl"
-            />
-            <p className="text-xs text-white/50 tracking-widest uppercase text-right">
-              {t("Wisdom. Accessibility. Growth.", "الحكمة · إمكانية الوصول · النمو")}
-            </p>
+            <div className="bg-white rounded-2xl px-8 py-6 shadow-2xl flex flex-col items-center gap-2">
+              <img
+                src="/manus-storage/hikma-logo-wordmark_12a85ef1.png"
+                alt="Hikma — حكمة"
+                className="w-72 object-contain"
+              />
+              <p className="text-xs text-[#6b5c3e] tracking-widest uppercase text-center font-semibold">
+                {t("Wisdom · Accessibility · Growth", "الحكمة · إمكانية الوصول · النمو")}
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -142,7 +144,7 @@ export default function Home() {
       <footer className="border-t border-border bg-card py-6">
         <div className="container flex items-center justify-between flex-wrap gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <img src="/manus-storage/hikma-icon-dark_0489d20a.png" alt="Hikma" className="w-5 h-5 rounded object-cover" />
+            <img src="/manus-storage/hikma-icon-dark_453d3815.png" alt="Hikma" className="w-5 h-5 rounded object-cover" />
             <span className="font-semibold">Hikma — حكمة</span>
           </div>
           <div className="flex items-center gap-4">
