@@ -292,6 +292,30 @@
     outline-offset: 4px;
   }
 
+  /* ── STRONG FOCUS RING — always visible for keyboard/AT users ── */
+  /* Overrides any component-level outline:none to ensure keyboard nav works */
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 3px solid rgb(28 70 32) !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 5px rgba(28, 70, 32, 0.18) !important;
+    border-radius: 4px !important;
+  }
+  [data-theme="high_contrast"] button:focus-visible,
+  [data-theme="high_contrast"] [role="button"]:focus-visible,
+  [data-theme="high_contrast"] a:focus-visible,
+  [data-theme="high_contrast"] input:focus-visible,
+  [data-theme="high_contrast"] [tabindex]:focus-visible {
+    outline: 4px solid rgb(255 255 0) !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 0 6px rgba(255, 255, 0, 0.25) !important;
+  }
+
   /* ── SCREEN-READER ONLY ── */
   .sr-only {
     position: absolute;

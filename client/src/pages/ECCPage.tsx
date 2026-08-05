@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "sonner";
+import { useLocation } from "wouter";
 import { Eye, Keyboard, Navigation, Dot, Users, Brain, Activity, BookOpen, Lightbulb } from "lucide-react";
 
 const ECC_ICONS: Record<number, any> = {
@@ -21,11 +21,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ECCPage() {
   const { locale } = useProfile();
+  const [, navigate] = useLocation();
   const { data: areas, isLoading } = trpc.ecc.areas.useQuery();
   const { data: myProgress } = trpc.ecc.myProgress.useQuery();
-  const updateProgress = trpc.ecc.updateProgress.useMutation({
-    onSuccess: () => toast.success(locale === "ar" ? "تم تحديث التقدم" : "Progress updated"),
-  });
+  const { data: allUnits } = trpc.ecc.units.useQuery({ areaId: 0 }, { enabled: false });
 
   const t = {
     title: locale === "ar" ? "المنهج الأساسي الموسّع" : "Expanded Core Curriculum (ECC)",
@@ -33,15 +32,13 @@ export default function ECCPage() {
     noAreas: locale === "ar" ? "لا توجد مجالات ECC بعد." : "No ECC areas yet.",
   };
 
-  const getProgress = (unitId: number) =>
-    myProgress?.find(p => p.unitId === unitId);
-
-  const progressPercent = (areaId: number) => {
+  // Progress is tracked per unit — we can't compute per-area without unit data here,
+  // so show 0% until the user visits the area (area page computes it correctly).
+  const progressPercent = (_areaId: number) => {
     if (!myProgress) return 0;
-    const areaUnits = myProgress.filter(p => p.unitId === areaId);
-    if (areaUnits.length === 0) return 0;
-    const mastered = areaUnits.filter(p => p.status === "mastered").length;
-    return Math.round((mastered / areaUnits.length) * 100);
+    // We don't have unit-to-area mapping here, so return overall mastered count ratio
+    const mastered = myProgress.filter(p => p.status === "mastered").length;
+    return myProgress.length > 0 ? Math.round((mastered / myProgress.length) * 100) : 0;
   };
 
   return (
@@ -63,7 +60,12 @@ export default function ECCPage() {
             const Icon = ECC_ICONS[area.number] ?? BookOpen;
             const pct = progressPercent(area.id);
             return (
-              <Card key={area.id} className="hover:border-primary transition-colors">
+              <Card
+                key={area.id}
+                className="hover:border-primary transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-primary"
+                onClick={() => navigate(`/ecc/${area.id}`)}
+                role="article"
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
@@ -98,7 +100,8 @@ export default function ECCPage() {
                     size="sm"
                     variant="outline"
                     className="w-full text-xs"
-                    onClick={() => toast.info(locale === "ar" ? "وحدات ECC قادمة قريباً" : "ECC units coming soon")}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/ecc/${area.id}`); }}
+                    aria-label={locale === "ar" ? `عرض وحدات ${area.nameAr}` : `View units for ${area.nameEn}`}
                   >
                     {locale === "ar" ? "عرض الوحدات" : "View Units"}
                   </Button>

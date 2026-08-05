@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
 
 export default function ECCAreaPage() {
@@ -52,6 +52,30 @@ export default function ECCAreaPage() {
       setCurrentUnit(i => i + 1);
     }
   };
+
+  // Keyboard: Left/Right arrows navigate between units; Enter marks complete
+  const handleTabKeyDown = useCallback((e: React.KeyboardEvent, i: number) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      setCurrentUnit(Math.min((units?.length ?? 1) - 1, i + 1));
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setCurrentUnit(Math.max(0, i - 1));
+    }
+  }, [units?.length]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
+        setCurrentUnit(i => Math.min((units?.length ?? 1) - 1, i + 1));
+      } else if (e.key === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
+        setCurrentUnit(i => Math.max(0, i - 1));
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [units?.length]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -101,7 +125,10 @@ export default function ECCAreaPage() {
                   key={u.id}
                   role="tab"
                   aria-selected={i === currentUnit}
+                  tabIndex={i === currentUnit ? 0 : -1}
+                  aria-label={`${locale === "ar" ? u.titleAr : u.titleEn}${done ? (locale === "ar" ? " — مكتمل" : " — completed") : ""}`}
                   onClick={() => setCurrentUnit(i)}
+                  onKeyDown={(e) => handleTabKeyDown(e, i)}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-1.5
                     ${i === currentUnit
                       ? "bg-primary text-primary-foreground"

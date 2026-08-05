@@ -156,3 +156,14 @@
 - [x] ProfileContext: fully wired to trpc.profile.get (load on login) and trpc.profile.update (save on change)
 - [x] Profile persistence: all settings (theme, font, mode, TTS, overlay) restored from DB after login
 - [x] Profile mode migration: "audio" → "audio_first" in DB + sanitizer in profile.get router
+
+## Phase 16: ECC, Voice Nav & Keyboard Fixes (Aug 2026)
+- [x] ECC navigation: "View Units" button now navigates to /ecc/:areaId (was showing toast)
+- [x] ECC units: seeded all 57 units across all 9 areas (Compensatory, O&M, Social, ILS, Recreation, Career, AT, Sensory, Self-Determination)
+- [x] ECC cards: fully clickable (card + button both navigate), keyboard accessible with focus ring
+- [x] ECCAreaPage: arrow key navigation between units (Left/Right), roving tabIndex on unit tabs
+- [x] Voice navigation: fixed getUserMedia permission request (was silently failing before user gesture)
+- [x] Voice navigation: lazy SpeechRecognition check on click (was failing at module load time)
+- [x] Keyboard focus ring: strengthened global CSS with !important overrides for all interactive elements
+- [x] Keyboard focus ring: high-contrast yellow ring for data-theme=high_contrast
+- [x] profile.update fix: locale stripped from learner_profiles insert (was causing SQL error on every login)

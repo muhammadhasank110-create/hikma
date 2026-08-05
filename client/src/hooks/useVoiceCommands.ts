@@ -1,15 +1,15 @@
 /**
- * useVoiceCommands — continuous voice command recognition for Hikma.
+ * useVoiceCommands — Web Speech API voice command hook.
  *
- * Uses the Web Speech API (SpeechRecognition) for continuous listening.
- * Supports English and Arabic commands for navigation, TTS control,
- * font scaling, and accessibility toggles.
- *
- * Activation: hold the V key, or call startListening() programmatically.
- * A floating badge shows listening state.
+ * Key fixes:
+ * - isSupported checked lazily (not at module init) to avoid false negatives
+ * - Requests microphone permission via getUserMedia before starting recognition
+ * - Shows clear toast feedback for permission denied / no speech / errors
+ * - Tries multiple recognition alternatives for best command match
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { toast } from "sonner";
 
 export type VoiceCommandAction =
   | { type: "navigate"; path: string }
@@ -27,18 +27,19 @@ export type VoiceCommandAction =
   | { type: "unknown"; transcript: string };
 
 const EN_COMMANDS: Array<{ patterns: RegExp[]; action: VoiceCommandAction }> = [
-  { patterns: [/\b(go home|home page|dashboard)\b/i], action: { type: "navigate", path: "/dashboard" } },
+  { patterns: [/\b(go home|home page|dashboard|home)\b/i], action: { type: "navigate", path: "/dashboard" } },
   { patterns: [/\b(open tutor|ask tutor|ai tutor|tutor)\b/i], action: { type: "navigate", path: "/tutor" } },
+  { patterns: [/\b(ecc|expanded core|ecc page)\b/i], action: { type: "navigate", path: "/ecc" } },
+  { patterns: [/\b(settings|open settings|preferences)\b/i], action: { type: "navigate", path: "/settings" } },
+  { patterns: [/\b(my progress|progress|achievements)\b/i], action: { type: "navigate", path: "/progress" } },
   { patterns: [/\b(go back|back|previous page)\b/i], action: { type: "go_back" } },
   { patterns: [/\b(next|next section|continue|forward)\b/i], action: { type: "next_section" } },
   { patterns: [/\b(previous|previous section|back section|go back section)\b/i], action: { type: "prev_section" } },
   { patterns: [/\b(read|read aloud|narrate|speak|play)\b/i], action: { type: "read_aloud" } },
-  { patterns: [/\b(stop|stop reading|stop speaking|silence|quiet)\b/i], action: { type: "stop_speech" } },
+  { patterns: [/\b(stop|stop reading|stop speaking|silence|quiet|cancel)\b/i], action: { type: "stop_speech" } },
   { patterns: [/\b(focus mode|focus|concentrate)\b/i], action: { type: "focus_mode" } },
-  { patterns: [/\b(bigger text|increase font|larger text|zoom in)\b/i], action: { type: "increase_font" } },
+  { patterns: [/\b(bigger text|increase font|larger text|zoom in|bigger)\b/i], action: { type: "increase_font" } },
   { patterns: [/\b(smaller text|decrease font|smaller|zoom out)\b/i], action: { type: "decrease_font" } },
-  { patterns: [/\b(settings|open settings)\b/i], action: { type: "navigate", path: "/settings" } },
-  { patterns: [/\b(my progress|progress|achievements)\b/i], action: { type: "navigate", path: "/progress" } },
 ];
 
 const AR_COMMANDS: Array<{ patterns: RegExp[]; action: VoiceCommandAction }> = [
@@ -64,6 +65,12 @@ function parseCommand(transcript: string, lang: string): VoiceCommandAction {
   return { type: "unknown", transcript };
 }
 
+/** Lazily get SpeechRecognition constructor — avoids false negatives at module init */
+function getSpeechRecognition(): any | null {
+  if (typeof window === "undefined") return null;
+  return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
+}
+
 export type VoiceCommandsOptions = {
   lang?: string;
   onAction?: (action: VoiceCommandAction) => void;
@@ -74,15 +81,14 @@ export function useVoiceCommands(options: VoiceCommandsOptions = {}) {
   const { lang = "en-GB", onAction, enabled = true } = options;
   const [isListening, setIsListening] = useState(false);
   const [lastTranscript, setLastTranscript] = useState("");
-  const [isSupported] = useState(
-    () => "SpeechRecognition" in window || "webkitSpeechRecognition" in window
-  );
   const recognitionRef = useRef<any>(null);
   const [, navigate] = useLocation();
 
+  // Always true — we check lazily on click
+  const isSupported = true;
+
   const handleAction = useCallback((action: VoiceCommandAction) => {
     if (onAction) { onAction(action); return; }
-    // Default handlers
     switch (action.type) {
       case "navigate": navigate(action.path); break;
       case "go_back": window.history.back(); break;
@@ -91,37 +97,85 @@ export function useVoiceCommands(options: VoiceCommandsOptions = {}) {
     }
   }, [onAction, navigate]);
 
-  const startListening = useCallback(() => {
-    if (!isSupported || !enabled) return;
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  const startListening = useCallback(async () => {
+    if (!enabled) return;
+
+    const SpeechRecognition = getSpeechRecognition();
+    if (!SpeechRecognition) {
+      toast.error("Voice commands require Chrome or Edge browser.");
+      return;
+    }
+
+    // Request microphone permission explicitly — this triggers the browser permission dialog
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop()); // release immediately
+    } catch (err: any) {
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        toast.error("Microphone access denied. Allow microphone in your browser settings and try again.");
+      } else {
+        toast.error("Microphone unavailable: " + (err.message ?? err.name));
+      }
+      return;
+    }
+
+    // Stop any existing session
+    try { recognitionRef.current?.stop(); } catch {}
+
     const recognition = new SpeechRecognition();
     recognition.lang = lang;
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.maxAlternatives = 3;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      toast.info(lang.startsWith("ar") ? "أستمع… تحدث الآن" : "Listening… speak a command", { duration: 3000 });
+    };
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0]?.[0]?.transcript ?? "";
-      setLastTranscript(transcript);
-      const action = parseCommand(transcript, lang);
-      handleAction(action);
+      let bestAction: VoiceCommandAction | null = null;
+      const result = event.results[0];
+      for (let i = 0; i < (result?.length ?? 0); i++) {
+        const transcript = result[i]?.transcript ?? "";
+        setLastTranscript(transcript);
+        const action = parseCommand(transcript, lang);
+        if (action.type !== "unknown") { bestAction = action; break; }
+        if (!bestAction) bestAction = action;
+      }
+      if (bestAction) handleAction(bestAction);
     };
+
+    recognition.onerror = (event: any) => {
+      setIsListening(false);
+      if (event.error === "not-allowed") {
+        toast.error("Microphone access denied.");
+      } else if (event.error === "no-speech") {
+        toast.info(lang.startsWith("ar") ? "لم أسمع شيئاً، حاول مرة أخرى" : "No speech detected. Try again.", { duration: 2500 });
+      } else if (event.error !== "aborted") {
+        toast.error("Voice error: " + event.error);
+      }
+    };
+
     recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => setIsListening(false);
 
     recognitionRef.current = recognition;
-    recognition.start();
-    setIsListening(true);
-  }, [isSupported, enabled, lang, handleAction]);
+    try {
+      recognition.start();
+    } catch (e: any) {
+      setIsListening(false);
+      toast.error("Could not start voice recognition: " + e.message);
+    }
+  }, [enabled, lang, handleAction]);
 
   const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
+    try { recognitionRef.current?.stop(); } catch {}
     setIsListening(false);
   }, []);
 
-  // V key hold-to-listen
+  // V key to start listening
   useEffect(() => {
-    if (!enabled || !isSupported) return;
+    if (!enabled) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "v" && !e.ctrlKey && !e.metaKey && !e.altKey
         && !(e.target instanceof HTMLInputElement)
@@ -132,7 +186,12 @@ export function useVoiceCommands(options: VoiceCommandsOptions = {}) {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [enabled, isSupported, isListening, startListening]);
+  }, [enabled, isListening, startListening]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => { try { recognitionRef.current?.stop(); } catch {} };
+  }, []);
 
   return { isListening, lastTranscript, startListening, stopListening, isSupported };
 }
