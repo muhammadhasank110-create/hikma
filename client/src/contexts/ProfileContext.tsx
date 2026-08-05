@@ -110,7 +110,20 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     enabled: isAuthenticated,
     staleTime: 60_000,
   });
-  const updateProfileMutation = trpc.profile.update.useMutation();
+  const utils = trpc.useUtils();
+  const updateProfileMutation = trpc.profile.update.useMutation({
+    // IMPORTANT: Do NOT invalidate the profile query on success.
+    // We update local state optimistically in updateProfile() below.
+    // Invalidating causes a refetch → useEffect fires → setProfile → full re-render → scroll reset.
+    onSuccess: () => {
+      // Cancel any in-flight refetch so the optimistic local state wins
+      utils.profile.get.cancel();
+    },
+    onError: (_err, variables) => {
+      // On error, re-fetch to restore server state
+      utils.profile.get.invalidate();
+    },
+  });
 
   // Merge DB profile into local state when it loads or user changes
   useEffect(() => {

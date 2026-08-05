@@ -50,7 +50,9 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 flex-wrap mt-1">
           {profile.curriculum !== "none" && (
              <Badge variant="secondary" className="text-xs">
-                {profile.curriculum}
+                {profile.curriculum === "qatar_moehe" ? "Qatar MoEHE" :
+                 profile.curriculum === "igcse_edexcel" ? "IGCSE Edexcel" :
+                 profile.curriculum.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
              </Badge>
            )}
            <Badge variant="outline" className="text-xs capitalize">

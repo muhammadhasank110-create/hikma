@@ -28,6 +28,14 @@ import ExamSkillsPage from "./pages/ExamSkillsPage";
 import TopicsPage from "./pages/TopicsPage";
 import CheckPage from "./pages/CheckPage";
 
+import { VoiceCommandOverlay } from "./components/VoiceCommandOverlay";
+import { useAccessibilityProfile } from "./hooks/useAccessibilityProfile";
+
+function AccessibilityProfileManager() {
+  useAccessibilityProfile();
+  return null;
+}
+
 function Router() {
   return (
     <AppShell>
@@ -55,6 +63,9 @@ function Router() {
       <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>
+      {/* These must be inside Router so useLocation() has a wouter context */}
+      <VoiceCommandOverlay />
+      <AccessibilityProfileManager />
     </AppShell>
   );
 }
@@ -69,8 +80,6 @@ export default function App() {
               <TooltipProvider>
                 <Toaster richColors position="top-center" />
                 <Router />
-                <VoiceCommandOverlay />
-                <AccessibilityProfileManager />
               </TooltipProvider>
             </AriaLiveProvider>
           </KeyboardProvider>
@@ -78,11 +87,4 @@ export default function App() {
       </ThemeProvider>
     </ErrorBoundary>
   );
-}
-import { VoiceCommandOverlay } from "./components/VoiceCommandOverlay";
-import { useAccessibilityProfile } from "./hooks/useAccessibilityProfile";
-
-function AccessibilityProfileManager() {
-  useAccessibilityProfile();
-  return null;
 }

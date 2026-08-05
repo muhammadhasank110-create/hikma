@@ -153,7 +153,7 @@ export default function Home() {
           {/* Right: logo + subject pills */}
           <div className="hidden lg:flex flex-col items-center gap-8 animate-arrive" style={{ animationDelay: "120ms" }}>
             <img
-              src="/manus-storage/hikma-wordmark-transparent_fdf6160f.png"
+              src="/manus-storage/hikma-wordmark-clean_8b6e54cc.png"
               alt="Hikma — حكمة"
               className="w-80 object-contain"
               style={{ filter: "brightness(0) invert(1)", opacity: 0.88 }}
