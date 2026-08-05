@@ -137,7 +137,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
         {/* Logo */}
         <Link href="/" className="flex items-center flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1">
           <img
-            src="/manus-storage/hikma-wordmark-transparent_fdf6160f.png"
+            src="/manus-storage/hikma-icon-only_47640eed.png"
             alt="Hikma حكمة"
             className="h-9 w-auto object-contain"
             style={{ filter: "brightness(0) invert(1)", opacity: 0.95 }}
@@ -311,7 +311,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img
-                  src="/manus-storage/hikma-wordmark-transparent_fdf6160f.png"
+                  src="/manus-storage/hikma-icon-only_47640eed.png"
                   alt="Hikma حكمة"
                   className="h-8 w-auto object-contain"
                   style={{ filter: "brightness(0) invert(1)", opacity: 0.95 }}
