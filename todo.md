@@ -171,49 +171,49 @@
 ## Phase 17: MASTER SPRINT — Full Rebuild (Aug 2026)
 
 ### CONTENT (15 full lessons)
-- [ ] Seed 5 Math lessons: Types of Numbers, Fractions & Decimals, Algebra Basics, Geometry (Angles), Statistics
-- [ ] Seed 5 English lessons: Reading Comprehension, Writing Skills, Grammar, Vocabulary, Speaking & Listening
-- [ ] Seed 5 Science lessons: Cells, Photosynthesis, Forces & Motion, Atoms & Elements, Ecosystems
-- [ ] Each lesson: 4-6 sections, 300-600 words per section, summaryEn, narrationScriptEn
+- [x] Seed 5 Math lessons: Types of Numbers, Fractions & Decimals, Algebra Basics, Geometry (Angles), Statistics
+- [x] Seed 5 English lessons: Reading Comprehension, Writing Skills, Grammar, Vocabulary, Speaking & Listening
+- [x] Seed 5 Science lessons: Cells, Photosynthesis, Forces & Motion, Atoms & Elements, Ecosystems
+- [x] Each lesson: 4-6 sections, 300-600 words per section, summaryEn, narrationScriptEn
 
 ### ONBOARDING REBUILD
-- [ ] Step 1: Accessibility profile (Blind/Low Vision, ADHD, Dyslexia, No specific need) — with descriptions
-- [ ] Step 2: Language (English / Arabic / Both)
-- [ ] Step 3: Curriculum (IGCSE Edexcel / Qatar MoEHE)
-- [ ] Step 4: Year group / grade
-- [ ] Step 5: Further personalisation (font size, speech rate, theme, voice)
-- [ ] Auto-apply profile immediately on completion
-- [ ] Fully keyboard navigable (Tab/Enter, no mouse needed)
+- [x] Step 1: Accessibility profile (Blind/Low Vision, ADHD, Dyslexia, No specific need) — with descriptions
+- [x] Step 2: Language (English / Arabic / Both)
+- [x] Step 3: Curriculum (IGCSE Edexcel / Qatar MoEHE)
+- [x] Step 4: Year group / grade
+- [x] Step 5: Further personalisation (font size, speech rate, theme, voice)
+- [x] Auto-apply profile immediately on completion
+- [x] Fully keyboard navigable (Tab/Enter, no mouse needed)
 
 ### ACCESSIBILITY PROFILES
-- [ ] Blind/Low Vision mode: TTS on every focus event, full keyboard nav, landmark roles, skip links
-- [ ] ADHD/Focus mode: stripped UI, one section at a time, no decorations, soft background, no animations
-- [ ] Dyslexia mode: OpenDyslexic/Lexie font, increased spacing, cream tint, no justified text
-- [ ] All profiles auto-applied from DB on every page load
+- [x] Blind/Low Vision mode: TTS on every focus event, full keyboard nav, landmark roles, skip links
+- [x] ADHD/Focus mode: stripped UI, one section at a time, no decorations, soft background, no animations
+- [x] Dyslexia mode: OpenDyslexic/Lexie font, increased spacing, cream tint, no justified text
+- [x] All profiles auto-applied from DB on every page load
 
 ### VOICE COMMANDS
-- [ ] Remove "Could not recognise command" — use LLM fallback for any spoken phrase
-- [ ] All navigation commands work reliably
-- [ ] Blind mode: voice is primary navigation
+- [x] Remove "Could not recognise command" — use LLM fallback for any spoken phrase
+- [x] All navigation commands work reliably
+- [x] Blind mode: voice is primary navigation
 
 ### HOME PAGE
-- [ ] Remove subject cards from home page
-- [ ] Clean hero with Sign In CTA only
-- [ ] No broken images or placeholder content visible
+- [x] Remove subject cards from home page
+- [x] Clean hero with Sign In CTA only
+- [x] No broken images or placeholder content visible
 
 ### FOCUS MODE
-- [ ] Activating focus mode strips page to lesson text only
-- [ ] One section visible at a time, no sidebar decorations
-- [ ] Soft background, large font, generous line height
-- [ ] Only essential controls visible
+- [x] Activating focus mode strips page to lesson text only
+- [x] One section visible at a time, no sidebar decorations
+- [x] Soft background, large font, generous line height
+- [x] Only essential controls visible
 
 ### UI POLISH
-- [ ] All pages professional on desktop and mobile
-- [ ] No broken layouts, no overflow, no invisible text
-- [ ] Loading/empty/error states on all pages
-- [ ] Dashboard shows real data
+- [x] All pages professional on desktop and mobile
+- [x] No broken layouts, no overflow, no invisible text
+- [x] Loading/empty/error states on all pages
+- [x] Dashboard shows real data
 
 ### KEYBOARD NAVIGATION
-- [ ] Tab order logical on every page
-- [ ] All interactive elements keyboard reachable
-- [ ] Lesson arrow keys, Space to read
+- [x] Tab order logical on every page
+- [x] All interactive elements keyboard reachable
+- [x] Lesson arrow keys, Space to read
