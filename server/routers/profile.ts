@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { learnerProfiles } from "../../drizzle/schema";
+import { learnerProfiles, users } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -61,12 +61,19 @@ export const profileRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
+      // `locale` belongs to the `users` table, not `learner_profiles`.
+      // Strip it before touching learner_profiles, then write it to users.
+      const { locale, ...profileInput } = input as any;
+      if (locale !== undefined) {
+        await db.update(users).set({ locale } as any).where(eq(users.id, ctx.user.id));
+      }
+      if (Object.keys(profileInput).length === 0) return { success: true };
       const existing = await db.select({ id: learnerProfiles.id })
         .from(learnerProfiles).where(eq(learnerProfiles.userId, ctx.user.id)).limit(1);
       if (existing.length === 0) {
-        await db.insert(learnerProfiles).values({ userId: ctx.user.id, ...input } as any);
+        await db.insert(learnerProfiles).values({ userId: ctx.user.id, ...profileInput } as any);
       } else {
-        await db.update(learnerProfiles).set(input as any)
+        await db.update(learnerProfiles).set(profileInput as any)
           .where(eq(learnerProfiles.userId, ctx.user.id));
       }
       return { success: true };
