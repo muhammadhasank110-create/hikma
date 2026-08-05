@@ -37,7 +37,7 @@ const CURRICULUM_OPTIONS = [
 
 const MODE_OPTIONS = [
   { value: "reading", labelEn: "Reading Mode", labelAr: "وضع القراءة", descEn: "Text-first with TTS support", descAr: "نصي مع دعم القراءة الصوتية", icon: BookOpen },
-  { value: "audio", labelEn: "Audio-First Mode", labelAr: "وضع الصوت أولاً", descEn: "Full narration, screen-reader optimised", descAr: "سرد كامل، محسّن لقارئ الشاشة", icon: Volume2 },
+  { value: "audio_first", labelEn: "Audio-First Mode", labelAr: "وضع الصوت أولاً", descEn: "Full narration, screen-reader optimised", descAr: "سرد كامل، محسّن لقارئ الشاشة", icon: Volume2 },
   { value: "focus", labelEn: "Focus Mode", labelAr: "وضع التركيز", descEn: "One chunk at a time, ADHD-friendly", descAr: "مقطع واحد في كل مرة، مناسب لـ ADHD", icon: Brain },
 ];
 

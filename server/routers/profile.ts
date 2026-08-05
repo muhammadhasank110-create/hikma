@@ -10,7 +10,12 @@ export const profileRouter = router({
     if (!db) return null;
     const result = await db.select().from(learnerProfiles)
       .where(eq(learnerProfiles.userId, ctx.user.id)).limit(1);
-    return result[0] ?? null;
+    if (!result[0]) return null;
+    const row = { ...(result[0] as any) };
+    // Migrate legacy mode values stored before the enum was renamed
+    const modeAliases: Record<string, string> = { audio: "audio_first" };
+    if (row.mode && modeAliases[row.mode]) row.mode = modeAliases[row.mode];
+    return row;
   }),
 
   update: protectedProcedure
