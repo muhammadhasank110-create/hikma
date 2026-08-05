@@ -49,7 +49,7 @@
 - [x] Word-by-word synchronised highlighting (implemented — words highlighted during TTS playback)
 - [x] Reading ruler / focus line overlay (in settings)
 - [x] Syllable splitting toggle (in settings)
-- [ ] Tap-any-word: definition, pronunciation (future)
+- [x] Tap-any-word: definition popup (click any word → AI definition via tutor stream; also click key terms badges)
 - [x] Simplify this button (LLM-powered via tutor)
 - [x] Summary-first section structure
 - [x] Overlay tints (in settings: blue/yellow/peach/green/grey)
@@ -58,7 +58,7 @@
 - [x] Full lesson narration (OpenAI TTS + browser fallback)
 - [x] Navigable lesson outline (arrow keys ← →)
 - [x] Lesson accelerator keys (Space, R, S, F, P, Esc, ← →)
-- [ ] Position awareness (Ctrl+P speaks position) (future)
+- [x] Position awareness (Ctrl+P speaks "Section X of Y: title" via TTS + toast)
 - [x] Automatic diagram description (via tutor describeImage)
 - [ ] Data sonification for charts (future)
 - [x] Earcons toggle (in settings)
@@ -71,9 +71,9 @@
 - [x] Save-and-resume (progress saved to DB)
 - [x] Park-it capture (P key + input field)
 - [x] Pomodoro timer (implemented in LessonPage Focus mode — 25/5 min Pomodoro with visual countdown)
-- [ ] Body-double AI companion (future)
+- [x] Body-double AI companion (B key toggle — ambient companion panel with rotating encouragement messages every 45s)
 - [x] Gentle gamification toggle (in settings)
-- [ ] Overwhelm escape hatch button (future)
+- [x] Overwhelm escape hatch button ("Break" button in lesson nav — saves progress, shows calm break screen with continue/dashboard/tutor options)
 
 ## Phase 8: AI Tutor
 - [x] /tutor — full-screen conversational tutor
@@ -83,10 +83,10 @@
 - [x] Voice output toggle (OpenAI TTS + browser fallback)
 - [x] Push-to-talk microphone button
 - [x] Text transcript alongside voice
-- [ ] Modality switching mid-lesson (future)
+- [x] Modality switching (Read/Listen/Map switcher in TutorPage; Mode button in LessonPage toolbar cycles reading/audio_first/focus)
 - [x] Concept-map JSON output from tutor
 - [x] Re-explain at different level (via tutor)
-- [ ] Socratic one-question check (future)
+- [x] Socratic one-question check (auto-generated after each tutor reply — amber bubble with "Answer this" link pre-fills input)
 - [x] Arabic responses (locale-aware system prompt)
 
 ## Phase 9: Concept Maps
@@ -114,7 +114,7 @@
 
 ## Phase 12: ECC Track
 - [x] /ecc — nine areas overview with progress bars
-- [ ] /ecc/:area — ECC area lesson (future — uses same lesson engine)
+- [x] /ecc/:areaId — ECCAreaPage with unit navigation, progress tracking (not_started/rehearsed/practised/mastered), in-person practice notes
 - [x] Area 1: Compensatory Skills (seeded)
 - [x] Area 3: Social Interaction Skills (seeded)
 - [x] Area 7: Assistive Technology (seeded)

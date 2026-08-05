@@ -18,6 +18,7 @@ import ProgressPage from "./pages/ProgressPage";
 import SettingsPage from "./pages/SettingsPage";
 import ShortcutsPage from "./pages/ShortcutsPage";
 import ECCPage from "./pages/ECCPage";
+import ECCAreaPage from "./pages/ECCAreaPage";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import CurriculumPage from "@/pages/CurriculumPage";
 import ClassJoinPage from "@/pages/ClassJoinPage";
@@ -43,6 +44,7 @@ function Router() {
         <Route path="/settings" component={SettingsPage} />
         <Route path="/shortcuts" component={ShortcutsPage} />
         <Route path="/ecc" component={ECCPage} />
+        <Route path="/ecc/:areaId" component={ECCAreaPage} />
         <Route path="/teacher" component={TeacherDashboard} />
         <Route path="/guardian" component={GuardianDashboard} />
         <Route path="/admin" component={AdminDashboard} />

@@ -11,7 +11,8 @@ import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 import {
   Volume2, VolumeX, ChevronRight, ChevronLeft, Bot,
-  AlignLeft, Maximize2, Minimize2, ParkingSquare, Timer, Map, X
+  AlignLeft, Maximize2, Minimize2, ParkingSquare, Timer, Map, X,
+  AlertTriangle, Shuffle, UserCheck, BookOpen
 } from "lucide-react";
 
 // ── Concept Map SVG ──────────────────────────────────────────────────────────
@@ -38,12 +39,10 @@ function ConceptMapSVG({ lessonTitle, sections, locale }: {
           <path d="M0,0 L0,6 L8,3 z" fill="var(--color-primary)" />
         </marker>
       </defs>
-      {/* Central node */}
       <ellipse cx={cx} cy={cy} rx={90} ry={24} fill="var(--color-primary)" />
       <text x={cx} y={cy + 5} textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">
         {lessonTitle.slice(0, 28)}
       </text>
-      {/* Branch nodes */}
       {nodes.map((n, i) => (
         <g key={i}>
           <line x1={cx} y1={cy + 24} x2={n.x} y2={n.y - 18}
@@ -60,13 +59,129 @@ function ConceptMapSVG({ lessonTitle, sections, locale }: {
   );
 }
 
+// ── Word Definition Popup ────────────────────────────────────────────────────
+function WordDefinitionPopup({ word, locale, onClose }: { word: string; locale: string; onClose: () => void }) {
+  const [definition, setDefinition] = useState("");
+  const [loading, setLoading] = useState(true);
+  const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+
+  useEffect(() => {
+    if (!word) return;
+    setLoading(true);
+    setDefinition("");
+    const prompt = locale === "ar"
+      ? `عرّف الكلمة "${word}" بجملة واحدة بسيطة مناسبة لطالب في المرحلة الثانوية.`
+      : `Define the word "${word}" in one simple sentence suitable for a secondary school student. Be concise.`;
+    fetch("/api/tutor/stream", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: prompt,
+        sessionId: `def-${word}`,
+        profile: { mode: "reading", locale },
+        conversationHistory: [],
+      }),
+    }).then(async res => {
+      if (!res.ok) { setDefinition(t("Definition unavailable.", "التعريف غير متاح.")); setLoading(false); return; }
+      const reader = res.body?.getReader();
+      if (!reader) { setLoading(false); return; }
+      const decoder = new TextDecoder();
+      let full = ""; let buf = "";
+      setLoading(false);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n"); buf = lines.pop() ?? "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed === "data: [DONE]") break;
+          if (trimmed.startsWith("data: ")) {
+            try { const p = JSON.parse(trimmed.slice(6)); if (p.delta) { full += p.delta; setDefinition(full); } } catch { /* skip */ }
+          }
+        }
+      }
+    }).catch(() => { setDefinition(t("Definition unavailable.", "التعريف غير متاح.")); setLoading(false); });
+  }, [word, locale]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t(`Definition of ${word}`, `تعريف ${word}`)}
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <Card className="relative z-10 max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+        <CardContent className="p-5 space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">{t("Definition", "تعريف")}</p>
+              <h3 className="text-lg font-bold font-display">{word}</h3>
+            </div>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label={t("Close", "إغلاق")} className="flex-shrink-0">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          {loading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ) : (
+            <p className="text-sm leading-relaxed">{definition}</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ── Body Double Companion ────────────────────────────────────────────────────
+function BodyDoublePanel({ locale, lessonTitle }: { locale: string; lessonTitle: string }) {
+  const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  const messages = locale === "ar" ? [
+    "أنا هنا معك. خطوة واحدة في كل مرة.",
+    "أنت تتقدم. استمر.",
+    "لا بأس بالتوقف للتنفس.",
+    "كل قسم تكمله هو إنجاز.",
+    "أنا أراقب معك. أنت لست وحدك.",
+  ] : [
+    "I'm here with you. One step at a time.",
+    "You're making progress. Keep going.",
+    "It's okay to pause and breathe.",
+    "Every section you finish is an achievement.",
+    "I'm working alongside you. You're not alone.",
+  ];
+  const [msgIndex, setMsgIndex] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setMsgIndex(i => (i + 1) % messages.length), 45000);
+    return () => clearInterval(timer);
+  }, [messages.length]);
+  return (
+    <div className="fixed bottom-20 right-4 z-[100] max-w-xs">
+      <Card className="border-primary/30 bg-card/95 backdrop-blur-sm shadow-lg">
+        <CardContent className="p-3 flex items-start gap-2">
+          <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <UserCheck className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-primary mb-0.5">{t("Hikma is with you", "حكمة معك")}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{messages[msgIndex]}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function LessonPage() {
   const [, params] = useRoute("/lesson/:lessonId");
   const [, navigate] = useLocation();
-  const { profile, locale } = useProfile();
+  const { profile, locale, setMode } = useProfile();
   const lessonId = parseInt(params?.lessonId ?? "0");
-
   const [sectionIndex, setSectionIndex] = useState(0);
   const [isNarrating, setIsNarrating] = useState(false);
   const [isFocused, setIsFocused] = useState(profile.mode === "focus");
@@ -76,27 +191,50 @@ export default function LessonPage() {
   const [parkedThoughts, setParkedThoughts] = useState<string[]>([]);
   const [parkInput, setParkInput] = useState("");
   const [showConceptMap, setShowConceptMap] = useState(false);
-
+  const [showBodyDouble, setShowBodyDouble] = useState(false);
+  const [showOverwhelmEscape, setShowOverwhelmEscape] = useState(false);
+  // Tap-any-word definition
+  const [selectedWord, setSelectedWord] = useState<string | null>(null);
   // Pomodoro
   const [pomodoroActive, setPomodoroActive] = useState(false);
   const [pomodoroSeconds, setPomodoroSeconds] = useState(25 * 60);
   const [pomodoroPhase, setPomodoroPhase] = useState<"work" | "break">("work");
   const pomodoroRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   // Word-by-word highlighting
   const [highlightedWords, setHighlightedWords] = useState<string[]>([]);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const highlightTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const contentRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
   const { data: lesson, isLoading } = trpc.curriculum.lesson.useQuery(
     { lessonId },
     { enabled: lessonId > 0 }
   );
-
   const saveProgress = trpc.progress.updateProgress.useMutation();
+  const ttsMutation = trpc.tts.synthesize.useMutation({
+    onSuccess: (data) => {
+      const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
+      audioRef.current = audio;
+      setIsNarrating(true);
+      audio.onended = () => { setIsNarrating(false); stopWordHighlight(); };
+      audio.play().catch(() => {
+        setIsNarrating(false);
+        stopWordHighlight();
+        if ("speechSynthesis" in window && lesson) {
+          const secs = lesson.sections as any[];
+          const text = locale === "ar"
+            ? (secs[sectionIndex]?.bodyAr ?? secs[sectionIndex]?.bodyEn ?? "")
+            : (secs[sectionIndex]?.bodyEn ?? "");
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.lang = locale === "ar" ? "ar-QA" : "en-GB";
+          utt.rate = profile.speechRate;
+          utt.onend = () => { setIsNarrating(false); stopWordHighlight(); };
+          window.speechSynthesis.speak(utt);
+          setIsNarrating(true);
+        }
+      });
+    },
+  });
 
   const stopWordHighlight = useCallback(() => {
     if (highlightTimerRef.current) clearInterval(highlightTimerRef.current);
@@ -126,31 +264,6 @@ export default function LessonPage() {
   useEffect(() => {
     return () => { if (highlightTimerRef.current) clearInterval(highlightTimerRef.current); };
   }, []);
-
-  const ttsMutation = trpc.tts.synthesize.useMutation({
-    onSuccess: (data) => {
-      const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
-      audioRef.current = audio;
-      setIsNarrating(true);
-      audio.onended = () => { setIsNarrating(false); stopWordHighlight(); };
-      audio.play().catch(() => {
-        setIsNarrating(false);
-        stopWordHighlight();
-        if ("speechSynthesis" in window && lesson) {
-          const secs = lesson.sections as any[];
-          const text = locale === "ar"
-            ? (secs[sectionIndex]?.bodyAr ?? secs[sectionIndex]?.bodyEn ?? "")
-            : (secs[sectionIndex]?.bodyEn ?? "");
-          const utt = new SpeechSynthesisUtterance(text);
-          utt.lang = locale === "ar" ? "ar-QA" : "en-GB";
-          utt.rate = profile.speechRate;
-          utt.onend = () => { setIsNarrating(false); stopWordHighlight(); };
-          window.speechSynthesis.speak(utt);
-          setIsNarrating(true);
-        }
-      });
-    },
-  });
 
   const sections = (lesson?.sections as any[]) ?? [];
   const currentSection = sections[sectionIndex];
@@ -241,6 +354,25 @@ export default function LessonPage() {
     } finally { setIsSimplifying(false); }
   }, [lesson, sectionIndex, locale, profile, lessonId, simplifiedContent]);
 
+  // Position awareness (Ctrl+P)
+  const announcePosition = useCallback(() => {
+    if (!lesson) return;
+    const lessonTitle = locale === "ar" ? (lesson.titleAr ?? lesson.titleEn ?? "") : (lesson.titleEn ?? "");
+    const secTitle = locale === "ar"
+      ? (currentSection?.titleAr ?? currentSection?.titleEn ?? "")
+      : (currentSection?.titleEn ?? "");
+    const msg = locale === "ar"
+      ? `أنت في الدرس: ${lessonTitle}. القسم ${sectionIndex + 1} من ${totalSections}: ${secTitle}`
+      : `You are in lesson: ${lessonTitle}. Section ${sectionIndex + 1} of ${totalSections}: ${secTitle}`;
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(msg);
+      utt.lang = locale === "ar" ? "ar-QA" : "en-GB";
+      window.speechSynthesis.speak(utt);
+    }
+    toast.info(msg, { duration: 4000 });
+  }, [lesson, locale, sectionIndex, totalSections, currentSection]);
+
   // Pomodoro timer
   useEffect(() => {
     if (pomodoroActive) {
@@ -277,11 +409,13 @@ export default function LessonPage() {
       if (e.key === "s" || e.key === "S") simplifySection();
       if (e.key === "m" || e.key === "M") setShowConceptMap(v => !v);
       if (e.key === "t" || e.key === "T") setPomodoroActive(v => !v);
-      if (e.key === "Escape") setIsFocused(false);
+      if (e.key === "b" || e.key === "B") setShowBodyDouble(v => !v);
+      if (e.key === "p" && e.ctrlKey) { e.preventDefault(); announcePosition(); }
+      if (e.key === "Escape") { setIsFocused(false); setShowOverwhelmEscape(false); setSelectedWord(null); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [nextSection, prevSection, readAloud, simplifySection]);
+  }, [nextSection, prevSection, readAloud, simplifySection, announcePosition]);
 
   // Auto-narrate on section change if enabled
   useEffect(() => {
@@ -290,6 +424,14 @@ export default function LessonPage() {
       return () => clearTimeout(timer);
     }
   }, [sectionIndex, profile.autoNarrate]);
+
+  // Handle word click for definition
+  const handleWordClick = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.tagName === "SPAN" && target.dataset.word) {
+      setSelectedWord(target.dataset.word);
+    }
+  }, []);
 
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
@@ -308,9 +450,54 @@ export default function LessonPage() {
     </div>
   );
 
+  const lessonTitle = locale === "ar" ? (lesson.titleAr ?? lesson.titleEn ?? "") : (lesson.titleEn ?? "");
+
+  // Overwhelm escape hatch overlay
+  if (showOverwhelmEscape) return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8 text-center space-y-6">
+      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+        <BookOpen className="w-8 h-8 text-primary" />
+      </div>
+      <div className="space-y-2 max-w-sm">
+        <h1 className="text-2xl font-bold font-display">{t("Take a breath.", "خذ نفساً.")}</h1>
+        <p className="text-muted-foreground">
+          {t("You've saved your progress. Come back when you're ready — Hikma will be here.",
+             "لقد حُفظ تقدمك. عد عندما تكون مستعداً — حكمة ستكون هنا.")}
+        </p>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button onClick={() => setShowOverwhelmEscape(false)}>
+          {t("Continue lesson", "متابعة الدرس")}
+        </Button>
+        <Button variant="outline" onClick={() => navigate("/dashboard")}>
+          {t("Go to dashboard", "الصفحة الرئيسية")}
+        </Button>
+        <Button variant="outline" onClick={() => navigate("/tutor")}>
+          <Bot className="w-4 h-4 mr-2" />
+          {t("Talk to tutor", "تحدث مع المعلم")}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t("Press Escape to return to the lesson.", "اضغط Escape للعودة إلى الدرس.")}
+      </p>
+    </div>
+  );
+
   return (
     <div className={`min-h-screen ${isFocused ? "bg-black/95" : "bg-background"} transition-colors duration-300`}>
       {isFocused && <div className="focus-dim" aria-hidden="true" />}
+
+      {/* Word definition popup */}
+      {selectedWord && (
+        <WordDefinitionPopup
+          word={selectedWord}
+          locale={locale}
+          onClose={() => setSelectedWord(null)}
+        />
+      )}
+
+      {/* Body double companion */}
+      {showBodyDouble && <BodyDoublePanel locale={locale} lessonTitle={lessonTitle} />}
 
       <div className="container py-6 max-w-3xl relative z-[51]">
         {/* Lesson header */}
@@ -320,7 +507,7 @@ export default function LessonPage() {
             <Badge variant="outline" className="text-xs">{lesson.estimatedMinutes ? `${lesson.estimatedMinutes} min` : ""}</Badge>
           </div>
           <h1 className={`text-xl font-bold ${isFocused ? "text-white" : "text-foreground"}`}>
-            {locale === "ar" ? lesson.titleAr : lesson.titleEn}
+            {lessonTitle}
           </h1>
           <div className="flex items-center gap-3">
             <Progress value={progressPct} className="h-1.5 flex-1" />
@@ -400,57 +587,87 @@ export default function LessonPage() {
             <Map className="w-3.5 h-3.5 mr-1.5" />
             {t("Map", "خريطة")}
           </Button>
+          {/* Modality switch */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const modes: ("reading" | "audio_first" | "focus")[] = ["reading", "audio_first", "focus"];
+              const current = modes.indexOf(profile.mode as any);
+              const next = modes[(current + 1) % modes.length];
+              setMode(next);
+              toast.info(t(`Switched to ${next.replace("_", " ")} mode`, `تم التبديل إلى وضع ${next === "reading" ? "القراءة" : next === "audio_first" ? "الصوت أولاً" : "التركيز"}`));
+            }}
+            aria-label={t("Switch learning mode", "تبديل وضع التعلم")}
+          >
+            <Shuffle className="w-3.5 h-3.5 mr-1.5" />
+            {t("Mode", "الوضع")}
+          </Button>
+          {/* Body double toggle */}
+          <Button
+            variant={showBodyDouble ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowBodyDouble(v => !v)}
+            aria-label={t("Toggle body double companion", "رفيق العمل")}
+            aria-pressed={showBodyDouble}
+          >
+            <UserCheck className="w-3.5 h-3.5 mr-1.5" />
+            {t("Companion", "رفيق")}
+          </Button>
         </div>
 
-        {/* Concept Map */}
-        {showConceptMap && lesson && (
-          <Card className="mb-4 overflow-hidden">
+        {/* Concept map */}
+        {showConceptMap && sections.length > 0 && (
+          <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-sm font-semibold">{t("Concept Map", "خريطة المفاهيم")}</p>
-                <Button variant="ghost" size="sm" onClick={() => setShowConceptMap(false)} aria-label={t("Close map", "إغلاق")}>
-                  <X className="w-3.5 h-3.5" />
+                <Button variant="ghost" size="icon" onClick={() => setShowConceptMap(false)} aria-label={t("Close map", "إغلاق الخريطة")}>
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
-              <ConceptMapSVG
-                lessonTitle={locale === "ar" ? (lesson.titleAr ?? lesson.titleEn ?? "") : (lesson.titleEn ?? "")}
-                sections={(lesson.sections as any[]) ?? []}
-                locale={locale}
-              />
+              <ConceptMapSVG lessonTitle={lessonTitle} sections={sections} locale={locale} />
             </CardContent>
           </Card>
         )}
 
         {/* Section content */}
-        <Card className={`focus-dim-active ${isFocused ? "border-white/20 bg-gray-900" : ""}`}>
-          <CardContent className="p-6 md:p-8" ref={contentRef}>
+        <Card className={isFocused ? "border-white/10 bg-black/40" : ""} ref={contentRef as any}>
+          <CardContent className="p-6">
             {currentSection ? (
               <div className="space-y-4">
-                {currentSection.type === "heading" && (
-                  <h2 className={`text-lg font-bold ${isFocused ? "text-white" : ""}`}>
-                    {locale === "ar" ? currentSection.titleAr : currentSection.titleEn}
-                  </h2>
-                )}
-                <div className={`prose-hikma prose prose-sm max-w-none ${isFocused ? "prose-invert" : ""} ${simplifiedView ? "text-base leading-relaxed" : ""}`}>
+                <h2 className={`text-lg font-bold font-display ${isFocused ? "text-white" : ""}`}>
+                  {locale === "ar" ? (currentSection.titleAr ?? currentSection.titleEn ?? "") : (currentSection.titleEn ?? "")}
+                </h2>
+                <div
+                  className={`prose prose-sm max-w-none ${isFocused ? "prose-invert" : ""} ${simplifiedView ? "text-base leading-relaxed" : ""}`}
+                  onClick={handleWordClick}
+                >
                   {highlightedWords.length > 0 && highlightIndex >= 0 ? (
                     <p className="leading-relaxed">
                       {highlightedWords.map((word, i) => (
                         <span
                           key={i}
-                          className={`transition-colors duration-100 ${i === highlightIndex ? "bg-primary/30 rounded px-0.5 font-semibold" : ""}`}
+                          data-word={word}
+                          className={`cursor-pointer transition-colors duration-100 hover:underline hover:text-primary ${i === highlightIndex ? "bg-primary/30 rounded px-0.5 font-semibold" : ""}`}
                         >
                           {word}{" "}
                         </span>
                       ))}
                     </p>
                   ) : (
-                    <Streamdown>
-                      {simplifiedView && simplifiedContent[sectionIndex]
-                        ? simplifiedContent[sectionIndex]
-                        : (locale === "ar"
-                            ? (currentSection.bodyAr ?? currentSection.bodyEn ?? "")
-                            : (currentSection.bodyEn ?? ""))}
-                    </Streamdown>
+                    <div>
+                      <Streamdown>
+                        {simplifiedView && simplifiedContent[sectionIndex]
+                          ? simplifiedContent[sectionIndex]
+                          : (locale === "ar"
+                              ? (currentSection.bodyAr ?? currentSection.bodyEn ?? "")
+                              : (currentSection.bodyEn ?? ""))}
+                      </Streamdown>
+                      <p className="text-xs text-muted-foreground mt-3 italic">
+                        {t("Tip: click any word for its definition.", "نصيحة: انقر على أي كلمة لتعريفها.")}
+                      </p>
+                    </div>
                   )}
                 </div>
                 {currentSection.keyTerms && currentSection.keyTerms.length > 0 && (
@@ -460,7 +677,10 @@ export default function LessonPage() {
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {currentSection.keyTerms.map((term: string) => (
-                        <Badge key={term} variant="secondary" className="text-xs">{term}</Badge>
+                        <Badge key={term} variant="secondary" className="text-xs cursor-pointer hover:bg-primary/20"
+                          onClick={() => setSelectedWord(term)}>
+                          {term}
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -479,7 +699,7 @@ export default function LessonPage() {
               type="text"
               value={parkInput}
               onChange={e => setParkInput(e.target.value)}
-              placeholder={t("Park a thought… (P)", "احفظ فكرة… (P)")}
+              placeholder={t("Park a thought… (P key)", "احفظ فكرة… (مفتاح P)")}
               className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
               onKeyDown={e => {
                 if (e.key === "Enter" && parkInput.trim()) {
@@ -528,9 +748,25 @@ export default function LessonPage() {
             <ChevronLeft className="w-4 h-4 mr-1" />
             {t("Previous", "السابق")}
           </Button>
-          <span className="text-xs text-muted-foreground">
-            {t("Use ← → arrow keys to navigate", "استخدم مفاتيح الأسهم للتنقل")}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground hidden sm:block">
+              {t("← → arrow keys", "مفاتيح الأسهم")}
+            </span>
+            {/* Overwhelm escape hatch */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                saveProgress.mutate({ lessonId, sectionId: sectionIndex, cursorOffset: 0, status: "in_progress" });
+                setShowOverwhelmEscape(true);
+              }}
+              aria-label={t("I need a break", "أحتاج استراحة")}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <AlertTriangle className="w-3.5 h-3.5 mr-1" />
+              {t("Break", "استراحة")}
+            </Button>
+          </div>
           <Button
             onClick={nextSection}
             aria-label={sectionIndex < totalSections - 1 ? t("Next section", "القسم التالي") : t("Complete lesson", "إكمال الدرس")}
@@ -538,6 +774,17 @@ export default function LessonPage() {
             {sectionIndex < totalSections - 1 ? t("Next", "التالي") : t("Complete", "إكمال")}
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
+        </div>
+
+        {/* Keyboard hints */}
+        <div className="mt-4 text-xs text-muted-foreground text-center space-x-3">
+          <span>Space/{t("R", "R")}: {t("read aloud", "استمع")}</span>
+          <span>S: {t("simplify", "تبسيط")}</span>
+          <span>F: {t("focus", "تركيز")}</span>
+          <span>M: {t("map", "خريطة")}</span>
+          <span>T: {t("timer", "مؤقت")}</span>
+          <span>B: {t("companion", "رفيق")}</span>
+          <span>Ctrl+P: {t("position", "الموضع")}</span>
         </div>
       </div>
     </div>
