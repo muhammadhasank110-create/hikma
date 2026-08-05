@@ -75,17 +75,16 @@ export default function Home() {
               )}
             </div>
           </div>
-          <div className="hidden md:flex flex-col items-end gap-3 animate-arrive animate-arrive-delay-2">
-            <div className="bg-white rounded-2xl px-8 py-6 shadow-2xl flex flex-col items-center gap-2">
-              <img
-                src="/manus-storage/hikma-logo-wordmark_12a85ef1.png"
-                alt="Hikma — حكمة"
-                className="w-72 object-contain"
-              />
-              <p className="text-xs text-[#6b5c3e] tracking-widest uppercase text-center font-semibold">
-                {t("Wisdom · Accessibility · Growth", "الحكمة · إمكانية الوصول · النمو")}
-              </p>
-            </div>
+          <div className="hidden md:flex flex-col items-end gap-2 animate-arrive animate-arrive-delay-2">
+            <img
+              src="/manus-storage/hikma-wordmark-transparent_fdf6160f.png"
+              alt="Hikma — حكمة"
+              className="w-96 object-contain"
+              style={{ filter: "brightness(0) invert(1)", opacity: 0.9 }}
+            />
+            <p className="text-xs text-white/50 tracking-widest uppercase text-right">
+              {t("Wisdom · Accessibility · Growth", "الحكمة · إمكانية الوصول · النمو")}
+            </p>
           </div>
         </div>
       </section>

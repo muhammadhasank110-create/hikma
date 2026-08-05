@@ -135,16 +135,13 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
     >
       <div className="container flex items-center justify-between h-14 gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded">
+        <Link href="/" className="flex items-center flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1">
           <img
-            src="/manus-storage/hikma-icon-dark_453d3815.png"
-            alt="Hikma"
-            className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+            src="/manus-storage/hikma-wordmark-transparent_fdf6160f.png"
+            alt="Hikma حكمة"
+            className="h-9 w-auto object-contain"
+            style={{ filter: "brightness(0) invert(1)", opacity: 0.95 }}
           />
-          <div>
-            <span className="font-bold text-base tracking-tight">Hikma</span>
-            <span className="text-white/60 text-xs ms-1.5 font-arabic">حكمة</span>
-          </div>
         </Link>
 
         {/* Desktop nav links */}
@@ -313,8 +310,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="p-4 border-b border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img src="/manus-storage/hikma-icon-dark_453d3815.png" alt="Hikma" className="w-8 h-8 rounded-lg object-cover" />
-                <span className="font-bold">Hikma <span className="font-arabic text-white/60">حكمة</span></span>
+                <img
+                  src="/manus-storage/hikma-wordmark-transparent_fdf6160f.png"
+                  alt="Hikma حكمة"
+                  className="h-8 w-auto object-contain"
+                  style={{ filter: "brightness(0) invert(1)", opacity: 0.95 }}
+                />
               </div>
               <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="text-white hover:bg-white/10 w-8 h-8">
                 <X className="w-4 h-4" />

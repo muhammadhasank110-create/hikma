@@ -384,6 +384,29 @@
 
   /* Syllable split helper */
   .syllable-split .syllable { border-bottom: 1px dotted rgb(var(--clay)); }
+  /* ── LOGO THEME ADAPTATION ── */
+  /* Nav is always dark (forest-deep, near-black, or pure black) → invert to white */
+  .hikma-nav-logo {
+    filter: brightness(0) invert(1);
+    opacity: 0.95;
+  }
+  /* High contrast: yellow tint */
+  [data-theme="high_contrast"] .hikma-nav-logo {
+    filter: brightness(0) saturate(100%) invert(1) sepia(1) saturate(5) hue-rotate(20deg);
+    opacity: 1;
+  }
+  /* Hero logo on dark green background → white */
+  .hikma-hero-logo {
+    filter: brightness(0) invert(1);
+    opacity: 0.92;
+  }
+  /* Hero logo on light/cream/calm backgrounds → original dark green colors */
+  [data-theme="cream"] .hikma-hero-logo,
+  [data-theme="calm"] .hikma-hero-logo {
+    filter: none;
+    opacity: 1;
+  }
+
 
   /* ── ARRIVAL RAIL ── */
   .arrival-rail {
