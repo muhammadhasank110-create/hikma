@@ -105,9 +105,54 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
-  // Load profile from server when authenticated
-  // Profile sync will be wired once routers are built
-  const updateProfileMutation = { mutate: (_: any) => {} };
+  // Load profile from DB when authenticated
+  const profileQuery = trpc.profile.get.useQuery(undefined, {
+    enabled: isAuthenticated,
+    staleTime: 60_000,
+  });
+  const updateProfileMutation = trpc.profile.update.useMutation();
+
+  // Merge DB profile into local state when it loads or user changes
+  useEffect(() => {
+    if (!profileQuery.data) return;
+    const db = profileQuery.data as any;
+    setProfile(prev => ({
+      ...prev,
+      ...(db.mode && { mode: db.mode }),
+      ...(db.primaryModality && { primaryModality: db.primaryModality }),
+      ...(db.autoNarrate != null && { autoNarrate: Boolean(db.autoNarrate) }),
+      ...(db.speechRate != null && { speechRate: Number(db.speechRate) }),
+      ...(db.voice && { voice: db.voice }),
+      ...(db.earcons != null && { earcons: Boolean(db.earcons) }),
+      ...(db.theme && { theme: db.theme }),
+      ...(db.fontFamily && { fontFamily: db.fontFamily }),
+      ...(db.fontScale != null && { fontScale: Number(db.fontScale) }),
+      ...(db.lineHeight != null && { lineHeight: Number(db.lineHeight) }),
+      ...(db.letterSpacing != null && { letterSpacing: Number(db.letterSpacing) }),
+      ...(db.wordSpacing != null && { wordSpacing: Number(db.wordSpacing) }),
+      ...(db.maxLineLength != null && { maxLineLength: Number(db.maxLineLength) }),
+      ...(db.rulerOverlay != null && { rulerOverlay: Boolean(db.rulerOverlay) }),
+      ...(db.overlayTint && { overlayTint: db.overlayTint }),
+      ...(db.overlayOpacity != null && { overlayOpacity: Number(db.overlayOpacity) }),
+      ...(db.chunkSize && { chunkSize: db.chunkSize }),
+      ...(db.reduceMotion != null && { reduceMotion: Boolean(db.reduceMotion) }),
+      ...(db.hideDecorative != null && { hideDecorative: Boolean(db.hideDecorative) }),
+      ...(db.timers != null && { timers: Boolean(db.timers) }),
+      ...(db.bodyDouble != null && { bodyDouble: Boolean(db.bodyDouble) }),
+      ...(db.rewards && { rewards: db.rewards }),
+      ...(db.readingLevel != null && { readingLevel: Number(db.readingLevel) as 1|2|3 }),
+      ...(db.tashkeel != null && { tashkeel: Boolean(db.tashkeel) }),
+      ...(db.numerals && { numerals: db.numerals }),
+      ...(db.syllableSplit != null && { syllableSplit: Boolean(db.syllableSplit) }),
+      ...(db.curriculum && { curriculum: db.curriculum }),
+      ...(db.tier !== undefined && { tier: db.tier }),
+      ...(db.eccEnabled != null && { eccEnabled: Boolean(db.eccEnabled) }),
+      ...(db.inputMethod && { inputMethod: db.inputMethod }),
+      ...(db.singleKeyShortcuts != null && { singleKeyShortcuts: Boolean(db.singleKeyShortcuts) }),
+      ...(db.onboardingComplete != null && { onboardingComplete: Boolean(db.onboardingComplete) }),
+    }));
+    if (db.locale) setLocaleState(db.locale as Locale);
+  }, [profileQuery.data]);
 
   // Apply theme to document
   useEffect(() => {

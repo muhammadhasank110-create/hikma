@@ -69,6 +69,7 @@ export default function App() {
               <TooltipProvider>
                 <Toaster richColors position="top-center" />
                 <Router />
+                <VoiceCommandOverlay />
               </TooltipProvider>
             </AriaLiveProvider>
           </KeyboardProvider>
@@ -77,3 +78,4 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+import { VoiceCommandOverlay } from "./components/VoiceCommandOverlay";

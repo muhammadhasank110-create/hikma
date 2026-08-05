@@ -14,6 +14,7 @@ import {
   AlignLeft, Maximize2, Minimize2, ParkingSquare, Timer, Map, X,
   AlertTriangle, Shuffle, UserCheck, BookOpen
 } from "lucide-react";
+import { useTTS } from "@/hooks/useTTS";
 
 // ── Concept Map SVG ──────────────────────────────────────────────────────────
 function ConceptMapSVG({ lessonTitle, sections, locale }: {
@@ -183,7 +184,12 @@ export default function LessonPage() {
   const { profile, locale, setMode } = useProfile();
   const lessonId = parseInt(params?.lessonId ?? "0");
   const [sectionIndex, setSectionIndex] = useState(0);
-  const [isNarrating, setIsNarrating] = useState(false);
+  const tts = useTTS({
+    rate: profile.speechRate,
+    lang: locale === "ar" ? "ar-SA" : "en-GB",
+    voiceHint: profile.voice,
+  });
+  const isNarrating = tts.isSpeaking;
   const [isFocused, setIsFocused] = useState(profile.mode === "focus");
   const [simplifiedView, setSimplifiedView] = useState(false);
   const [simplifiedContent, setSimplifiedContent] = useState<Record<number, string>>({});
@@ -205,36 +211,11 @@ export default function LessonPage() {
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const highlightTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { data: lesson, isLoading } = trpc.curriculum.lesson.useQuery(
     { lessonId },
     { enabled: lessonId > 0 }
   );
   const saveProgress = trpc.progress.updateProgress.useMutation();
-  const ttsMutation = trpc.tts.synthesize.useMutation({
-    onSuccess: (data) => {
-      const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
-      audioRef.current = audio;
-      setIsNarrating(true);
-      audio.onended = () => { setIsNarrating(false); stopWordHighlight(); };
-      audio.play().catch(() => {
-        setIsNarrating(false);
-        stopWordHighlight();
-        if ("speechSynthesis" in window && lesson) {
-          const secs = lesson.sections as any[];
-          const text = locale === "ar"
-            ? (secs[sectionIndex]?.bodyAr ?? secs[sectionIndex]?.bodyEn ?? "")
-            : (secs[sectionIndex]?.bodyEn ?? "");
-          const utt = new SpeechSynthesisUtterance(text);
-          utt.lang = locale === "ar" ? "ar-QA" : "en-GB";
-          utt.rate = profile.speechRate;
-          utt.onend = () => { setIsNarrating(false); stopWordHighlight(); };
-          window.speechSynthesis.speak(utt);
-          setIsNarrating(true);
-        }
-      });
-    },
-  });
 
   const stopWordHighlight = useCallback(() => {
     if (highlightTimerRef.current) clearInterval(highlightTimerRef.current);
@@ -273,9 +254,7 @@ export default function LessonPage() {
   const readAloud = useCallback(() => {
     if (!currentSection) return;
     if (isNarrating) {
-      audioRef.current?.pause();
-      window.speechSynthesis?.cancel();
-      setIsNarrating(false);
+      tts.stop();
       stopWordHighlight();
       return;
     }
@@ -283,13 +262,8 @@ export default function LessonPage() {
       ? (currentSection.bodyAr ?? currentSection.bodyEn ?? currentSection.titleAr ?? "")
       : (currentSection.bodyEn ?? currentSection.titleEn ?? "");
     startWordHighlight(text);
-    ttsMutation.mutate({
-      text: text.slice(0, 1500),
-      voice: profile.voice as any,
-      speed: profile.speechRate,
-      locale: locale as "ar" | "en",
-    });
-  }, [currentSection, isNarrating, profile, locale, startWordHighlight, stopWordHighlight]);
+    tts.speak(text);
+  }, [currentSection, isNarrating, tts, locale, startWordHighlight, stopWordHighlight]);
 
   const nextSection = useCallback(() => {
     if (sectionIndex < totalSections - 1) {
@@ -364,12 +338,7 @@ export default function LessonPage() {
     const msg = locale === "ar"
       ? `أنت في الدرس: ${lessonTitle}. القسم ${sectionIndex + 1} من ${totalSections}: ${secTitle}`
       : `You are in lesson: ${lessonTitle}. Section ${sectionIndex + 1} of ${totalSections}: ${secTitle}`;
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utt = new SpeechSynthesisUtterance(msg);
-      utt.lang = locale === "ar" ? "ar-QA" : "en-GB";
-      window.speechSynthesis.speak(utt);
-    }
+    tts.speak(msg);
     toast.info(msg, { duration: 4000 });
   }, [lesson, locale, sectionIndex, totalSections, currentSection]);
 
@@ -416,6 +385,22 @@ export default function LessonPage() {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [nextSection, prevSection, readAloud, simplifySection, announcePosition]);
+
+  // Voice command events dispatched by VoiceCommandOverlay
+  useEffect(() => {
+    const onRead = () => readAloud();
+    const onNext = () => nextSection();
+    const onPrev = () => prevSection();
+    window.addEventListener("hikma:read_aloud", onRead);
+    window.addEventListener("hikma:next_section", onNext);
+    window.addEventListener("hikma:prev_section", onPrev);
+    return () => {
+      window.removeEventListener("hikma:read_aloud", onRead);
+      window.removeEventListener("hikma:next_section", onNext);
+      window.removeEventListener("hikma:prev_section", onPrev);
+    };
+  }, [readAloud, nextSection, prevSection]);
+
 
   // Auto-narrate on section change if enabled
   useEffect(() => {

@@ -142,3 +142,17 @@
 - [ ] PWA offline caching / service worker (future)
 - [ ] LCP < 2.5s performance audit (future)
 - [x] Vitest: auth.logout test passes
+
+## Phase 15: Audio, Voice Navigation & Keyboard Accessibility (Aug 2026)
+- [x] TTS audio: replaced broken Forge API call with useTTS hook (Web Speech API, browser-native, zero silence)
+- [x] useTTS hook: voice selection, rate, lang, Chrome cancel-bug workaround, cleanup on unmount
+- [x] LessonPage: wired useTTS, removed dead audioRef/ttsMutation, auto-narrate fires on section load
+- [x] TutorPage: wired useTTS, removed dead ttsMutation, speakText uses hook
+- [x] Voice command navigation: useVoiceCommands hook with EN + AR command parser (30+ commands)
+- [x] VoiceCommandOverlay: floating mic button (bottom-right), V key hold-to-listen, app-wide
+- [x] Voice commands: navigate, go back, next/prev section, read aloud, focus mode, font size, stop speech
+- [x] LessonPage: listens to hikma:read_aloud, hikma:next_section, hikma:prev_section custom events
+- [x] AppShell: skip-to-main-content link (visible on keyboard focus, sr-only otherwise)
+- [x] ProfileContext: fully wired to trpc.profile.get (load on login) and trpc.profile.update (save on change)
+- [x] Profile persistence: all settings (theme, font, mode, TTS, overlay) restored from DB after login
+- [x] Profile mode migration: "audio" → "audio_first" in DB + sanitizer in profile.get router

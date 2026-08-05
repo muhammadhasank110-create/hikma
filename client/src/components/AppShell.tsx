@@ -285,6 +285,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      {/* Skip to main content — visible on focus for keyboard/screen-reader users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[999] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:text-sm focus:font-semibold focus:outline-none"
+      >
+        {locale === "ar" ? "انتقل إلى المحتوى الرئيسي" : "Skip to main content"}
+      </a>
       {/* Colour overlay for dyslexia tint */}
       {profile.overlayTint !== "none" && (
         <div

@@ -32,7 +32,6 @@ export default function TutorPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(profile.autoNarrate);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -46,33 +45,17 @@ export default function TutorPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const ttsMutation = trpc.tts.synthesize.useMutation({
-    onSuccess: (data) => {
-      const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
-      setIsSpeaking(true);
-      audio.onended = () => setIsSpeaking(false);
-      audio.play().catch(() => {
-        setIsSpeaking(false);
-        if ("speechSynthesis" in window) {
-          const utterance = new SpeechSynthesisUtterance();
-          utterance.text = messages[messages.length - 1]?.content ?? "";
-          utterance.lang = locale === "ar" ? "ar-QA" : "en-GB";
-          utterance.rate = profile.speechRate;
-          window.speechSynthesis.speak(utterance);
-        }
-      });
-    },
+  const tts = useTTS({
+    rate: profile.speechRate,
+    lang: locale === "ar" ? "ar-SA" : "en-GB",
+    voiceHint: profile.voice,
   });
+  const isSpeaking = tts.isSpeaking;
 
   const speakText = useCallback((text: string) => {
     const plain = text.replace(/[#*_`~\[\]]/g, "").slice(0, 1000);
-    ttsMutation.mutate({
-      text: plain,
-      voice: profile.voice as any,
-      speed: profile.speechRate,
-      locale: locale as "ar" | "en",
-    });
-  }, [profile.voice, profile.speechRate, locale]);
+    tts.speak(plain);
+  }, [tts]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -451,3 +434,4 @@ export default function TutorPage() {
     </div>
   );
 }
+import { useTTS } from "@/hooks/useTTS";
