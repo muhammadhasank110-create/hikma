@@ -113,33 +113,23 @@ export default function Home() {
 
             {/* CTA buttons */}
             <div className="flex flex-wrap gap-4 pt-2">
+              {/* Always go to onboarding — personalisation runs every session */}
               {isAuthenticated ? (
-                <Link href="/dashboard">
+                <Link href="/onboarding">
                   <Button size="lg" className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl">
-                    {t("Continue Learning", "تابع التعلم")}
+                    {t("Personalise & Start", "خصّص وابدأ")}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
               ) : (
-                <>
-                  <Button
-                    size="lg"
-                    className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl"
-                    onClick={() => startLogin()}
-                  >
-                    {t("Sign in & Start Learning", "سجّل دخولك وابدأ التعلم")}
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                  <Link href="/onboarding">
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="border-white/30 text-white hover:bg-white/10 text-base px-6 h-14 rounded-2xl"
-                    >
-                      {t("Explore first", "استكشف أولاً")}
-                    </Button>
-                  </Link>
-                </>
+                <Button
+                  size="lg"
+                  className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl"
+                  onClick={() => startLogin()}
+                >
+                  {t("Sign in & Personalise", "سجّل دخولك وخصّص")}
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
               )}
             </div>
 
@@ -310,28 +300,21 @@ export default function Home() {
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             {isAuthenticated ? (
-              <Link href="/dashboard">
+              <Link href="/onboarding">
                 <Button size="lg" className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl">
-                  {t("Go to Dashboard", "الذهاب إلى لوحة التحكم")}
+                  {t("Personalise & Start", "خصّص وابدأ")}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
             ) : (
-              <>
-                <Button
-                  size="lg"
-                  className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl"
-                  onClick={() => startLogin()}
-                >
-                  {t("Sign in with Manus", "سجّل الدخول")}
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-                <Link href="/onboarding">
-                  <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 text-base px-8 h-14 rounded-2xl">
-                    {t("Explore without account", "استكشف بدون حساب")}
-                  </Button>
-                </Link>
-              </>
+              <Button
+                size="lg"
+                className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl"
+                onClick={() => startLogin()}
+              >
+                {t("Sign in & Personalise", "سجّل دخولك وخصّص")}
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
             )}
           </div>
           <p className="text-xs text-white/40 flex items-center justify-center gap-2">
