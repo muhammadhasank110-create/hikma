@@ -137,10 +137,9 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
         {/* Logo */}
         <Link href="/" className="flex items-center flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1">
           <img
-            src="/manus-storage/hikma-icon-only_47640eed.png"
+            src="/manus-storage/hikma-app-icon-dark_b5db94f5.png"
             alt="Hikma حكمة"
-            className="h-9 w-auto object-contain"
-            style={{ filter: "brightness(0) invert(1)", opacity: 0.95 }}
+            className="h-9 w-9 object-contain rounded-xl"
           />
         </Link>
 
@@ -311,10 +310,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img
-                  src="/manus-storage/hikma-icon-only_47640eed.png"
+                  src="/manus-storage/hikma-app-icon-dark_b5db94f5.png"
                   alt="Hikma حكمة"
-                  className="h-8 w-auto object-contain"
-                  style={{ filter: "brightness(0) invert(1)", opacity: 0.95 }}
+                  className="h-8 w-8 object-contain rounded-xl"
                 />
               </div>
               <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="text-white hover:bg-white/10 w-8 h-8">
