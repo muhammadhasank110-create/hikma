@@ -76,19 +76,14 @@ export default function Home() {
             </div>
           </div>
           <div className="hidden md:flex flex-col items-end gap-3 animate-arrive animate-arrive-delay-2">
-            <div className="relative w-48 h-48">
-              {[0, 8, 16, 24, 32, 40].map((inset, i) => (
-                <div key={i} className="absolute rounded-full border border-white/20" style={{ inset: `${inset}px` }} />
-              ))}
-              <div className="absolute inset-20 rounded-full bg-white/20 flex items-center justify-center">
-                <div className="w-4 h-4 rounded-full bg-white" />
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xs font-semibold tracking-widest uppercase text-white/50">{t("SIGNATURE", "الشعار")}</p>
-              <p className="text-lg font-bold">{t("The growth ring", "حلقة النمو")}</p>
-              <p className="text-xs text-white/60 max-w-32 text-right">{t("Arrival as a widening loop — the motif every mode shares.", "الوصول كحلقة متسعة — الشعار الذي تشترك فيه كل الأوضاع.")}</p>
-            </div>
+            <img
+              src="/manus-storage/hikma-logo-wordmark_78dd37d4.png"
+              alt="Hikma — حكمة"
+              className="w-80 object-contain drop-shadow-2xl"
+            />
+            <p className="text-xs text-white/50 tracking-widest uppercase text-right">
+              {t("Wisdom. Accessibility. Growth.", "الحكمة · إمكانية الوصول · النمو")}
+            </p>
           </div>
         </div>
       </section>
@@ -147,7 +142,7 @@ export default function Home() {
       <footer className="border-t border-border bg-card py-6">
         <div className="container flex items-center justify-between flex-wrap gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full border border-primary/40 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-primary" /></div>
+            <img src="/manus-storage/hikma-icon-dark_0489d20a.png" alt="Hikma" className="w-5 h-5 rounded object-cover" />
             <span className="font-semibold">Hikma — حكمة</span>
           </div>
           <div className="flex items-center gap-4">

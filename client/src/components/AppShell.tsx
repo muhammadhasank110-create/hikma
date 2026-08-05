@@ -136,13 +136,11 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
       <div className="container flex items-center justify-between h-14 gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded">
-          {/* Growth ring — the Hikma signature motif */}
-          <div className="w-9 h-9 relative flex items-center justify-center flex-shrink-0" aria-hidden="true">
-            <div className="absolute inset-0 rounded-full border-2 border-white/20" />
-            <div className="absolute inset-1 rounded-full border border-white/35" />
-            <div className="absolute inset-2 rounded-full border border-white/55" />
-            <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />
-          </div>
+          <img
+            src="/manus-storage/hikma-icon-dark_0489d20a.png"
+            alt="Hikma"
+            className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+          />
           <div>
             <span className="font-bold text-base tracking-tight">Hikma</span>
             <span className="text-white/60 text-xs ms-1.5 font-arabic">حكمة</span>
@@ -314,7 +312,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <SheetContent side={locale === "ar" ? "right" : "left"} className="w-72 bg-[rgb(var(--nav-bg))] text-white border-0 p-0">
           <div className="p-4 border-b border-white/10">
             <div className="flex items-center justify-between">
-              <span className="font-bold">Hikma <span className="font-arabic text-white/60">حكمة</span></span>
+              <div className="flex items-center gap-2">
+                <img src="/manus-storage/hikma-icon-dark_0489d20a.png" alt="Hikma" className="w-8 h-8 rounded-lg object-cover" />
+                <span className="font-bold">Hikma <span className="font-arabic text-white/60">حكمة</span></span>
+              </div>
               <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="text-white hover:bg-white/10 w-8 h-8">
                 <X className="w-4 h-4" />
               </Button>
