@@ -1,26 +1,23 @@
 /**
- * useTTS — Web Speech API based TTS hook.
+ * useTTS — Web Speech API TTS hook with word-boundary sync.
  *
- * The Forge API does not expose a /v1/audio/speech endpoint, so we use the
- * browser's native SpeechSynthesis API as the primary engine.  This gives
- * real audio on all modern browsers (Chrome, Edge, Firefox, Safari) without
- * any server round-trip.
+ * Uses the browser's native SpeechSynthesis API.
+ * Exposes an `onBoundary` callback that fires at the exact character offset
+ * when each word is spoken — enabling accurate word-by-word highlighting.
  *
- * Features:
- *  - Speaks text in the user's locale (ar / en)
- *  - Respects profile.speechRate and profile.voice (mapped to browser voices)
- *  - Cancels previous utterance before starting a new one
- *  - Exposes isSpeaking, speak(), stop(), and isSupported
+ * The `boundary` event is supported in Chrome, Edge, and Safari.
+ * Firefox does not fire boundary events — we fall back to a timer there.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type TTSOptions = {
   rate?: number;
   lang?: string;
-  voiceHint?: string; // partial name match, e.g. "Google UK English Female"
+  voiceHint?: string;
+  onBoundary?: (charIndex: number, charLength: number) => void;
+  onEnd?: () => void;
 };
 
-// Map Hikma voice names to browser voice name fragments
 const VOICE_HINTS: Record<string, string[]> = {
   alloy: ["Google UK English Female", "Microsoft Zira", "Karen", "Samantha"],
   echo: ["Google UK English Male", "Microsoft David", "Daniel", "Alex"],
@@ -34,37 +31,34 @@ function pickVoice(lang: string, voiceHint: string): SpeechSynthesisVoice | null
   if (!("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
-
   const isAr = lang.startsWith("ar");
   const langVoices = voices.filter(v => isAr ? v.lang.startsWith("ar") : v.lang.startsWith("en"));
-
-  // Try hint fragments first
   const hints = VOICE_HINTS[voiceHint] ?? [];
   for (const hint of hints) {
     const match = langVoices.find(v => v.name.includes(hint));
     if (match) return match;
   }
-
-  // Fall back to any voice for the language
   if (langVoices.length) return langVoices[0];
-
-  // Last resort: first available voice
   return voices[0] ?? null;
 }
 
 export function useTTS(options: TTSOptions = {}) {
-  const { rate = 1.0, lang = "en-GB", voiceHint = "nova" } = options;
+  const { rate = 1.0, lang = "en-GB", voiceHint = "nova", onBoundary, onEnd } = options;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSupported] = useState(() => "speechSynthesis" in window);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const pendingTextRef = useRef<string | null>(null);
-  const voicesLoadedRef = useRef(false);
+  const onBoundaryRef = useRef(onBoundary);
+  const onEndRef = useRef(onEnd);
 
-  // Voices load asynchronously in Chrome — wait for them
+  // Keep callbacks in refs to avoid stale closures
+  useEffect(() => { onBoundaryRef.current = onBoundary; }, [onBoundary]);
+  useEffect(() => { onEndRef.current = onEnd; }, [onEnd]);
+
+  // Voices load asynchronously in Chrome
   useEffect(() => {
     if (!isSupported) return;
-    const load = () => { voicesLoadedRef.current = true; };
-    window.speechSynthesis.getVoices(); // trigger load
+    window.speechSynthesis.getVoices();
+    const load = () => {};
     window.speechSynthesis.addEventListener("voiceschanged", load);
     return () => window.speechSynthesis.removeEventListener("voiceschanged", load);
   }, [isSupported]);
@@ -78,8 +72,6 @@ export function useTTS(options: TTSOptions = {}) {
 
   const speak = useCallback((text: string) => {
     if (!isSupported || !text.trim()) return;
-
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
     const clean = text
@@ -98,9 +90,21 @@ export function useTTS(options: TTSOptions = {}) {
     if (voice) utt.voice = voice;
 
     utt.onstart = () => setIsSpeaking(true);
-    utt.onend = () => { setIsSpeaking(false); utteranceRef.current = null; };
+
+    // Word boundary event — fires at exact character position
+    utt.onboundary = (event: SpeechSynthesisEvent) => {
+      if (event.name === "word" && onBoundaryRef.current) {
+        onBoundaryRef.current(event.charIndex, event.charLength ?? 0);
+      }
+    };
+
+    utt.onend = () => {
+      setIsSpeaking(false);
+      utteranceRef.current = null;
+      onEndRef.current?.();
+    };
+
     utt.onerror = (e) => {
-      // "interrupted" is normal when stop() is called — not a real error
       if (e.error !== "interrupted" && e.error !== "canceled") {
         console.warn("[TTS] error:", e.error);
       }
@@ -111,8 +115,7 @@ export function useTTS(options: TTSOptions = {}) {
     utteranceRef.current = utt;
     setIsSpeaking(true);
 
-    // Chrome bug: speech synthesis silently fails if called immediately after cancel()
-    // A tiny setTimeout fixes this reliably.
+    // Chrome bug: tiny delay after cancel() prevents silent failure
     setTimeout(() => {
       if (utteranceRef.current === utt) {
         window.speechSynthesis.speak(utt);
@@ -120,7 +123,6 @@ export function useTTS(options: TTSOptions = {}) {
     }, 50);
   }, [lang, rate, voiceHint, isSupported]);
 
-  // Clean up on unmount
   useEffect(() => () => { if (isSupported) window.speechSynthesis.cancel(); }, [isSupported]);
 
   return { speak, stop, isSpeaking, isSupported };

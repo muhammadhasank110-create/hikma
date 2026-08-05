@@ -28,7 +28,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", labelEn: "Home", labelAr: "الرئيسية", icon: Home },
   { href: "/subjects/1", labelEn: "Subjects", labelAr: "المواد", icon: BookOpen },
-  { href: "/tutor", labelEn: "AI Tutor", labelAr: "المعلم الذكي", icon: Bot },
+  { href: "/tutor", labelEn: "Hikma AI", labelAr: "حكمة AI", icon: Bot },
   { href: "/progress", labelEn: "Progress", labelAr: "تقدمي", icon: TrendingUp },
   { href: "/ecc", labelEn: "ECC", labelAr: "المنهج الموسّع", icon: Layers },
   { href: "/exam-skills", labelEn: "Exam Skills", labelAr: "مهارات الامتحان", icon: FileText },
@@ -137,7 +137,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
         {/* Logo */}
         <Link href="/" className="flex items-center flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1">
           <img
-            src="/manus-storage/hikma-app-icon-dark_b5db94f5.png"
+            src="/manus-storage/hikma-app-icon-clean_e261c2b4.png"
             alt="Hikma حكمة"
             className="h-9 w-9 object-contain rounded-xl"
           />
@@ -236,7 +236,7 @@ function CommandPalette() {
   const commands = [
     { label: locale === "ar" ? "الرئيسية" : "Home", href: "/dashboard", icon: Home },
     { label: locale === "ar" ? "المواد" : "Subjects", href: "/subjects/1", icon: BookOpen },
-    { label: locale === "ar" ? "المعلم الذكي" : "AI Tutor", href: "/tutor", icon: Bot },
+    { label: locale === "ar" ? "حكمة AI" : "Hikma AI", href: "/tutor", icon: Bot },
     { label: locale === "ar" ? "تقدمي" : "My Progress", href: "/progress", icon: TrendingUp },
     { label: locale === "ar" ? "الإعدادات" : "Settings", href: "/settings", icon: Settings },
     { label: locale === "ar" ? "الاختصارات" : "Keyboard Shortcuts", href: "/shortcuts", icon: Keyboard },
@@ -310,7 +310,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img
-                  src="/manus-storage/hikma-app-icon-dark_b5db94f5.png"
+                  src="/manus-storage/hikma-app-icon-clean_e261c2b4.png"
                   alt="Hikma حكمة"
                   className="h-8 w-8 object-contain rounded-xl"
                 />

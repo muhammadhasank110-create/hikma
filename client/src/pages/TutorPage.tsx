@@ -176,7 +176,7 @@ export default function TutorPage() {
               try {
                 const parsed = JSON.parse(trimmed.slice(6));
                 if (parsed.delta) { fullContent += parsed.delta; setStreamingContent(fullContent); }
-                if (parsed.error) toast.error(locale === "ar" ? "خطأ في المعلم الذكي" : "Tutor error: " + parsed.error);
+                if (parsed.error) toast.error(locale === "ar" ? "خطأ في حكمة AI" : "Hikma AI error: " + parsed.error);
               } catch { /* skip */ }
             }
           }
@@ -191,7 +191,7 @@ export default function TutorPage() {
         }
       } catch (err: any) {
         if (err?.name !== "AbortError") {
-          toast.error(locale === "ar" ? "خطأ في المعلم الذكي" : "Tutor error: " + (err?.message ?? "Unknown error"));
+          toast.error(locale === "ar" ? "خطأ في حكمة AI" : "Hikma AI error: " + (err?.message ?? "Unknown error"));
         }
       } finally {
         setIsStreaming(false);
@@ -239,7 +239,7 @@ export default function TutorPage() {
   };
 
   const t = {
-    title: locale === "ar" ? "المعلم الذكي" : "AI Tutor",
+    title: locale === "ar" ? "حكمة AI" : "Hikma AI",
     placeholder: locale === "ar" ? "اسأل سؤالاً… (Enter للإرسال، Shift+Enter لسطر جديد)" : "Ask a question… (Enter to send, Shift+Enter for new line)",
     send: locale === "ar" ? "إرسال" : "Send",
     tts: locale === "ar" ? "قراءة الردود" : "Read replies aloud",
@@ -298,7 +298,7 @@ export default function TutorPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" role="log" aria-label={locale === "ar" ? "محادثة المعلم الذكي" : "AI tutor conversation"} aria-live="polite">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" role="log" aria-label={locale === "ar" ? "محادثة حكمة AI" : "Hikma AI conversation"} aria-live="polite">
         {messages.map((msg, i) => (
           <div key={i} className={`flex gap-3 animate-arrive ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
             <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -411,7 +411,7 @@ export default function TutorPage() {
             placeholder={t.placeholder}
             rows={1}
             className="flex-1 resize-none min-h-[2.5rem] max-h-32"
-            aria-label={locale === "ar" ? "رسالتك للمعلم الذكي" : "Your message to the AI tutor"}
+            aria-label={locale === "ar" ? "رسالتك لحكمة AI" : "Your message to Hikma AI"}
             disabled={isStreaming}
           />
           <Button

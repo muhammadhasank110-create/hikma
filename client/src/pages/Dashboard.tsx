@@ -96,7 +96,7 @@ export default function Dashboard() {
                 <Bot className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="font-semibold text-sm">{t("AI Tutor", "المعلم الذكي")}</p>
+                <p className="font-semibold text-sm">{t("Hikma AI", "حكمة AI")}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{t("A calm space to ask anything", "مساحة هادئة لطرح أي سؤال")}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto flex-shrink-0 mt-0.5 group-hover:text-primary transition-colors" />

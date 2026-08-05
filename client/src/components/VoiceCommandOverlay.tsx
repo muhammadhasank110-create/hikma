@@ -1,12 +1,13 @@
 /**
- * VoiceCommandOverlay — floating mic badge that shows voice command state.
- * Wired into App.tsx so it's available on every page.
+ * VoiceCommandOverlay — floating mic badge with three states:
+ *  OFF      → grey mic-off icon (click to enable)
+ *  STANDBY  → green pulsing mic icon (waiting for "Hikma" wake word)
+ *  COMMAND  → red pulsing mic icon (actively listening for command)
  */
 import { Mic, MicOff } from "lucide-react";
 import { useVoiceCommands, type VoiceCommandAction } from "@/hooks/useVoiceCommands";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useLocation } from "wouter";
-import { toast } from "sonner";
 import { useTTS } from "@/hooks/useTTS";
 
 export function VoiceCommandOverlay() {
@@ -25,6 +26,10 @@ export function VoiceCommandOverlay() {
         window.history.back();
         say(locale === "ar" ? "رجوع" : "Going back");
         break;
+      case "go_home":
+        navigate("/dashboard");
+        say(locale === "ar" ? "الصفحة الرئيسية" : "Going home");
+        break;
       case "stop_speech":
         tts.stop();
         window.speechSynthesis?.cancel();
@@ -42,7 +47,6 @@ export function VoiceCommandOverlay() {
         say(locale === "ar" ? "وضع التركيز مفعّل" : "Focus mode on");
         break;
       case "read_aloud":
-        // Dispatch a custom event that LessonPage listens to
         window.dispatchEvent(new CustomEvent("hikma:read_aloud"));
         break;
       case "next_section":
@@ -52,40 +56,56 @@ export function VoiceCommandOverlay() {
         window.dispatchEvent(new CustomEvent("hikma:prev_section"));
         break;
       case "unknown":
-        toast.info(
-          locale === "ar"
-            ? `لم أفهم: "${action.transcript}"`
-            : `Not understood: "${action.transcript}"`,
-          { duration: 2500 }
-        );
+        // Handled inside the hook with a toast
         break;
       default:
         break;
     }
   };
 
-  const { isListening, startListening, stopListening, isSupported } = useVoiceCommands({
+  const { mode, isListening, isStandby, toggleVoice } = useVoiceCommands({
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     onAction: handleAction,
     enabled: true,
   });
 
-  if (!isSupported) return null;
+  const isOff = mode === "off";
+
+  const ariaLabel = isListening
+    ? (locale === "ar" ? "إيقاف الاستماع" : "Stop listening")
+    : isStandby
+    ? (locale === "ar" ? 'في وضع الانتظار — قل "حكمة"' : 'Standby — say "Hikma" to command')
+    : (locale === "ar" ? "تفعيل الأوامر الصوتية" : "Enable voice commands");
 
   return (
     <button
-      onClick={isListening ? stopListening : startListening}
-      aria-label={isListening
-        ? (locale === "ar" ? "إيقاف الأوامر الصوتية" : "Stop voice commands")
-        : (locale === "ar" ? "تشغيل الأوامر الصوتية (أو اضغط V)" : "Start voice commands (or press V)")}
-      aria-pressed={isListening}
-      className={`fixed bottom-6 right-6 z-[300] w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+      onClick={toggleVoice}
+      aria-label={ariaLabel}
+      aria-pressed={!isOff}
+      title={ariaLabel}
+      className={[
+        "fixed bottom-6 right-6 z-[300] w-12 h-12 rounded-full shadow-lg",
+        "flex items-center justify-center transition-all duration-200 relative",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
         isListening
           ? "bg-red-500 text-white animate-pulse scale-110"
-          : "bg-primary text-primary-foreground hover:scale-105 active:scale-95"
-      }`}
+          : isStandby
+          ? "bg-primary text-primary-foreground scale-100"
+          : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:scale-105",
+      ].join(" ")}
     >
-      {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+      {isOff ? (
+        <MicOff className="w-5 h-5" />
+      ) : (
+        <Mic className={`w-5 h-5 ${isStandby ? "opacity-80" : ""}`} />
+      )}
+      {/* Standby pulse ring */}
+      {isStandby && (
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-30"
+        />
+      )}
       {isListening && (
         <span className="sr-only">{locale === "ar" ? "يستمع للأوامر…" : "Listening for commands…"}</span>
       )}

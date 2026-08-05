@@ -9,11 +9,11 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
-import {
-  Volume2, VolumeX, ChevronRight, ChevronLeft, Bot,
-  AlignLeft, Maximize2, Minimize2, ParkingSquare, Timer, Map, X,
-  AlertTriangle, Shuffle, UserCheck, BookOpen
-} from "lucide-react";
+  import {
+    Volume2, VolumeX, ChevronRight, ChevronLeft, Bot,
+    AlignLeft, Maximize2, Minimize2, ParkingSquare, Timer, Map, X,
+    AlertTriangle, Shuffle, UserCheck, BookOpen, HelpCircle, Send
+  } from "lucide-react";
 import { useTTS } from "@/hooks/useTTS";
 
 // ── Concept Map SVG ──────────────────────────────────────────────────────────
@@ -184,10 +184,24 @@ export default function LessonPage() {
   const { profile, locale, setMode } = useProfile();
   const lessonId = parseInt(params?.lessonId ?? "0");
   const [sectionIndex, setSectionIndex] = useState(0);
+  // Keep a ref to the clean text being spoken so boundary charIndex → word index
+  const speakingTextRef = useRef<string>("");
   const tts = useTTS({
     rate: profile.speechRate,
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     voiceHint: profile.voice,
+    onBoundary: (charIndex: number) => {
+      const text = speakingTextRef.current;
+      if (!text) return;
+      const upToChar = text.slice(0, charIndex + 1);
+      const wordIdx = upToChar.trim().split(/\s+/).length - 1;
+      setHighlightIndex(wordIdx);
+    },
+    onEnd: () => {
+      setHighlightIndex(-1);
+      setHighlightedWords([]);
+      speakingTextRef.current = "";
+    },
   });
   const isNarrating = tts.isSpeaking;
   const [isFocused, setIsFocused] = useState(profile.mode === "focus");
@@ -199,6 +213,20 @@ export default function LessonPage() {
   const [showConceptMap, setShowConceptMap] = useState(false);
   const [showBodyDouble, setShowBodyDouble] = useState(false);
   const [showOverwhelmEscape, setShowOverwhelmEscape] = useState(false);
+  // Per-topic question
+  const [topicQuestion, setTopicQuestion] = useState<string | null>(null);
+  const [topicAnswer, setTopicAnswer] = useState("");
+  const [showTopicQuestion, setShowTopicQuestion] = useState(false);
+  const [questionSectionIndex, setQuestionSectionIndex] = useState(-1);
+  const generateQuestion = trpc.tutor.generateTopicQuestion.useMutation({
+    onSuccess: (data) => {
+      if (data.question) {
+        setTopicQuestion(data.question);
+        setShowTopicQuestion(true);
+        setTopicAnswer("");
+      }
+    },
+  });
   // Tap-any-word definition
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   // Pomodoro
@@ -209,7 +237,6 @@ export default function LessonPage() {
   // Word-by-word highlighting
   const [highlightedWords, setHighlightedWords] = useState<string[]>([]);
   const [highlightIndex, setHighlightIndex] = useState(-1);
-  const highlightTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { data: lesson, isLoading } = trpc.curriculum.lesson.useQuery(
     { lessonId },
@@ -218,32 +245,17 @@ export default function LessonPage() {
   const saveProgress = trpc.progress.updateProgress.useMutation();
 
   const stopWordHighlight = useCallback(() => {
-    if (highlightTimerRef.current) clearInterval(highlightTimerRef.current);
     setHighlightIndex(-1);
     setHighlightedWords([]);
+    speakingTextRef.current = "";
   }, []);
 
   const startWordHighlight = useCallback((text: string) => {
-    if (highlightTimerRef.current) clearInterval(highlightTimerRef.current);
-    const words = text.replace(/[#*`_~[\]()]/g, "").split(/\s+/).filter(Boolean);
+    const clean = text.replace(/[#*`_~[\]()]/g, " ").replace(/\s+/g, " ").trim();
+    const words = clean.split(/\s+/).filter(Boolean);
+    speakingTextRef.current = clean;
     setHighlightedWords(words);
     setHighlightIndex(0);
-    let idx = 0;
-    const avgWordMs = Math.max(180, Math.round(60000 / (profile.speechRate * 130)));
-    highlightTimerRef.current = setInterval(() => {
-      idx++;
-      if (idx >= words.length) {
-        clearInterval(highlightTimerRef.current!);
-        setHighlightIndex(-1);
-        setHighlightedWords([]);
-      } else {
-        setHighlightIndex(idx);
-      }
-    }, avgWordMs);
-  }, [profile.speechRate]);
-
-  useEffect(() => {
-    return () => { if (highlightTimerRef.current) clearInterval(highlightTimerRef.current); };
   }, []);
 
   const sections = (lesson?.sections as any[]) ?? [];
@@ -265,7 +277,7 @@ export default function LessonPage() {
     tts.speak(text);
   }, [currentSection, isNarrating, tts, locale, startWordHighlight, stopWordHighlight]);
 
-  const nextSection = useCallback(() => {
+  const advanceSection = useCallback(() => {
     if (sectionIndex < totalSections - 1) {
       setSectionIndex(i => i + 1);
       saveProgress.mutate({ lessonId, sectionId: sectionIndex + 1, cursorOffset: 0, status: "in_progress" });
@@ -274,7 +286,35 @@ export default function LessonPage() {
       saveProgress.mutate({ lessonId, sectionId: sectionIndex, cursorOffset: 0, status: "complete" });
       toast.success(locale === "ar" ? "أحسنت! أكملت الدرس." : "Well done! Lesson complete.");
     }
+    setShowTopicQuestion(false);
+    setTopicQuestion(null);
+    setTopicAnswer("");
   }, [sectionIndex, totalSections, lessonId, locale]);
+
+  const nextSection = useCallback(() => {
+    // Show a topic question before advancing (only once per section)
+    if (currentSection && questionSectionIndex !== sectionIndex && !showTopicQuestion) {
+      const body = locale === "ar"
+        ? (currentSection.bodyAr ?? currentSection.bodyEn ?? "")
+        : (currentSection.bodyEn ?? "");
+      const title = locale === "ar"
+        ? (currentSection.titleAr ?? currentSection.titleEn ?? "")
+        : (currentSection.titleEn ?? "");
+      if (body.trim().length > 50) {
+        setQuestionSectionIndex(sectionIndex);
+        generateQuestion.mutate({
+          topicTitle: title,
+          topicBody: body,
+          locale: locale as "ar" | "en",
+          curriculum: profile.curriculum,
+          tier: profile.tier,
+          readingLevel: profile.readingLevel,
+        });
+        return; // Wait for question to load, then user clicks Next again
+      }
+    }
+    advanceSection();
+  }, [currentSection, sectionIndex, questionSectionIndex, showTopicQuestion, locale, profile, generateQuestion, advanceSection]);
 
   const prevSection = useCallback(() => {
     if (sectionIndex > 0) setSectionIndex(i => i - 1);
@@ -722,6 +762,43 @@ export default function LessonPage() {
           )}
         </div>
 
+        {/* Per-topic question */}
+        {(showTopicQuestion && topicQuestion) && (
+          <div className="mt-6 p-4 rounded-2xl border-2 border-primary/30 bg-primary/5 space-y-3 animate-arrive">
+            <div className="flex items-center gap-2 text-primary text-sm font-semibold">
+              <HelpCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{t("Hikma AI asks:", "حكمة AI يسأل:")}</span>
+            </div>
+            <p className="text-sm leading-relaxed font-medium">{topicQuestion}</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={topicAnswer}
+                onChange={e => setTopicAnswer(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && topicAnswer.trim()) advanceSection(); }}
+                placeholder={t("Type your answer or thinking…", "اكتب إجابتك أو تفكيرك…")}
+                className="flex-1 px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label={t("Your answer", "إجابتك")}
+              />
+              <Button
+                size="sm"
+                onClick={advanceSection}
+                className="rounded-xl"
+                aria-label={t("Submit and continue", "أرسل وتابع")}
+              >
+                <Send className="w-3.5 h-3.5 mr-1" />
+                {t("Continue", "تابع")}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">{t("Share your thinking — there's no wrong answer here. Press Continue when ready.", "شارك تفكيرك — لا توجد إجابة خاطئة هنا. اضغط تابع عندما تكون مستعداً.")}</p>
+          </div>
+        )}
+        {generateQuestion.isPending && (
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <HelpCircle className="w-4 h-4 animate-pulse text-primary" />
+            <span>{t("Hikma AI is preparing a question…", "حكمة AI يجهّز سؤالاً…")}</span>
+          </div>
+        )}
         {/* Navigation */}
         <div className="flex items-center justify-between mt-6">
           <Button
