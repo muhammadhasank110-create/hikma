@@ -48,14 +48,21 @@ export default function Dashboard() {
             {isAuthenticated ? user?.name : t("Welcome to Hikma", "أهلاً بك في حكمة")}
           </h1>
           <div className="flex items-center gap-2 flex-wrap mt-1">
-            {profile.curriculum !== "none" && (
-              <Badge variant="secondary" className="text-xs">
-                {profile.curriculum.replace("_", " ").toUpperCase()}
-              </Badge>
-            )}
-            <Badge variant="outline" className="text-xs capitalize">
-              {t(profile.mode + " mode", "وضع " + profile.mode)}
-            </Badge>
+          {profile.curriculum !== "none" && (
+             <Badge variant="secondary" className="text-xs">
+                {profile.curriculum}
+             </Badge>
+           )}
+           <Badge variant="outline" className="text-xs capitalize">
+              {t(
+                profile.mode === "audio_first" ? "Audio-First Mode" :
+                profile.mode === "focus" ? "Focus Mode" :
+                profile.mode === "reading" ? "Reading Mode" : "Custom Mode",
+                profile.mode === "audio_first" ? "وضع الصوت أولاً" :
+                profile.mode === "focus" ? "وضع التركيز" :
+                profile.mode === "reading" ? "وضع القراءة" : "وضع مخصص"
+              )}
+           </Badge>
           </div>
         </div>
         {!isAuthenticated && (

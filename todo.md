@@ -167,3 +167,53 @@
 - [x] Keyboard focus ring: strengthened global CSS with !important overrides for all interactive elements
 - [x] Keyboard focus ring: high-contrast yellow ring for data-theme=high_contrast
 - [x] profile.update fix: locale stripped from learner_profiles insert (was causing SQL error on every login)
+
+## Phase 17: MASTER SPRINT — Full Rebuild (Aug 2026)
+
+### CONTENT (15 full lessons)
+- [ ] Seed 5 Math lessons: Types of Numbers, Fractions & Decimals, Algebra Basics, Geometry (Angles), Statistics
+- [ ] Seed 5 English lessons: Reading Comprehension, Writing Skills, Grammar, Vocabulary, Speaking & Listening
+- [ ] Seed 5 Science lessons: Cells, Photosynthesis, Forces & Motion, Atoms & Elements, Ecosystems
+- [ ] Each lesson: 4-6 sections, 300-600 words per section, summaryEn, narrationScriptEn
+
+### ONBOARDING REBUILD
+- [ ] Step 1: Accessibility profile (Blind/Low Vision, ADHD, Dyslexia, No specific need) — with descriptions
+- [ ] Step 2: Language (English / Arabic / Both)
+- [ ] Step 3: Curriculum (IGCSE Edexcel / Qatar MoEHE)
+- [ ] Step 4: Year group / grade
+- [ ] Step 5: Further personalisation (font size, speech rate, theme, voice)
+- [ ] Auto-apply profile immediately on completion
+- [ ] Fully keyboard navigable (Tab/Enter, no mouse needed)
+
+### ACCESSIBILITY PROFILES
+- [ ] Blind/Low Vision mode: TTS on every focus event, full keyboard nav, landmark roles, skip links
+- [ ] ADHD/Focus mode: stripped UI, one section at a time, no decorations, soft background, no animations
+- [ ] Dyslexia mode: OpenDyslexic/Lexie font, increased spacing, cream tint, no justified text
+- [ ] All profiles auto-applied from DB on every page load
+
+### VOICE COMMANDS
+- [ ] Remove "Could not recognise command" — use LLM fallback for any spoken phrase
+- [ ] All navigation commands work reliably
+- [ ] Blind mode: voice is primary navigation
+
+### HOME PAGE
+- [ ] Remove subject cards from home page
+- [ ] Clean hero with Sign In CTA only
+- [ ] No broken images or placeholder content visible
+
+### FOCUS MODE
+- [ ] Activating focus mode strips page to lesson text only
+- [ ] One section visible at a time, no sidebar decorations
+- [ ] Soft background, large font, generous line height
+- [ ] Only essential controls visible
+
+### UI POLISH
+- [ ] All pages professional on desktop and mobile
+- [ ] No broken layouts, no overflow, no invisible text
+- [ ] Loading/empty/error states on all pages
+- [ ] Dashboard shows real data
+
+### KEYBOARD NAVIGATION
+- [ ] Tab order logical on every page
+- [ ] All interactive elements keyboard reachable
+- [ ] Lesson arrow keys, Space to read

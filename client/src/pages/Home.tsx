@@ -14,14 +14,6 @@ import {
   MessageCircle, Zap, Eye, Volume2
 } from "lucide-react";
 
-const SUBJECTS = [
-  { emoji: "🧮", en: "Mathematics", ar: "الرياضيات", color: "bg-blue-50 border-blue-200 text-blue-800" },
-  { emoji: "⚗️", en: "Sciences", ar: "العلوم", color: "bg-green-50 border-green-200 text-green-800" },
-  { emoji: "📖", en: "English Language", ar: "اللغة الإنجليزية", color: "bg-yellow-50 border-yellow-200 text-yellow-800" },
-  { emoji: "🌍", en: "Geography", ar: "الجغرافيا", color: "bg-orange-50 border-orange-200 text-orange-800" },
-  { emoji: "📜", en: "History", ar: "التاريخ", color: "bg-red-50 border-red-200 text-red-800" },
-  { emoji: "💻", en: "ICT", ar: "تقنية المعلومات", color: "bg-purple-50 border-purple-200 text-purple-800" },
-];
 
 const HOW_IT_WORKS = [
   {
@@ -166,15 +158,7 @@ export default function Home() {
               className="w-80 object-contain"
               style={{ filter: "brightness(0) invert(1)", opacity: 0.88 }}
             />
-            {/* Subject pills floating */}
-            <div className="flex flex-wrap gap-2 justify-center max-w-xs">
-              {SUBJECTS.map(s => (
-                <span key={s.en} className="px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-sm text-white/80 flex items-center gap-1.5">
-                  <span>{s.emoji}</span>
-                  <span>{t(s.en, s.ar)}</span>
-                </span>
-              ))}
-            </div>
+
           </div>
         </div>
 

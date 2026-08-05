@@ -70,6 +70,7 @@ export default function App() {
                 <Toaster richColors position="top-center" />
                 <Router />
                 <VoiceCommandOverlay />
+                <AccessibilityProfileManager />
               </TooltipProvider>
             </AriaLiveProvider>
           </KeyboardProvider>
@@ -79,3 +80,9 @@ export default function App() {
   );
 }
 import { VoiceCommandOverlay } from "./components/VoiceCommandOverlay";
+import { useAccessibilityProfile } from "./hooks/useAccessibilityProfile";
+
+function AccessibilityProfileManager() {
+  useAccessibilityProfile();
+  return null;
+}

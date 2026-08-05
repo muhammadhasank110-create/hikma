@@ -37,6 +37,11 @@ const EN_COMMANDS: Array<{ patterns: RegExp[]; action: VoiceCommandAction; label
   { patterns: [/\b(go home|home page|dashboard|home)\b/i], action: { type: "go_home" }, label: "Go home" },
   { patterns: [/\b(go back|back|previous page)\b/i], action: { type: "go_back" }, label: "Go back" },
   { patterns: [/\b(subjects?|my subjects?)\b/i], action: { type: "navigate", path: "/subjects" }, label: "Open Subjects" },
+  { patterns: [/\b(maths?|mathematics?|numbers?|algebra|geometry|calculus)\b/i], action: { type: "navigate", path: "/subjects/1/topics/1" }, label: "Open Maths" },
+  { patterns: [/\b(english|language|reading|writing|grammar)\b/i], action: { type: "navigate", path: "/subjects/1/topics/5" }, label: "Open English" },
+  { patterns: [/\b(science|biology|chemistry|physics|cells|atoms)\b/i], action: { type: "navigate", path: "/subjects/1/topics/8" }, label: "Open Science" },
+  { patterns: [/\b(ecc|expanded core|blind skills|orientation|mobility)\b/i], action: { type: "navigate", path: "/ecc" }, label: "Open ECC" },
+  { patterns: [/\b(exam|exam skills|command words)\b/i], action: { type: "navigate", path: "/exam-skills" }, label: "Open Exam Skills" },
   { patterns: [/\b(tutor|ai tutor|open tutor|hikma ai|ask hikma)\b/i], action: { type: "navigate", path: "/tutor" }, label: "Open Tutor" },
   { patterns: [/\b(progress|my progress|achievements)\b/i], action: { type: "navigate", path: "/progress" }, label: "Open Progress" },
   { patterns: [/\b(ecc|expanded core)\b/i], action: { type: "navigate", path: "/ecc" }, label: "Open ECC" },
@@ -190,13 +195,75 @@ export function useVoiceCommands(options: VoiceCommandsOptions = {}) {
       } else if (parsed.confidence === "exact") {
         handleAction(parsed.action);
       } else {
+        // LLM fallback: try to interpret any natural language phrase
         const unknown = parsed.action as { type: "unknown"; transcript: string };
-        toast.info(
-          lang.startsWith("ar")
-            ? `لم أفهم: "${unknown.transcript}" — قل "حكمة" ثم أمرك`
-            : `Not understood: "${unknown.transcript}" — say "Hikma" then your command`,
-          { duration: 3000 }
+        const transcript = unknown.transcript;
+        toast.loading(
+          lang.startsWith("ar") ? "حكمة تفكر…" : "Hikma is thinking…",
+          { id: "voice-llm", duration: 5000 }
         );
+        // Use the tutor stream endpoint to interpret the command
+        fetch("/api/tutor/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: `The user said: "${transcript}". Interpret this as a navigation or app command. Reply with ONLY a JSON object: {"action": "navigate", "path": "/dashboard"} or {"action": "read_aloud"} or {"action": "next_section"} or {"action": "prev_section"} or {"action": "stop_speech"} or {"action": "focus_mode"} or {"action": "increase_font"} or {"action": "decrease_font"} or {"action": "go_back"} or {"action": "unknown", "reply": "friendly message explaining what you can do"}. Available paths: /dashboard, /subjects, /tutor, /progress, /settings, /ecc, /exam-skills, /subjects/1/topics/1 (maths), /subjects/1/topics/5 (english), /subjects/1/topics/8 (science).`,
+            sessionId: "voice-fallback",
+            profile: { mode: "reading", chunkSize: "micro", readingLevel: 2, locale: lang.startsWith("ar") ? "ar" : "en", curriculum: "IGCSE Edexcel", tier: null, tashkeel: false, numerals: "western" },
+            conversationHistory: [],
+          }),
+        }).then(async res => {
+          if (!res.ok) throw new Error("API error");
+          const reader = res.body?.getReader();
+          if (!reader) throw new Error("No stream");
+          const decoder = new TextDecoder();
+          let full = ""; let buf = "";
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            const lines = buf.split("\n"); buf = lines.pop() ?? "";
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (trimmed.startsWith("data: ") && trimmed !== "data: [DONE]") {
+                try { const p = JSON.parse(trimmed.slice(6)); if (p.delta) full += p.delta; } catch {}
+              }
+            }
+          }
+          toast.dismiss("voice-llm");
+          try {
+            const jsonMatch = full.match(/\{[^}]+\}/);
+            if (jsonMatch) {
+              const cmd = JSON.parse(jsonMatch[0]);
+              if (cmd.action === "navigate" && cmd.path) {
+                navigate(cmd.path);
+              } else if (cmd.action === "read_aloud") {
+                window.dispatchEvent(new CustomEvent("hikma:read_aloud"));
+              } else if (cmd.action === "next_section") {
+                window.dispatchEvent(new CustomEvent("hikma:next_section"));
+              } else if (cmd.action === "prev_section") {
+                window.dispatchEvent(new CustomEvent("hikma:prev_section"));
+              } else if (cmd.action === "stop_speech") {
+                window.speechSynthesis?.cancel();
+              } else if (cmd.action === "focus_mode") {
+                window.dispatchEvent(new CustomEvent("hikma:focus_mode"));
+              } else if (cmd.reply) {
+                // Hikma replies in natural language
+                if ("speechSynthesis" in window) {
+                  const utt = new SpeechSynthesisUtterance(cmd.reply);
+                  utt.lang = lang;
+                  window.speechSynthesis.speak(utt);
+                }
+                toast.info(cmd.reply, { duration: 5000 });
+              }
+            }
+          } catch {
+            toast.info(lang.startsWith("ar") ? "لم أفهم الأمر" : "I didn't understand that command", { duration: 3000 });
+          }
+        }).catch(() => {
+          toast.dismiss("voice-llm");
+          toast.info(lang.startsWith("ar") ? "لم أفهم الأمر" : "I didn't understand that command", { duration: 3000 });
+        });
       }
     };
 

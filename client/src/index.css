@@ -482,3 +482,69 @@
   @media (min-width: 1280px) { .container { max-width: 1280px; } }
   @media (min-width: 1536px) { .container { max-width: 1536px; } }
 }
+
+/* ── ADHD Focus Mode — stripped UI ─────────────────────────────────────────── */
+[data-focus-mode="true"] {
+  /* Hide decorative elements */
+  .decorative,
+  [data-decorative],
+  .nav-decorative,
+  aside:not([aria-label]),
+  .sidebar-decoration {
+    display: none !important;
+  }
+
+  /* Simplify backgrounds */
+  body {
+    background-color: oklch(from var(--color-background) calc(l + 0.02) c h) !important;
+  }
+
+  /* Larger, more readable text */
+  p, li, .lesson-body {
+    font-size: 1.05em;
+    line-height: 1.9;
+    max-width: 65ch;
+  }
+
+  /* No animations */
+  *, *::before, *::after {
+    animation-duration: 0ms !important;
+    transition-duration: 0ms !important;
+  }
+
+  /* Calm focus ring */
+  :focus-visible {
+    outline: 3px solid oklch(0.55 0.15 145) !important;
+    outline-offset: 3px !important;
+  }
+}
+
+/* ── Dyslexia Mode — font and spacing ──────────────────────────────────────── */
+[data-dyslexia="true"] {
+  font-family: 'Lexend', 'Atkinson Hyperlegible', sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.1em !important;
+  line-height: 1.85 !important;
+
+  p, li, .lesson-body {
+    text-align: left !important; /* never justify */
+    max-width: 70ch;
+  }
+
+  /* Cream tint overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 248, 220, 0.15);
+    pointer-events: none;
+    z-index: 9999;
+  }
+}
+
+/* ── Blind/Screen Reader Mode — enhanced focus indicators ──────────────────── */
+[data-theme="dark"] :focus-visible,
+[data-theme="high_contrast"] :focus-visible {
+  outline: 3px solid #fff !important;
+  outline-offset: 3px !important;
+}
