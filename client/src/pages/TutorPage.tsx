@@ -83,7 +83,7 @@ export default function TutorPage() {
         role: "assistant",
         content: locale === "ar"
           ? "مرحباً! أنا حكمة، معلمك الذكي. كيف يمكنني مساعدتك اليوم؟ يمكنك أن تسألني أي سؤال عن دروسك."
-          : "Hello! I'm Hikma, your AI tutor. How can I help you today? Ask me anything about your lessons.",
+          : "Hello — I'm Hikma, your learning companion. This is a quiet space to ask anything, go at your own pace, and arrive at understanding. What would you like to explore today?",
         timestamp: Date.now(),
       };
       setMessages([greeting]);

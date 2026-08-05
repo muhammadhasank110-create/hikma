@@ -136,10 +136,12 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
       <div className="container flex items-center justify-between h-14 gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded">
-          <div className="w-8 h-8 rounded-full border-2 border-white/40 flex items-center justify-center relative">
-            <div className="w-5 h-5 rounded-full border border-white/60 flex items-center justify-center">
-              <div className="w-2 h-2 rounded-full bg-white" />
-            </div>
+          {/* Growth ring — the Hikma signature motif */}
+          <div className="w-9 h-9 relative flex items-center justify-center flex-shrink-0" aria-hidden="true">
+            <div className="absolute inset-0 rounded-full border-2 border-white/20" />
+            <div className="absolute inset-1 rounded-full border border-white/35" />
+            <div className="absolute inset-2 rounded-full border border-white/55" />
+            <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />
           </div>
           <div>
             <span className="font-bold text-base tracking-tight">Hikma</span>
@@ -352,4 +354,3 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-

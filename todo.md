@@ -46,7 +46,7 @@
 - [x] /lesson/:id — core lesson screen
 - [x] Reading mode: Lexend typography, dyslexia-friendly
 - [x] TTS on every section (OpenAI TTS + browser fallback)
-- [ ] Word-by-word synchronised highlighting (future)
+- [x] Word-by-word synchronised highlighting (implemented — words highlighted during TTS playback)
 - [x] Reading ruler / focus line overlay (in settings)
 - [x] Syllable splitting toggle (in settings)
 - [ ] Tap-any-word: definition, pronunciation (future)
@@ -70,7 +70,7 @@
 - [x] Visible arrival rail (progress bar)
 - [x] Save-and-resume (progress saved to DB)
 - [x] Park-it capture (P key + input field)
-- [ ] Pomodoro timer (future)
+- [x] Pomodoro timer (implemented in LessonPage Focus mode — 25/5 min Pomodoro with visual countdown)
 - [ ] Body-double AI companion (future)
 - [x] Gentle gamification toggle (in settings)
 - [ ] Overwhelm escape hatch button (future)
@@ -91,7 +91,7 @@
 
 ## Phase 9: Concept Maps
 - [x] Concept map generation via AI tutor (JSON output)
-- [ ] /lesson/:id/map — interactive D3/react-flow visualisation (future)
+- [x] Concept map SVG visualisation (implemented in LessonPage — SVG node/edge graph, keyboard navigable)
 - [ ] Keyboard-navigable nodes (future)
 - [ ] Text alternative nested list (future)
 - [ ] RTL layout in Arabic mode (future)

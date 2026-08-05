@@ -7,14 +7,60 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 import {
-  Volume2, VolumeX, ChevronRight, ChevronLeft, Bot, BookOpen,
-  Brain, Headphones, AlignLeft, Maximize2, Minimize2, ParkingSquare
+  Volume2, VolumeX, ChevronRight, ChevronLeft, Bot,
+  AlignLeft, Maximize2, Minimize2, ParkingSquare, Timer, Map, X
 } from "lucide-react";
 
+// ── Concept Map SVG ──────────────────────────────────────────────────────────
+function ConceptMapSVG({ lessonTitle, sections, locale }: {
+  lessonTitle: string;
+  sections: any[];
+  locale: string;
+}) {
+  const W = 560; const H = 280;
+  const cx = W / 2; const cy = 60;
+  const r = 110;
+  const nodes = sections.slice(0, 6).map((s, i) => {
+    const angle = (Math.PI / (sections.length + 1)) * (i + 1);
+    return {
+      x: cx + r * Math.cos(angle - Math.PI / 2),
+      y: cy + r * Math.sin(angle - Math.PI / 2) + 60,
+      label: locale === "ar" ? (s.titleAr ?? s.titleEn ?? "") : (s.titleEn ?? ""),
+    };
+  });
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-label={`Concept map for ${lessonTitle}`} role="img">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="var(--color-primary)" />
+        </marker>
+      </defs>
+      {/* Central node */}
+      <ellipse cx={cx} cy={cy} rx={90} ry={24} fill="var(--color-primary)" />
+      <text x={cx} y={cy + 5} textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">
+        {lessonTitle.slice(0, 28)}
+      </text>
+      {/* Branch nodes */}
+      {nodes.map((n, i) => (
+        <g key={i}>
+          <line x1={cx} y1={cy + 24} x2={n.x} y2={n.y - 18}
+            stroke="var(--color-primary)" strokeWidth="1.5" strokeDasharray="4 2"
+            markerEnd="url(#arrow)" />
+          <rect x={n.x - 70} y={n.y - 18} width={140} height={36}
+            rx={8} fill="var(--color-muted)" stroke="var(--color-border)" strokeWidth="1" />
+          <text x={n.x} y={n.y + 4} textAnchor="middle" fontSize="10" fill="var(--color-foreground)">
+            {n.label.slice(0, 22)}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function LessonPage() {
   const [, params] = useRoute("/lesson/:lessonId");
   const [, navigate] = useLocation();
@@ -29,6 +75,19 @@ export default function LessonPage() {
   const [isSimplifying, setIsSimplifying] = useState(false);
   const [parkedThoughts, setParkedThoughts] = useState<string[]>([]);
   const [parkInput, setParkInput] = useState("");
+  const [showConceptMap, setShowConceptMap] = useState(false);
+
+  // Pomodoro
+  const [pomodoroActive, setPomodoroActive] = useState(false);
+  const [pomodoroSeconds, setPomodoroSeconds] = useState(25 * 60);
+  const [pomodoroPhase, setPomodoroPhase] = useState<"work" | "break">("work");
+  const pomodoroRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Word-by-word highlighting
+  const [highlightedWords, setHighlightedWords] = useState<string[]>([]);
+  const [highlightIndex, setHighlightIndex] = useState(-1);
+  const highlightTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const contentRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -38,22 +97,54 @@ export default function LessonPage() {
   );
 
   const saveProgress = trpc.progress.updateProgress.useMutation();
+
+  const stopWordHighlight = useCallback(() => {
+    if (highlightTimerRef.current) clearInterval(highlightTimerRef.current);
+    setHighlightIndex(-1);
+    setHighlightedWords([]);
+  }, []);
+
+  const startWordHighlight = useCallback((text: string) => {
+    if (highlightTimerRef.current) clearInterval(highlightTimerRef.current);
+    const words = text.replace(/[#*`_~[\]()]/g, "").split(/\s+/).filter(Boolean);
+    setHighlightedWords(words);
+    setHighlightIndex(0);
+    let idx = 0;
+    const avgWordMs = Math.max(180, Math.round(60000 / (profile.speechRate * 130)));
+    highlightTimerRef.current = setInterval(() => {
+      idx++;
+      if (idx >= words.length) {
+        clearInterval(highlightTimerRef.current!);
+        setHighlightIndex(-1);
+        setHighlightedWords([]);
+      } else {
+        setHighlightIndex(idx);
+      }
+    }, avgWordMs);
+  }, [profile.speechRate]);
+
+  useEffect(() => {
+    return () => { if (highlightTimerRef.current) clearInterval(highlightTimerRef.current); };
+  }, []);
+
   const ttsMutation = trpc.tts.synthesize.useMutation({
     onSuccess: (data) => {
       const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
       audioRef.current = audio;
       setIsNarrating(true);
-      audio.onended = () => setIsNarrating(false);
+      audio.onended = () => { setIsNarrating(false); stopWordHighlight(); };
       audio.play().catch(() => {
         setIsNarrating(false);
-        // Browser TTS fallback
+        stopWordHighlight();
         if ("speechSynthesis" in window && lesson) {
-          const sections = lesson.sections as any[];
-          const text = sections[sectionIndex]?.body ?? "";
+          const secs = lesson.sections as any[];
+          const text = locale === "ar"
+            ? (secs[sectionIndex]?.bodyAr ?? secs[sectionIndex]?.bodyEn ?? "")
+            : (secs[sectionIndex]?.bodyEn ?? "");
           const utt = new SpeechSynthesisUtterance(text);
           utt.lang = locale === "ar" ? "ar-QA" : "en-GB";
           utt.rate = profile.speechRate;
-          utt.onend = () => setIsNarrating(false);
+          utt.onend = () => { setIsNarrating(false); stopWordHighlight(); };
           window.speechSynthesis.speak(utt);
           setIsNarrating(true);
         }
@@ -72,16 +163,20 @@ export default function LessonPage() {
       audioRef.current?.pause();
       window.speechSynthesis?.cancel();
       setIsNarrating(false);
+      stopWordHighlight();
       return;
     }
-    const text = currentSection.body ?? currentSection.title ?? "";
+    const text = locale === "ar"
+      ? (currentSection.bodyAr ?? currentSection.bodyEn ?? currentSection.titleAr ?? "")
+      : (currentSection.bodyEn ?? currentSection.titleEn ?? "");
+    startWordHighlight(text);
     ttsMutation.mutate({
       text: text.slice(0, 1500),
       voice: profile.voice as any,
       speed: profile.speechRate,
       locale: locale as "ar" | "en",
     });
-  }, [currentSection, isNarrating, profile, locale]);
+  }, [currentSection, isNarrating, profile, locale, startWordHighlight, stopWordHighlight]);
 
   const nextSection = useCallback(() => {
     if (sectionIndex < totalSections - 1) {
@@ -100,12 +195,12 @@ export default function LessonPage() {
 
   const simplifySection = useCallback(async () => {
     if (!lesson) return;
-    const sections = (lesson.sections as any[]) ?? [];
-    const sec = sections[sectionIndex];
+    const secs = (lesson.sections as any[]) ?? [];
+    const sec = secs[sectionIndex];
     if (!sec) return;
     const key = sectionIndex;
     if (simplifiedContent[key]) { setSimplifiedView(v => !v); return; }
-    const originalText = locale === "ar" ? (sec.bodyAr ?? sec.body ?? "") : (sec.body ?? "");
+    const originalText = locale === "ar" ? (sec.bodyAr ?? sec.bodyEn ?? "") : (sec.bodyEn ?? "");
     if (!originalText.trim()) return;
     setIsSimplifying(true);
     setSimplifiedView(true);
@@ -140,11 +235,35 @@ export default function LessonPage() {
           }
         }
       }
-    } catch (err: any) {
+    } catch {
       toast.error(locale === "ar" ? "فشل التبسيط" : "Simplification failed");
       setSimplifiedView(false);
     } finally { setIsSimplifying(false); }
   }, [lesson, sectionIndex, locale, profile, lessonId, simplifiedContent]);
+
+  // Pomodoro timer
+  useEffect(() => {
+    if (pomodoroActive) {
+      pomodoroRef.current = setInterval(() => {
+        setPomodoroSeconds(s => {
+          if (s <= 1) {
+            const nextPhase = pomodoroPhase === "work" ? "break" : "work";
+            setPomodoroPhase(nextPhase);
+            toast.success(pomodoroPhase === "work"
+              ? (locale === "ar" ? "وقت الاستراحة! 5 دقائق." : "Break time! 5 minutes.")
+              : (locale === "ar" ? "عودة للعمل! 25 دقيقة." : "Back to work! 25 minutes."));
+            return pomodoroPhase === "work" ? 5 * 60 : 25 * 60;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    } else {
+      if (pomodoroRef.current) clearInterval(pomodoroRef.current);
+    }
+    return () => { if (pomodoroRef.current) clearInterval(pomodoroRef.current); };
+  }, [pomodoroActive, pomodoroPhase, locale]);
+
+  const pomodoroDisplay = `${String(Math.floor(pomodoroSeconds / 60)).padStart(2, "0")}:${String(pomodoroSeconds % 60).padStart(2, "0")}`;
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -156,11 +275,13 @@ export default function LessonPage() {
       if (e.key === "r" || e.key === "R") readAloud();
       if (e.key === "f" || e.key === "F") setIsFocused(v => !v);
       if (e.key === "s" || e.key === "S") simplifySection();
+      if (e.key === "m" || e.key === "M") setShowConceptMap(v => !v);
+      if (e.key === "t" || e.key === "T") setPomodoroActive(v => !v);
       if (e.key === "Escape") setIsFocused(false);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [nextSection, prevSection, readAloud]);
+  }, [nextSection, prevSection, readAloud, simplifySection]);
 
   // Auto-narrate on section change if enabled
   useEffect(() => {
@@ -191,20 +312,19 @@ export default function LessonPage() {
     <div className={`min-h-screen ${isFocused ? "bg-black/95" : "bg-background"} transition-colors duration-300`}>
       {isFocused && <div className="focus-dim" aria-hidden="true" />}
 
-      <div className="container py-6 max-w-3xl relative z-51">
+      <div className="container py-6 max-w-3xl relative z-[51]">
         {/* Lesson header */}
         <div className={`space-y-2 mb-6 ${isFocused ? "opacity-30" : ""}`}>
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="secondary">{"Lesson"}</Badge>
+            <Badge variant="secondary">Lesson</Badge>
             <Badge variant="outline" className="text-xs">{lesson.estimatedMinutes ? `${lesson.estimatedMinutes} min` : ""}</Badge>
           </div>
           <h1 className={`text-xl font-bold ${isFocused ? "text-white" : "text-foreground"}`}>
             {locale === "ar" ? lesson.titleAr : lesson.titleEn}
           </h1>
-          {/* Progress bar */}
           <div className="flex items-center gap-3">
             <Progress value={progressPct} className="h-1.5 flex-1" />
-            <span className={`text-xs ${isFocused ? "text-white/60" : "text-muted-foreground"}`}>
+            <span className={`text-xs tabular-nums ${isFocused ? "text-white/60" : "text-muted-foreground"}`}>
               {sectionIndex + 1}/{totalSections}
             </span>
           </div>
@@ -212,6 +332,24 @@ export default function LessonPage() {
 
         {/* Mode toolbar */}
         <div className={`flex items-center gap-2 mb-4 flex-wrap ${isFocused ? "opacity-50" : ""}`}>
+          {/* Pomodoro — visible in focus mode */}
+          {isFocused && (
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant={pomodoroActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPomodoroActive(v => !v)}
+                aria-label={pomodoroActive ? t("Pause Pomodoro", "إيقاف مؤقت") : t("Start Pomodoro timer", "ابدأ البومودورو")}
+                className="gap-1.5"
+              >
+                <Timer className="w-3.5 h-3.5" />
+                <span className="tabular-nums font-mono text-xs">{pomodoroDisplay}</span>
+              </Button>
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${pomodoroPhase === "work" ? "bg-primary/10 text-primary" : "bg-green-100 text-green-700"}`}>
+                {pomodoroPhase === "work" ? t("Focus", "تركيز") : t("Break", "استراحة")}
+              </span>
+            </div>
+          )}
           <Button
             variant={isNarrating ? "default" : "outline"}
             size="sm"
@@ -252,7 +390,36 @@ export default function LessonPage() {
             <Bot className="w-3.5 h-3.5 mr-1.5" />
             {t("Ask Tutor", "اسأل المعلم")}
           </Button>
+          <Button
+            variant={showConceptMap ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowConceptMap(v => !v)}
+            aria-label={t("Toggle concept map", "خريطة المفاهيم")}
+            aria-pressed={showConceptMap}
+          >
+            <Map className="w-3.5 h-3.5 mr-1.5" />
+            {t("Map", "خريطة")}
+          </Button>
         </div>
+
+        {/* Concept Map */}
+        {showConceptMap && lesson && (
+          <Card className="mb-4 overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold">{t("Concept Map", "خريطة المفاهيم")}</p>
+                <Button variant="ghost" size="sm" onClick={() => setShowConceptMap(false)} aria-label={t("Close map", "إغلاق")}>
+                  <X className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+              <ConceptMapSVG
+                lessonTitle={locale === "ar" ? (lesson.titleAr ?? lesson.titleEn ?? "") : (lesson.titleEn ?? "")}
+                sections={(lesson.sections as any[]) ?? []}
+                locale={locale}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Section content */}
         <Card className={`focus-dim-active ${isFocused ? "border-white/20 bg-gray-900" : ""}`}>
@@ -261,17 +428,30 @@ export default function LessonPage() {
               <div className="space-y-4">
                 {currentSection.type === "heading" && (
                   <h2 className={`text-lg font-bold ${isFocused ? "text-white" : ""}`}>
-                    {locale === "ar" ? currentSection.titleAr : currentSection.title}
+                    {locale === "ar" ? currentSection.titleAr : currentSection.titleEn}
                   </h2>
                 )}
                 <div className={`prose-hikma prose prose-sm max-w-none ${isFocused ? "prose-invert" : ""} ${simplifiedView ? "text-base leading-relaxed" : ""}`}>
-                  <Streamdown>
-                    {simplifiedView && simplifiedContent[sectionIndex]
-                      ? simplifiedContent[sectionIndex]
-                      : (locale === "ar"
-                          ? (currentSection.bodyAr ?? currentSection.body ?? "")
-                          : (currentSection.body ?? ""))}
-                  </Streamdown>
+                  {highlightedWords.length > 0 && highlightIndex >= 0 ? (
+                    <p className="leading-relaxed">
+                      {highlightedWords.map((word, i) => (
+                        <span
+                          key={i}
+                          className={`transition-colors duration-100 ${i === highlightIndex ? "bg-primary/30 rounded px-0.5 font-semibold" : ""}`}
+                        >
+                          {word}{" "}
+                        </span>
+                      ))}
+                    </p>
+                  ) : (
+                    <Streamdown>
+                      {simplifiedView && simplifiedContent[sectionIndex]
+                        ? simplifiedContent[sectionIndex]
+                        : (locale === "ar"
+                            ? (currentSection.bodyAr ?? currentSection.bodyEn ?? "")
+                            : (currentSection.bodyEn ?? ""))}
+                    </Streamdown>
+                  )}
                 </div>
                 {currentSection.keyTerms && currentSection.keyTerms.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-border">

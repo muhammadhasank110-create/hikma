@@ -78,8 +78,8 @@ export default function Dashboard() {
               <CardContent className="p-4 flex items-center gap-3">
                 <Icon className={`w-5 h-5 ${color} flex-shrink-0`} />
                 <div>
-                  <p className="text-xs text-muted-foreground">{label}</p>
-                  <p className="text-lg font-bold">{value}</p>
+                 <p className="text-xs text-muted-foreground">{label}</p>
+                  <p className="text-lg font-bold tabular-nums [font-variant-numeric:normal]">{value}</p>
                 </div>
               </CardContent>
             </Card>
@@ -97,7 +97,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="font-semibold text-sm">{t("AI Tutor", "المعلم الذكي")}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{t("Ask anything, get instant help", "اسأل أي شيء، احصل على مساعدة فورية")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("A calm space to ask anything", "مساحة هادئة لطرح أي سؤال")}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto flex-shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
             </CardContent>
@@ -111,7 +111,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="font-semibold text-sm">{t("My Progress", "تقدمي")}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{t("Track mastery across all subjects", "تتبع الإتقان في جميع المواد")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t("See how far you've arrived", "شاهد مدى تقدمك في رحلتك")}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto flex-shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
             </CardContent>

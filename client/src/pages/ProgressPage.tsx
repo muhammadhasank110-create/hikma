@@ -11,11 +11,11 @@ export default function ProgressPage() {
 
   const t = {
     title: locale === "ar" ? "تقدمي" : "My Progress",
-    subtitle: locale === "ar" ? "تتبع رحلتك التعليمية" : "Track your learning journey",
+    subtitle: locale === "ar" ? "كل خطوة تقربك من الفهم" : "Every step brings you closer to understanding",
     mastery: locale === "ar" ? "الإتقان" : "Mastery",
     concepts: locale === "ar" ? "المفاهيم" : "Concepts",
     streak: locale === "ar" ? "السلسلة" : "Streak",
-    noProgress: locale === "ar" ? "لا يوجد تقدم بعد. ابدأ درساً!" : "No progress yet. Start a lesson!",
+    noProgress: locale === "ar" ? "لم تبدأ رحلتك بعد — ابدأ درسًا لترى تقدمك هنا." : "Your journey hasn't started yet — begin a lesson and your progress will arrive here.",
   };
 
   const masteredCount = mastery?.filter(m => m.level >= 4).length ?? 0;
@@ -42,7 +42,7 @@ export default function ProgressPage() {
               <Icon className={`w-5 h-5 ${color}`} />
               <div>
                 <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="text-xl font-bold">{value}</p>
+                <p className="text-xl font-bold tabular-nums [font-variant-numeric:normal]">{value}</p>
               </div>
             </CardContent>
           </Card>
@@ -54,7 +54,7 @@ export default function ProgressPage() {
         <CardHeader><CardTitle>{t.mastery}</CardTitle></CardHeader>
         <CardContent>
           {!mastery || mastery.length === 0 ? (
-            <p className="text-muted-foreground text-sm py-4">{t.noProgress}</p>
+            <p className="text-muted-foreground text-sm py-8 text-center">{t.noProgress}</p>
           ) : (
             <div className="space-y-4">
               {mastery.map(m => (
