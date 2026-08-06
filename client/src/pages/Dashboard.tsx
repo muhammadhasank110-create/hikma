@@ -42,6 +42,7 @@ export default function Dashboard() {
   const { user, isAuthenticated } = useAuth();
   const { profile, locale } = useProfile();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  useScrollReveal();
 
   const { data: curricula, isLoading: loadingCurricula } = trpc.curriculum.list.useQuery();
   const { data: mastery } = trpc.progress.getMastery.useQuery(undefined, { enabled: isAuthenticated });
@@ -142,7 +143,7 @@ export default function Dashboard() {
               return (
                 <div
                   key={stat.label}
-                  className="bg-card border border-border rounded-2xl p-4 space-y-2"
+                  className="bg-card border border-border rounded-2xl p-4 space-y-2 reveal"
                   aria-label={stat.desc}
                 >
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${stat.colour}`}>
@@ -196,7 +197,7 @@ export default function Dashboard() {
                   role="link"
                   tabIndex={0}
                   aria-label={action.ariaLabel}
-                  className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-4 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-4 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary reveal"
                   onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (e.currentTarget as HTMLElement).click(); }}}
                 >
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${action.iconBg}`}>
@@ -260,3 +261,4 @@ export default function Dashboard() {
     </main>
   );
 }
+import { useScrollReveal } from "@/hooks/useScrollReveal";

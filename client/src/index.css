@@ -85,11 +85,14 @@
     --user-measure:    65ch;
 
     /* Motion */
-    --duration-fast:   120ms;
-    --duration-base:   200ms;
+    --duration-fast:   150ms;
+    --duration-base:   250ms;
     --duration-slow:   350ms;
-    --ease-out:        cubic-bezier(0.23, 1, 0.32, 1);
-    --ease-in-out:     cubic-bezier(0.77, 0, 0.175, 1);
+    --dur-fast:        150ms;
+    --dur-base:        250ms;
+    --dur-slow:        350ms;
+    --ease-out:        cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out:     cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* ── DARK THEME ── */
@@ -633,6 +636,14 @@ button:not([disabled]):active,
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  :root {
+    --dur-fast: 0.01ms !important;
+    --dur-base: 0.01ms !important;
+    --dur-slow: 0.01ms !important;
+    --duration-fast: 0.01ms !important;
+    --duration-base: 0.01ms !important;
+    --duration-slow: 0.01ms !important;
+  }
   /* Specific overrides for named classes */
   .page-enter,
   .stagger-children > *,
@@ -641,4 +652,122 @@ button:not([disabled]):active,
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ── VIEW TRANSITIONS API ─────────────────────────────────────────────────── */
+@view-transition { navigation: auto; }
+@keyframes fade-in  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+::view-transition-old(root) { animation: fade-out var(--dur-base, 250ms) var(--ease-in-out, ease); }
+::view-transition-new(root) { animation: fade-in  var(--dur-base, 250ms) var(--ease-out, ease); }
+
+/* ── BUTTON HOVER/ACTIVE ANIMATIONS ──────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  button:not([disabled]):not(.no-lift),
+  [role="button"]:not([aria-disabled="true"]):not(.no-lift) {
+    transition: transform var(--dur-fast, 150ms) var(--ease-out, ease),
+                background-color var(--dur-fast, 150ms) var(--ease-out, ease),
+                box-shadow var(--dur-fast, 150ms) var(--ease-out, ease);
+  }
+  button:not([disabled]):not(.no-lift):hover,
+  [role="button"]:not([aria-disabled="true"]):not(.no-lift):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgb(0 0 0 / 0.15);
+  }
+  button:not([disabled]):not(.no-lift):active,
+  [role="button"]:not([aria-disabled="true"]):not(.no-lift):active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: none;
+  }
+}
+
+/* ── SCROLL REVEAL ────────────────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity var(--dur-slow, 350ms) var(--ease-out, ease),
+              transform var(--dur-slow, 350ms) var(--ease-out, ease);
+}
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* ── SKELETON SHIMMER ─────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--muted)) 25%,
+    rgb(var(--border)) 50%,
+    rgb(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+/* ── QUIZ FEEDBACK ANIMATIONS ─────────────────────────────────────────────── */
+@keyframes correct-wipe {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0% 0 0); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-4px); }
+  40%       { transform: translateX(4px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+.answer-correct {
+  animation: correct-wipe 300ms var(--ease-out, ease) both;
+}
+.answer-incorrect {
+  animation: shake 200ms var(--ease-in-out, ease) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .answer-correct, .answer-incorrect { animation: none; }
+}
+
+/* ── AI TUTOR TYPING INDICATOR ────────────────────────────────────────────── */
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40%            { transform: translateY(-6px); opacity: 1; }
+}
+.typing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.30s; }
+@media (prefers-reduced-motion: reduce) {
+  .typing-dot { animation: none; opacity: 0.6; }
+}
+
+/* ── PROGRESS BAR TRANSITION ──────────────────────────────────────────────── */
+[role="progressbar"] > * {
+  transition: width var(--dur-slow, 350ms) var(--ease-out, ease);
+}
+
+/* ── SOUND VISUAL FLASH ────────────────────────────────────────────────────── */
+@keyframes sound-flash {
+  0%   { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+.sound-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  border-radius: 0;
+  animation: sound-flash 400ms ease-out forwards;
 }

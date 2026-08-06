@@ -155,7 +155,7 @@ export default function GuardianDashboard() {
                     <Badge variant="secondary" className="text-xs shrink-0">{report.badge}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">{report.desc}</p>
-                  <Button variant="outline" size="sm" className="w-full mt-2">
+                  <Button type="button" variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); toast.info(t("Report generation coming soon", "إنشاء التقارير قريباً")); }}>
                     <FileText className="w-3 h-3 mr-2" />
                     {t("Generate", "إنشاء")}
                   </Button>

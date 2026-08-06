@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { CheckCircle2, XCircle, ArrowRight, Mic, MicOff, Volume2, Loader2, RotateCcw, Trophy } from "lucide-react";
+import { useSounds } from "@/hooks/useSounds";
 
 interface Question {
   id: string;
@@ -81,6 +82,7 @@ export default function CheckPage() {
   const { profile, locale } = useProfile();
   const { isAuthenticated } = useAuth() as any;
   const lessonId = parseInt(params?.lessonId ?? "0");
+  const sounds = useSounds();
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
@@ -140,19 +142,27 @@ export default function CheckPage() {
     if (currentQ.type === "short") {
       setAnswers(prev => ({ ...prev, [currentQ.id]: textAnswer }));
     }
-  }, [currentQ, textAnswer, answers]);
+    // Sound feedback for MCQ/TF
+    if (currentQ.type !== "short") {
+      const isCorrect = String(ans) === String(currentQ.correct);
+      if (isCorrect) sounds.correct();
+      else sounds.incorrect();
+    }
+  }, [currentQ, textAnswer, answers, sounds]);
 
   const nextQuestion = useCallback(() => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(i => i + 1);
       setTextAnswer("");
+      sounds.questionAppear();
     } else {
       setIsComplete(true);
+      sounds.complete();
       if (isAuthenticated) {
         saveProgress.mutate({ lessonId, sectionId: 0, cursorOffset: 0, status: "complete" });
       }
     }
-  }, [currentIndex, questions.length, isAuthenticated, lessonId]);
+  }, [currentIndex, questions.length, isAuthenticated, lessonId, sounds]);
 
   const readQuestion = useCallback(() => {
     if (!currentQ) return;
@@ -316,8 +326,8 @@ export default function CheckPage() {
                 if (!isSubmitted) {
                   cls += isSelected ? "border-primary bg-primary/10 font-medium" : "border-border hover:border-primary/50 hover:bg-muted";
                 } else {
-                  if (isThisCorrect) cls += "border-green-500 bg-green-50 text-green-800 font-medium";
-                  else if (isSelected && !isThisCorrect) cls += "border-red-400 bg-red-50 text-red-800";
+                  if (isThisCorrect) cls += "border-green-500 bg-green-50 text-green-800 font-medium answer-correct";
+                  else if (isSelected && !isThisCorrect) cls += "border-amber-400 bg-amber-50 text-amber-800 answer-incorrect";
                   else cls += "border-border text-muted-foreground";
                 }
                 return (

@@ -6,7 +6,7 @@
  * Enter/Space activates the focused element.
  */
 import { createContext, useContext, useEffect, useRef, ReactNode } from "react";
-import { sounds } from "@/hooks/useSounds";
+import { playSound } from "@/lib/sound";
 
 interface KeyboardContextValue {
   isKeyboardActive: boolean;
@@ -152,7 +152,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
           if (first) {
             first.focus({ preventScroll: false });
             first.scrollIntoView({ block: "nearest", behavior: "smooth" });
-            sounds.click();
+            playSound("tap");
             announceElement(first);
           }
           return;
@@ -168,7 +168,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
         if (target) {
           target.focus({ preventScroll: false });
           target.scrollIntoView({ block: "nearest", behavior: "smooth" });
-          sounds.click();
+          playSound("tap");
           announceElement(target);
         }
         return;
@@ -181,7 +181,7 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
         if (tag === "button" || tag === "a" || role === "button" || role === "link") return;
         e.preventDefault();
         active.click();
-        sounds.click();
+        playSound("tap");
       }
     };
 

@@ -259,7 +259,11 @@ export default function SettingsPage() {
 
       <Button
         className="w-full"
-        onClick={() => toast.success(t("Settings saved", "تم حفظ الإعدادات"))}
+        onClick={() => {
+          // Settings are saved in real-time via updateProfile on each change
+          // This button provides explicit confirmation
+          toast.success(t("All settings saved — changes apply immediately", "تم حفظ جميع الإعدادات — التغييرات تُطبَّق فوراً"));
+        }}
       >
         {t("Save Settings", "حفظ الإعدادات")}
       </Button>

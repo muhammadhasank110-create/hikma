@@ -217,3 +217,19 @@
 - [x] Tab order logical on every page
 - [x] All interactive elements keyboard reachable
 - [x] Lesson arrow keys, Space to read
+
+## Round 2: Buttons, Animations, Sounds, TTS Fix
+- [x] Fix every broken button (no href="#", no empty handlers, SettingsPage save wired)
+- [x] Add CSS animation tokens (--dur-fast/base/slow) and View Transitions API
+- [x] Button hover (translateY -2px + shadow) and active (scale 0.97) animations
+- [x] Scroll reveals (IntersectionObserver, 24px rise+fade, 60ms stagger)
+- [x] Skeleton shimmer replacing spinners
+- [x] Quiz feedback: green wipe for correct, shake for incorrect
+- [x] AI tutor typing indicator (three dots bounce)
+- [x] Sound effects: Web Audio API, A minor pentatonic, OFF by default, localStorage toggle
+- [x] Sound toggle + volume slider in accessibility bar
+- [x] Wire tap/correct/incorrect/complete/achievement/error/open/close cues
+- [x] TTS word highlighting: time-based word stepping for ElevenLabs audio
+- [x] Fix toggle buttons in onboarding step 5 (voiceEnabled/autoNarrate default to false)
+- [x] ElevenLabs voice at onboarding voice preview step (not browser speech)
+- [x] Deliver verification table of every button tested

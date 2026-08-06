@@ -417,7 +417,11 @@ export default function TutorPage() {
               <Bot className="w-3.5 h-3.5 text-primary-foreground" />
             </div>
             <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3">
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              <div className="flex items-center gap-1.5 text-muted-foreground" aria-label={locale === "ar" ? "حكمة AI يفكر" : "Hikma AI is thinking"} role="status">
+                <span className="typing-dot" aria-hidden="true" />
+                <span className="typing-dot" aria-hidden="true" />
+                <span className="typing-dot" aria-hidden="true" />
+              </div>
             </div>
           </div>
         )}

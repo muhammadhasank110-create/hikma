@@ -40,6 +40,25 @@ const NAV_ITEMS: NavItem[] = [
 function AccessibilityBar() {
   const { profile, updateProfile, locale, setLocale } = useProfile();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  const [soundOn, setSoundOn] = React.useState(() => {
+    try { return localStorage.getItem("hikma:sound") === "on"; } catch { return false; }
+  });
+  const [volume, setVolume] = React.useState(() => {
+    try { return Number(localStorage.getItem("hikma:volume") ?? 0.7); } catch { return 0.7; }
+  });
+  const [showVolume, setShowVolume] = React.useState(false);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    try { localStorage.setItem("hikma:sound", next ? "on" : "off"); } catch {}
+    setSoundOn(next);
+  };
+
+  const handleVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = parseFloat(e.target.value);
+    try { localStorage.setItem("hikma:volume", String(v)); } catch {}
+    setVolume(v);
+  };
 
   return (
     <div
@@ -94,6 +113,45 @@ function AccessibilityBar() {
           <Star className="w-3 h-3" />
           <span>{t("Focus", "تركيز")}</span>
         </button>
+        {/* Sound effects toggle */}
+        <div className="relative flex items-center">
+          <button
+            type="button"
+            onClick={toggleSound}
+            className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
+            aria-label={soundOn ? t("Sound effects on — click to turn off", "مؤثرات صوتية مفعّلة — انقر للإيقاف") : t("Sound effects off — click to turn on", "مؤثرات صوتية معطّلة — انقر للتفعيل")}
+            aria-pressed={soundOn}
+          >
+            <span className="text-xs">{soundOn ? "🔊" : "🔇"}</span>
+            <span className="hidden sm:inline">{t("Sounds", "أصوات")}</span>
+          </button>
+          {soundOn && (
+            <button
+              type="button"
+              onClick={() => setShowVolume(v => !v)}
+              className="text-xs hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 min-h-[44px] flex items-center"
+              aria-label={t("Adjust volume", "ضبط الصوت")}
+            >
+              ▾
+            </button>
+          )}
+          {soundOn && showVolume && (
+            <div className="absolute top-full left-0 mt-1 bg-[rgb(var(--nav-bg))] border border-white/20 rounded-lg p-3 z-50 min-w-[140px] shadow-xl">
+              <p className="text-xs mb-2 text-white/70">{t("Volume", "الصوت")}</p>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={volume}
+                onChange={handleVolume}
+                className="w-full accent-yellow-300"
+                aria-label={t("Sound volume", "مستوى الصوت")}
+              />
+              <p className="text-xs text-white/50 mt-1 text-right">{Math.round(volume * 100)}%</p>
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-3">
         {/* Language toggle */}

@@ -289,7 +289,9 @@ export default function LessonPage() {
       contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       saveProgress.mutate({ lessonId, sectionId: sectionIndex, cursorOffset: 0, status: "complete" });
-      toast.success(locale === "ar" ? "أحسنت! أكملت الدرس." : "Well done! Lesson complete.");
+      sounds.complete();
+      toast.success(locale === "ar" ? "أحسنت! أكملت الدرس. جاري تحميل الاختبار…" : "Well done! Lesson complete. Loading quiz…");
+      setTimeout(() => navigate(`/check/${lessonId}`), 1200);
     }
     setShowTopicQuestion(false);
     setTopicQuestion(null);

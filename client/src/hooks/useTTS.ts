@@ -117,8 +117,38 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
       audioRef.current = audio;
-      audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-      audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+      // Time-based word highlighting for ElevenLabs (no onBoundary event)
+      const setupWordHighlight = () => {
+        const duration = audio.duration;
+        if (duration && isFinite(duration) && onBoundaryRef.current) {
+          const cleanedText = text.replace(/[#*_`~\[\]]/g, "").replace(/\s+/g, " ").trim();
+          const words = cleanedText.split(/\s+/);
+          const wordCount = words.length;
+          if (wordCount > 0) {
+            const msPerWord = (duration * 1000) / wordCount;
+            let wordIdx = 0;
+            const interval = setInterval(() => {
+              if (wordIdx >= wordCount) { clearInterval(interval); return; }
+              const charIndex = words.slice(0, wordIdx).join(" ").length;
+              onBoundaryRef.current?.(charIndex, cleanedText);
+              wordIdx++;
+            }, msPerWord);
+            const cleanup = () => {
+              clearInterval(interval);
+              setIsSpeaking(false);
+              URL.revokeObjectURL(url);
+            };
+            audio.onended = cleanup;
+            audio.onerror = cleanup;
+            return;
+          }
+        }
+        audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+        audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+      };
+      audio.onloadedmetadata = setupWordHighlight;
+      // Fallback if metadata loads after play
+      if (audio.readyState >= 1) setupWordHighlight();
       await audio.play();
     } catch {
       setHasElevenLabs(false);
