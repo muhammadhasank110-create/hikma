@@ -14,13 +14,46 @@ export default function ECCAreaPage() {
   const { locale } = useProfile();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
+  // ── All tRPC hooks ─────────────────────────────────────────────────────────
   const { data: areas } = trpc.ecc.areas.useQuery();
   const { data: units, isLoading } = trpc.ecc.units.useQuery({ areaId: Number(areaId) });
   const { data: myProgress } = trpc.ecc.myProgress.useQuery();
   const updateProgress = trpc.ecc.updateProgress.useMutation();
 
-  const area = areas?.find(a => a.id === Number(areaId));
+  // ── All useState hooks ─────────────────────────────────────────────────────
   const [currentUnit, setCurrentUnit] = useState(0);
+
+  // ── All useCallback hooks ──────────────────────────────────────────────────
+  // Keyboard: Left/Right arrows navigate between units
+  const handleTabKeyDown = useCallback((e: React.KeyboardEvent, i: number) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      setCurrentUnit(Math.min((units?.length ?? 1) - 1, i + 1));
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setCurrentUnit(Math.max(0, i - 1));
+    }
+  }, [units?.length]);
+
+  // ── All useEffect hooks ────────────────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
+        setCurrentUnit(i => Math.min((units?.length ?? 1) - 1, i + 1));
+      } else if (e.key === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
+        setCurrentUnit(i => Math.max(0, i - 1));
+      } else if (e.key === "Enter") {
+        // Enter = advance to next unit
+        setCurrentUnit(i => Math.min((units?.length ?? 1) - 1, i + 1));
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [units?.length]);
+
+  // ── Early returns AFTER all hooks ─────────────────────────────────────────
+  const area = areas?.find(a => a.id === Number(areaId));
 
   if (isLoading) return (
     <div className="max-w-2xl mx-auto px-4 py-12 text-center text-muted-foreground">
@@ -37,9 +70,9 @@ export default function ECCAreaPage() {
     </div>
   );
 
+  // ── Derived state ──────────────────────────────────────────────────────────
   const unit = units?.[currentUnit];
   const areaProgress = myProgress ?? [];
-  // Only count progress entries for units belonging to THIS area
   const areaUnitIds = new Set((units ?? []).map(u => u.id));
   const completedUnits = areaProgress.filter(p => p.status === 'mastered' && areaUnitIds.has(p.unitId)).length;
   const totalUnits = units?.length ?? 0;
@@ -53,60 +86,35 @@ export default function ECCAreaPage() {
     }
   };
 
-  // Keyboard: Left/Right arrows navigate between units; Enter marks complete
-  const handleTabKeyDown = useCallback((e: React.KeyboardEvent, i: number) => {
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-      e.preventDefault();
-      setCurrentUnit(Math.min((units?.length ?? 1) - 1, i + 1));
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-      e.preventDefault();
-      setCurrentUnit(Math.max(0, i - 1));
-    }
-  }, [units?.length]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
-        setCurrentUnit(i => Math.min((units?.length ?? 1) - 1, i + 1));
-      } else if (e.key === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
-        setCurrentUnit(i => Math.max(0, i - 1));
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [units?.length]);
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/ecc")} aria-label={t("Back", "رجوع")}>
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div className="flex-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">
-            {t(`ECC Area ${area.number}`, `مجال ECC ${area.number}`)}
-          </p>
-          <h1 className="text-xl font-bold font-display">
-            {locale === "ar" ? area.nameAr : area.nameEn}
-          </h1>
-        </div>
-      </div>
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6" dir={locale === "ar" ? "rtl" : "ltr"}>
+      {/* Back button */}
+      <Button variant="ghost" size="sm" onClick={() => navigate("/ecc")} aria-label={t("Back to ECC areas", "العودة إلى مجالات ECC")}>
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        {t("Back", "رجوع")}
+      </Button>
 
-      {/* Progress bar */}
-      <div className="space-y-1">
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{t("Progress", "التقدم")}</span>
-          <span className="tabular-nums">{coveragePct}%</span>
-        </div>
-        <Progress value={coveragePct} className="h-2" />
-        <p className="text-xs text-muted-foreground">
-          {t(`${completedUnits} of ${totalUnits} units completed`, `${completedUnits} من ${totalUnits} وحدة مكتملة`)}
+      {/* Area header */}
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold font-display">
+          {locale === "ar" ? area.nameAr : area.nameEn}
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          {locale === "ar" ? area.descriptionAr : area.descriptionEn}
         </p>
+        {totalUnits > 0 && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>{t(`${completedUnits} of ${totalUnits} units complete`, `${completedUnits} من ${totalUnits} وحدة مكتملة`)}</span>
+              <span>{coveragePct}%</span>
+            </div>
+            <Progress value={coveragePct} className="h-1.5" aria-label={t("Area progress", "تقدم المجال")} />
+          </div>
+        )}
       </div>
 
-      {/* Unit list sidebar + current unit */}
+      {/* Units */}
       {!units || units.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
@@ -163,18 +171,12 @@ export default function ECCAreaPage() {
                 {unit.requiresInPersonPractice && (
                   <div className="flex gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <p>
-                      {locale === "ar" ? unit.inPersonNoteAr : unit.inPersonNoteEn}
-                    </p>
+                    <p>{locale === "ar" ? unit.inPersonNoteAr : unit.inPersonNoteEn}</p>
                   </div>
                 )}
-
                 {/* If unit has a linked lesson, navigate to it */}
                 {unit.lessonId ? (
-                  <Button
-                    className="w-full"
-                    onClick={() => navigate(`/lesson/${unit.lessonId}`)}
-                  >
+                  <Button className="w-full" onClick={() => navigate(`/lesson/${unit.lessonId}`)}>
                     <BookOpen className="w-4 h-4 mr-2" />
                     {t("Open Lesson", "افتح الدرس")}
                   </Button>
@@ -184,17 +186,20 @@ export default function ECCAreaPage() {
                        "تُمارَس هذه الوحدة حضورياً مع معلم ذوي الإعاقة البصرية.")}
                   </p>
                 )}
-
                 {/* Mark complete button */}
                 <Button
                   variant="outline"
                   className="w-full"
                   onClick={markComplete}
                   disabled={updateProgress.isPending || areaProgress.some(p => p.unitId === unit.id && p.status === 'mastered')}
+                  aria-label={t("Mark unit as complete", "وضع علامة مكتمل على الوحدة")}
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
                   {t("Mark as complete", "وضع علامة مكتمل")}
                 </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  {t("Press Enter to advance · ← → to navigate units", "اضغط Enter للتقدم · ← → للتنقل بين الوحدات")}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -205,6 +210,7 @@ export default function ECCAreaPage() {
               variant="outline"
               onClick={() => setCurrentUnit(i => Math.max(0, i - 1))}
               disabled={currentUnit === 0}
+              aria-label={t("Previous unit", "الوحدة السابقة")}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t("Previous", "السابق")}
@@ -213,6 +219,7 @@ export default function ECCAreaPage() {
               variant="outline"
               onClick={() => setCurrentUnit(i => Math.min((units?.length ?? 1) - 1, i + 1))}
               disabled={currentUnit === (units?.length ?? 1) - 1}
+              aria-label={t("Next unit", "الوحدة التالية")}
             >
               {t("Next", "التالي")}
               <ArrowRight className="w-4 h-4 ml-2" />
