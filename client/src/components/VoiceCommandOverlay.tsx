@@ -2,18 +2,18 @@
  * VoiceCommandOverlay — floating mic button (bottom-left).
  *
  * States:
- *  OFF      → grey MicOff icon — click to enable voice commands
- *  STANDBY  → green Mic icon with pulse ring — waiting for "Hikma" wake word
- *  COMMAND  → red Mic icon with pulse — actively listening for a command
+ *  OFF      → dark MicOff icon — click to enable voice commands
+ *  ON       → green Mic icon with pulse ring — actively listening
  *
- * Mute = OFF state. Unmute = STANDBY state.
- * The button label always describes what clicking it will DO next.
+ * The pulse ring is a SIBLING element (not a child of the button)
+ * so it never visually escapes the button boundary.
  */
 import { Mic, MicOff } from "lucide-react";
 import { useVoiceCommands, type VoiceCommandAction } from "@/hooks/useVoiceCommands";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useLocation } from "wouter";
 import { useTTS } from "@/hooks/useTTS";
+import { playTestSound } from "@/lib/sound";
 
 export function VoiceCommandOverlay() {
   const { profile, locale, updateProfile } = useProfile();
@@ -60,79 +60,78 @@ export function VoiceCommandOverlay() {
       case "prev_section":
         window.dispatchEvent(new CustomEvent("hikma:prev_section"));
         break;
-      case "unknown":
-        break;
       default:
         break;
     }
   };
 
-  const { mode, isListening, isAwake, toggleVoice } = useVoiceCommands({
+  const { isListening, toggleVoice } = useVoiceCommands({
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     onAction: handleAction,
     enabled: true,
   });
 
-  const isOff = mode === "off";
-
-  // Label describes what clicking will DO
   const label = isListening
-    ? (locale === "ar" ? "إيقاف الاستماع" : "Mute — stop listening")
-    : (locale === "ar" ? "تفعيل الأوامر الصوتية — تكلّم بعد التفعيل" : "Enable voice — speak your command");
+    ? (locale === "ar" ? "إيقاف الأوامر الصوتية" : "Turn off voice commands")
+    : (locale === "ar" ? "تفعيل الأوامر الصوتية" : "Turn on voice commands");
+
+  const handleToggle = () => {
+    // Unlock Web Audio on user gesture so sounds work after this click
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) { const c = new AudioCtx(); c.resume().catch(() => {}); }
+    } catch {}
+    playTestSound();
+    toggleVoice();
+  };
 
   return (
     <div
-      className="fixed bottom-6 left-6 z-[300] flex flex-col items-start gap-1"
+      className="fixed bottom-6 left-6 z-[300]"
       role="region"
       aria-label={locale === "ar" ? "الأوامر الصوتية" : "Voice commands"}
     >
-      {/* Status label — only shown when active */}
-      {!isOff && (
-        <span
-          aria-live="polite"
-          className={[
-            "text-xs font-semibold px-2 py-0.5 rounded-full select-none pointer-events-none",
-            isListening
-              ? "bg-red-500 text-white"
-              : "bg-primary text-primary-foreground",
-          ].join(" ")}
-        >
-          {locale === "ar" ? "يستمع…" : "Listening…"}
-        </span>
-      )}
-
-      {/* Mic button */}
-      <button
-        onClick={toggleVoice}
-        aria-label={label}
-        aria-pressed={!isOff}
-        title={label}
-        className={[
-          "relative w-14 h-14 rounded-full shadow-xl",
-          "flex items-center justify-center",
-          "transition-all duration-200",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
-          isListening
-            ? "bg-red-500 text-white scale-110"
-            : "bg-muted/90 text-muted-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:scale-105",
-        ].join(" ")}
-      >
-        {isOff
-          ? <MicOff className="w-6 h-6" aria-hidden="true" />
-          : <Mic className="w-6 h-6" aria-hidden="true" />
-        }
-
-        {/* Pulse ring when standby or listening */}
+      {/* Wrapper: relative so pulse ring can surround the button without clipping */}
+      <div className="relative flex items-center justify-center w-14 h-14">
+        {/* Pulse ring — positioned as sibling, outside button overflow */}
         {isListening && (
           <span
             aria-hidden="true"
-            className={[
-              "absolute inset-0 rounded-full border-2 animate-ping opacity-40",
-              "border-red-400",
-            ].join(" ")}
+            className="absolute inset-[-4px] rounded-full border-2 border-green-400 animate-ping opacity-60 pointer-events-none"
           />
         )}
-      </button>
+        {/* Mic button */}
+        <button
+          type="button"
+          onClick={handleToggle}
+          aria-label={label}
+          aria-pressed={isListening}
+          title={label}
+          className={[
+            "w-14 h-14 rounded-full shadow-xl overflow-hidden",
+            "flex items-center justify-center",
+            "transition-colors duration-200",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
+            isListening
+              ? "bg-green-600 text-white"
+              : "bg-[rgb(var(--nav-bg))] text-white/80 border border-white/20 hover:bg-primary hover:text-white",
+          ].join(" ")}
+        >
+          {isListening
+            ? <Mic className="w-6 h-6" aria-hidden="true" />
+            : <MicOff className="w-6 h-6" aria-hidden="true" />
+          }
+        </button>
+      </div>
+      {/* Status label below the button */}
+      {isListening && (
+        <p
+          aria-live="polite"
+          className="mt-1.5 text-center text-[10px] font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/40 px-2 py-0.5 rounded-full select-none"
+        >
+          {locale === "ar" ? "يستمع" : "Listening"}
+        </p>
+      )}
     </div>
   );
 }

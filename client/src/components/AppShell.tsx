@@ -15,6 +15,7 @@ import {
   ChevronRight, LogOut, LogIn, Layers, Star, FileText
 } from "lucide-react";
 import { startLogin } from "@/const";
+import { playTestSound } from "@/lib/sound";
 
 interface NavItem {
   href: string;
@@ -52,6 +53,13 @@ function AccessibilityBar() {
     const next = !soundOn;
     try { localStorage.setItem("hikma:sound", next ? "on" : "off"); } catch {}
     setSoundOn(next);
+    if (next) {
+      // Unlock AudioContext on user gesture (Chrome autoplay policy) and play test tone
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) { const c = new AudioCtx(); c.resume().then(() => playTestSound()); }
+      } catch {}
+    }
   };
 
   const handleVolume = (e: React.ChangeEvent<HTMLInputElement>) => {

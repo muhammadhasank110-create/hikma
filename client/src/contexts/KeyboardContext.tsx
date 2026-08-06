@@ -131,11 +131,25 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
       if (shouldPassThrough(active)) return;
 
       const key = e.key;
+      // Detect if user is typing in a text field — don't hijack W/A/S/D
+      const isTextContext = active && (
+        active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        (active as HTMLElement).getAttribute("contenteditable") === "true" ||
+        active.closest('[role="textbox"]') !== null ||
+        active.closest('[role="searchbox"]') !== null
+      );
       const dirMap: Record<string, "up" | "down" | "left" | "right"> = {
-        ArrowUp: "up", w: "up", W: "up",
-        ArrowDown: "down", s: "down", S: "down",
-        ArrowLeft: "left", a: "left", A: "left",
-        ArrowRight: "right", d: "right", D: "right",
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right",
+        ...(isTextContext ? {} : {
+          w: "up", W: "up",
+          s: "down", S: "down",
+          a: "left", A: "left",
+          d: "right", D: "right",
+        }),
       };
 
       const direction = dirMap[key];

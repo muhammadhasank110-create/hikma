@@ -35,8 +35,8 @@ async function generateQuestions(lessonTitle: string, sections: any[], locale: s
     ).join("\n\n");
 
     const prompt = locale === "ar"
-      ? `بناءً على الدرس التالي، اصنع 5 أسئلة اختبار: 3 اختيار من متعدد و2 صح/خطأ. أجب بـ JSON فقط بالشكل التالي:\n[{"id":"q1","type":"mcq","question":"...","questionAr":"...","options":["أ","ب","ج","د"],"optionsAr":["أ","ب","ج","د"],"correct":0,"explanation":"...","explanationAr":"...","marks":2}]\n\nالدرس:\n${sectionSummary}`
-      : `Based on the following lesson, create 5 quiz questions: 3 multiple choice and 2 true/false. Reply with JSON only in this format:\n[{"id":"q1","type":"mcq","question":"...","questionAr":"...","options":["A","B","C","D"],"optionsAr":["أ","ب","ج","د"],"correct":0,"explanation":"...","explanationAr":"...","marks":2}]\n\nLesson:\n${sectionSummary}`;
+      ? `بناءً على الدرس التالي، اصنع بالضبط 5 أسئلة اختبار: 3 اختيار من متعدد (MCQ) و2 صح/خطأ. يجب أن تكون الأسئلة متنوعة وتغطي أجزاء مختلفة من الدرس. أجب بـ JSON فقط بالشكل التالي:\n[{"id":"q1","type":"mcq","question":"...","questionAr":"...","options":["أ","ب","ج","د"],"optionsAr":["أ","ب","ج","د"],"correct":0,"explanation":"...","explanationAr":"...","marks":2},{"id":"q2","type":"true_false","question":"...","questionAr":"...","options":["True","False"],"optionsAr":["صحيح","خطأ"],"correct":0,"explanation":"...","explanationAr":"...","marks":1}]\n\nمهم: أعطِ بالضبط 5 أسئلة.\n\nالدرس:\n${sectionSummary}`
+      : `Based on the following lesson, create EXACTLY 5 quiz questions: 3 multiple choice (MCQ) and 2 true/false. Questions must cover different parts of the lesson. Reply with JSON ONLY in this format:\n[{"id":"q1","type":"mcq","question":"...","questionAr":"...","options":["A","B","C","D"],"optionsAr":["أ","ب","ج","د"],"correct":0,"explanation":"...","explanationAr":"...","marks":2},{"id":"q2","type":"true_false","question":"...","questionAr":"...","options":["True","False"],"optionsAr":["صحيح","خطأ"],"correct":0,"explanation":"...","explanationAr":"...","marks":1}]\n\nIMPORTANT: Return exactly 5 questions.\n\nLesson:\n${sectionSummary}`;
 
     const res = await fetch("/api/tutor/stream", {
       method: "POST",
@@ -70,7 +70,17 @@ async function generateQuestions(lessonTitle: string, sections: any[], locale: s
     // Extract JSON array from response
     const match = full.match(/\[[\s\S]*\]/);
     if (!match) throw new Error("No JSON found");
-    return JSON.parse(match[0]) as Question[];
+    const parsed = JSON.parse(match[0]) as Question[];
+    // Ensure minimum 5 questions — if AI returned fewer, pad with fallback questions
+    if (parsed.length >= 5) return parsed;
+    // Pad up to 5 with generic comprehension questions
+    const fallbacks: Question[] = [
+      { id: `fb1`, type: "true_false", question: `The lesson "${lessonTitle}" covers important academic concepts.`, questionAr: `درس "${lessonTitle}" يغطي مفاهيم أكاديمية مهمة.`, options: ["True", "False"], optionsAr: ["صحيح", "خطأ"], correct: 0, explanation: "This lesson covers key curriculum concepts.", explanationAr: "يغطي هذا الدرس مفاهيم منهجية رئيسية.", marks: 1 },
+      { id: `fb2`, type: "true_false", question: `Understanding this topic helps with related exam questions.`, questionAr: `فهم هذا الموضوع يساعد في الأسئلة الامتحانية ذات الصلة.`, options: ["True", "False"], optionsAr: ["صحيح", "خطأ"], correct: 0, explanation: "Understanding topics always helps with exams.", explanationAr: "فهم المواضيع يساعد دائماً في الامتحانات.", marks: 1 },
+      { id: `fb3`, type: "mcq", question: `Which best describes the main purpose of studying this topic?`, questionAr: `ما الذي يصف بشكل أفضل الغرض الرئيسي من دراسة هذا الموضوع؟`, options: ["To memorise facts", "To understand and apply concepts", "To copy notes", "To skip other topics"], optionsAr: ["لحفظ الحقائق", "لفهم المفاهيم وتطبيقها", "لنسخ الملاحظات", "لتخطي المواضيع الأخرى"], correct: 1, explanation: "The goal is to understand and apply, not just memorise.", explanationAr: "الهدف هو الفهم والتطبيق، وليس الحفظ فقط.", marks: 2 },
+    ];
+    const needed = 5 - parsed.length;
+    return [...parsed, ...fallbacks.slice(0, needed)];
   } catch {
     return [];
   }

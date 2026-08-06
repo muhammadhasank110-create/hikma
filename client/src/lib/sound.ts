@@ -133,6 +133,20 @@ export function playSound(name: keyof typeof CUES | string) {
   }
 }
 
+/**
+ * playTestSound — plays a sound even if sounds are "off".
+ * Used to give immediate feedback when the user turns sounds ON.
+ */
+export function playTestSound() {
+  const vol = Number(localStorage.getItem("hikma:volume") ?? 0.7);
+  try {
+    const c = getCtx();
+    c.resume().then(() => {
+      CUES["navigate"]?.(vol);
+    });
+  } catch {}
+}
+
 export function isSoundEnabled(): boolean {
   return localStorage.getItem("hikma:sound") === "on";
 }
