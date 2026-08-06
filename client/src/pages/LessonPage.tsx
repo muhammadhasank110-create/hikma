@@ -191,7 +191,8 @@ export default function LessonPage() {
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     voiceHint: profile.voice,
     onBoundary: (charIndex: number) => {
-      const text = speakingTextRef.current;
+      // Use the cleaned text that was actually spoken (same string the browser uses for charIndex)
+      const text = tts.getCleanedText();
       if (!text) return;
       const upToChar = text.slice(0, charIndex + 1);
       const wordIdx = upToChar.trim().split(/\s+/).length - 1;
@@ -526,7 +527,7 @@ export default function LessonPage() {
 
       <div className="container py-6 max-w-3xl relative z-[51]">
         {/* Lesson header */}
-        <div className={`space-y-2 mb-6 ${isFocused ? "opacity-30" : ""}`}>
+        <div className={`space-y-2 mb-6 ${isFocused ? "opacity-60" : ""}`}>
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary">Lesson</Badge>
             <Badge variant="outline" className="text-xs">{lesson.estimatedMinutes ? `${lesson.estimatedMinutes} min` : ""}</Badge>
@@ -543,7 +544,7 @@ export default function LessonPage() {
         </div>
 
         {/* Mode toolbar */}
-        <div className={`flex items-center gap-2 mb-4 flex-wrap ${isFocused ? "opacity-50" : ""}`}>
+        <div className={`flex items-center gap-2 mb-4 flex-wrap ${isFocused ? "opacity-80" : ""}`}>
           {/* Pomodoro — visible in focus mode */}
           {isFocused && (
             <div className="flex items-center gap-1.5">
@@ -657,7 +658,7 @@ export default function LessonPage() {
         )}
 
         {/* Section content */}
-        <Card className={isFocused ? "border-white/10 bg-black/40" : ""} ref={contentRef as any}>
+        <Card className={isFocused ? "border-white/20 bg-[#0d1a0d] shadow-2xl" : ""} ref={contentRef as any}>
           <CardContent className="p-6">
             {currentSection ? (
               <div className="space-y-4">
@@ -665,7 +666,7 @@ export default function LessonPage() {
                   {locale === "ar" ? (currentSection.titleAr ?? currentSection.titleEn ?? "") : (currentSection.titleEn ?? "")}
                 </h2>
                 <div
-                  className={`prose prose-sm max-w-none ${isFocused ? "prose-invert" : ""} ${simplifiedView ? "text-base leading-relaxed" : ""}`}
+                  className={`prose max-w-none ${isFocused ? "prose-invert text-base leading-[1.9] tracking-wide" : "prose-sm"} ${simplifiedView ? "text-base leading-relaxed" : ""}`}
                   onClick={handleWordClick}
                 >
                   {highlightedWords.length > 0 && highlightIndex >= 0 ? (
@@ -674,7 +675,7 @@ export default function LessonPage() {
                         <span
                           key={i}
                           data-word={word}
-                          className={`cursor-pointer transition-colors duration-100 hover:underline hover:text-primary ${i === highlightIndex ? "bg-primary/30 rounded px-0.5 font-semibold" : ""}`}
+                          className={`cursor-pointer transition-colors duration-100 hover:underline hover:text-primary ${i === highlightIndex ? (isFocused ? "bg-yellow-400/60 text-black rounded px-0.5 font-bold" : "bg-primary/30 rounded px-0.5 font-semibold") : ""}`}
                         >
                           {word}{" "}
                         </span>

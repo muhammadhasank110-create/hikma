@@ -60,6 +60,7 @@ export function useTTS(options: TTSOptions = {}) {
   // Track when voices are loaded so speak() re-creates with correct voice
   const [voicesReady, setVoicesReady] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const lastCleanRef = useRef<string>("");
   const onBoundaryRef = useRef(onBoundary);
   const onEndRef = useRef(onEnd);
 
@@ -131,6 +132,7 @@ export function useTTS(options: TTSOptions = {}) {
       utteranceRef.current = null;
     };
 
+    lastCleanRef.current = clean;
     utteranceRef.current = utt;
     setIsSpeaking(true);
 
@@ -144,5 +146,5 @@ export function useTTS(options: TTSOptions = {}) {
 
   useEffect(() => () => { if (isSupported) window.speechSynthesis.cancel(); }, [isSupported]);
 
-  return { speak, stop, isSpeaking, isSupported };
+  return { speak, stop, isSpeaking, isSupported, getCleanedText: () => lastCleanRef.current };
 }

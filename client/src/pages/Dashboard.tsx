@@ -138,7 +138,7 @@ export default function Dashboard() {
                     <Icon className="w-4 h-4" aria-hidden="true" />
                   </div>
                   <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
-                  <p className="text-2xl font-bold leading-none">{stat.value}</p>
+                  <p className="text-2xl font-bold leading-none" style={{ fontVariantNumeric: "normal" }}>{stat.value}</p>
                 </div>
               );
             })}

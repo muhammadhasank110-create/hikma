@@ -93,8 +93,11 @@ export function KeyboardProvider({ children }: { children: React.ReactNode }) {
       const isSlider = target.getAttribute('role') === 'slider';
       if (isRange || isRadio || isSlider || inRadioGroup) return;
 
-      // Arrow keys: move focus (skip inside text inputs)
-      if (!isTextInput && (e.key === 'ArrowDown' || e.key === 'ArrowRight')) {
+      // WASD + Arrow keys: move focus (skip inside text inputs)
+      const isWASD = ['w','a','s','d'].includes(e.key.toLowerCase()) && !e.ctrlKey && !e.altKey && !e.metaKey;
+      const isDown = e.key === 'ArrowDown' || e.key === 'ArrowRight' || (!isTextInput && isWASD && (e.key === 's' || e.key === 'd'));
+      const isUp = e.key === 'ArrowUp' || e.key === 'ArrowLeft' || (!isTextInput && isWASD && (e.key === 'w' || e.key === 'a'));
+      if (!isTextInput && isDown) {
         // Don't override if inside a select, slider, or combobox
         if (tag === 'SELECT' || target.getAttribute('role') === 'combobox' || target.getAttribute('role') === 'listbox') return;
         e.preventDefault();
@@ -103,7 +106,7 @@ export function KeyboardProvider({ children }: { children: React.ReactNode }) {
         (all[idx + 1] ?? all[0])?.focus();
         return;
       }
-      if (!isTextInput && (e.key === 'ArrowUp' || e.key === 'ArrowLeft')) {
+      if (!isTextInput && isUp) {
         if (tag === 'SELECT' || target.getAttribute('role') === 'combobox' || target.getAttribute('role') === 'listbox') return;
         e.preventDefault();
         const all = getFocusables();

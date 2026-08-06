@@ -1,63 +1,74 @@
 /**
  * Home — Hikma landing page.
- * Educational, curiosity-driven design. Not a business site.
- * Prominent login CTA, Hikma AI branding, student-first language.
+ * Professional, animated, educational design.
+ * Built for blind, dyslexic, and ADHD learners.
  */
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { useProfile } from "@/contexts/ProfileContext";
+import { motion } from "framer-motion";
 import {
-  ArrowRight, Globe, BookOpen, Brain, Keyboard,
-  Layers, Sparkles, Star, ChevronRight, Accessibility,
-  MessageCircle, Zap, Eye, Volume2
+  ArrowRight, Globe, BookOpen, Brain,
+  Keyboard, Layers, Sparkles, Star,
+  MessageCircle, Zap, Eye, Volume2,
+  ChevronDown, Mic, GraduationCap
 } from "lucide-react";
 
+const WORDMARK_URL = "/manus-storage/hikma-wordmark-clean_292f98b9.png";
 
 const HOW_IT_WORKS = [
   {
-    step: "01",
-    icon: Brain,
+    step: "01", icon: Brain,
     titleEn: "Tell Hikma how you learn",
     titleAr: "أخبر حكمة كيف تتعلم",
     descEn: "Audio-first? Need bigger text? Prefer Arabic? Hikma adapts to you in 2 minutes.",
     descAr: "الصوت أولاً؟ نص أكبر؟ تفضل العربية؟ تتكيف حكمة معك في دقيقتين.",
   },
   {
-    step: "02",
-    icon: BookOpen,
-    titleEn: "Study with your voice",
-    titleAr: "ادرس بصوتك",
+    step: "02", icon: Mic,
+    titleEn: "Navigate with your voice",
+    titleAr: "تنقّل بصوتك",
     descEn: "Say \"Hikma\" to navigate, read aloud, or ask a question. No mouse needed.",
     descAr: "قل \"حكمة\" للتنقل أو القراءة أو طرح سؤال. لا حاجة للفأرة.",
   },
   {
-    step: "03",
-    icon: MessageCircle,
+    step: "03", icon: MessageCircle,
     titleEn: "Ask Hikma AI anything",
     titleAr: "اسأل حكمة AI أي شيء",
     descEn: "Hikma AI guides you like a teacher — asks questions, never just gives answers.",
     descAr: "حكمة AI يرشدك كالمعلم — يطرح أسئلة، ولا يعطي الإجابات مباشرة.",
   },
   {
-    step: "04",
-    icon: Star,
+    step: "04", icon: Star,
     titleEn: "Test yourself after every topic",
     titleAr: "اختبر نفسك بعد كل موضوع",
-    descEn: "Personalized questions after each unit. See what you know and what to revisit.",
+    descEn: "Personalised questions after each unit. See what you know and what to revisit.",
     descAr: "أسئلة مخصصة بعد كل وحدة. اعرف ما تعرفه وما تحتاج مراجعته.",
   },
 ];
 
-const ACCESSIBILITY_FEATURES = [
-  { icon: Volume2, en: "Audio-first narration", ar: "سرد صوتي أولاً" },
-  { icon: Eye, en: "High-contrast & dyslexia fonts", ar: "تباين عالٍ وخطوط لعسر القراءة" },
-  { icon: Keyboard, en: "Full keyboard navigation", ar: "تنقل كامل بلوحة المفاتيح" },
-  { icon: Zap, en: "ADHD focus mode", ar: "وضع تركيز لاضطراب ADHD" },
-  { icon: Layers, en: "ECC for blind learners", ar: "المنهج الأساسي الموسّع للمكفوفين" },
-  { icon: Sparkles, en: "Arabic & English bilingual", ar: "ثنائي اللغة عربي وإنجليزي" },
+const FEATURES = [
+  { icon: Volume2, en: "Audio-first narration", ar: "سرد صوتي أولاً", colour: "text-emerald-400" },
+  { icon: Eye, en: "High-contrast & dyslexia fonts", ar: "تباين عالٍ وخطوط لعسر القراءة", colour: "text-blue-400" },
+  { icon: Keyboard, en: "Full keyboard + WASD nav", ar: "تنقل كامل بلوحة المفاتيح", colour: "text-purple-400" },
+  { icon: Zap, en: "ADHD focus mode", ar: "وضع تركيز لاضطراب ADHD", colour: "text-yellow-400" },
+  { icon: Layers, en: "ECC for blind learners", ar: "المنهج الأساسي الموسّع للمكفوفين", colour: "text-pink-400" },
+  { icon: Sparkles, en: "Arabic & English bilingual", ar: "ثنائي اللغة عربي وإنجليزي", colour: "text-orange-400" },
+  { icon: GraduationCap, en: "IGCSE Edexcel + Qatar MoEHE", ar: "إيدكسيل + وزارة التعليم القطرية", colour: "text-cyan-400" },
+  { icon: Brain, en: "Socratic AI — never gives answers", ar: "AI سقراطي — لا يعطي الإجابات", colour: "text-rose-400" },
 ];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.23, 1, 0.32, 1] as any } },
+};
+
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.07 } },
+};
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
@@ -65,283 +76,316 @@ export default function Home() {
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   return (
-    <div className="min-h-screen bg-background text-foreground" dir={locale === "ar" ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden" dir={locale === "ar" ? "rtl" : "ltr"}>
 
-      {/* ── Top accessibility bar ── */}
-      <div className="w-full bg-[rgb(var(--nav-bg))] text-white text-xs flex items-center justify-between px-4 py-1.5">
-        <span className="opacity-60 hidden sm:block">{t("Wisdom · Accessibility · Growth", "الحكمة · إمكانية الوصول · النمو")}</span>
+      {/* ── Accessibility bar ──────────────────────────────────────────── */}
+      <div className="w-full bg-[rgb(var(--nav-bg))] text-white/80 text-xs flex items-center justify-between px-6 py-2">
+        <span className="hidden sm:block tracking-widest uppercase text-[10px] font-medium opacity-50">
+          {t("Wisdom · Accessibility · Growth", "الحكمة · إمكانية الوصول · النمو")}
+        </span>
         <button
           onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-          className="flex items-center gap-1 hover:text-yellow-300 transition-colors ml-auto"
-          aria-label={t("Switch to Arabic", "Switch to English")}
+          className="flex items-center gap-1.5 ml-auto hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-400 rounded px-2 py-0.5"
+          aria-label={t("Switch to Arabic", "التبديل إلى الإنجليزية")}
         >
-          <Globe className="w-3 h-3" />{locale === "ar" ? "EN" : "عربي"}
+          <Globe className="w-3 h-3" />
+          <span className="font-semibold">{locale === "ar" ? "EN" : "عربي"}</span>
         </button>
       </div>
 
-      {/* ── Hero ── */}
-      <section className="bg-[rgb(var(--forest-deep))] text-white relative overflow-hidden min-h-[92vh] flex items-center">
-        {/* Background texture */}
-        <div className="absolute inset-0 opacity-5 pointer-events-none" style={{
-          backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)",
-          backgroundSize: "60px 60px"
-        }} />
+      {/* ── Hero ──────────────────────────────────────────────────────── */}
+      <section
+        className="relative min-h-[92vh] flex items-center bg-[rgb(var(--nav-bg))] overflow-hidden"
+        aria-label={t("Hikma — adaptive learning platform", "حكمة — منصة التعلم التكيفي")}
+      >
+        {/* Subtle grid texture */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+          aria-hidden="true"
+        />
+        {/* Radial glow */}
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" aria-hidden="true" />
 
-        <div className="container relative z-10 py-20 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Left: text */}
-          <div className="space-y-8 animate-arrive">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold tracking-wide text-white/80">
-              <Sparkles className="w-3 h-3 text-yellow-300" />
-              {t("AI-powered · IGCSE Edexcel + Qatar MoEHE", "بالذكاء الاصطناعي · إيدكسيل + وزارة التعليم القطرية")}
-            </div>
+        <div className="container max-w-6xl relative z-10 py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
-            <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] tracking-tight">
-              {t("Learning that ", "تعلّم ")}
-              <span className="block text-[rgb(var(--clay-light))]">
-                {t("meets you", "يلتقي بك")}
-              </span>
-              {t("where you are.", "حيث أنت.")}
-            </h1>
+            {/* Left: copy */}
+            <motion.div
+              className="space-y-8"
+              initial="hidden"
+              animate="visible"
+              variants={stagger}
+            >
+              <motion.div variants={fadeUp}>
+                <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-primary/80 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
+                  <Sparkles className="w-3 h-3" aria-hidden="true" />
+                  {t("AI-powered · IGCSE Edexcel + Qatar MoEHE", "مدعوم بالذكاء الاصطناعي · إيدكسيل + وزارة التعليم القطرية")}
+                </span>
+              </motion.div>
 
-            <p className="text-white/70 text-xl leading-relaxed max-w-lg">
-              {t(
-                "Hikma is the adaptive learning companion built for blind, dyslexic, and ADHD learners. Voice-first. Keyboard-first. Curiosity-first.",
-                "حكمة هو الرفيق التعليمي التكيفي المصمم للمكفوفين وذوي عسر القراءة واضطراب التركيز. الصوت أولاً. لوحة المفاتيح أولاً. الفضول أولاً."
-              )}
-            </p>
+              <motion.h1
+                variants={fadeUp}
+               
+                className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] tracking-tight"
+              >
+                {t("Learning that", "تعلّم يلتقي")}{" "}
+                <span className="text-[rgb(var(--clay))]">{t("meets you", "بك")}</span>
+                <br />
+                {t("where you are.", "أينما كنت.")}
+              </motion.h1>
 
-            {/* CTA buttons */}
-            <div className="flex flex-wrap gap-4 pt-2">
-              {/* Always go to onboarding — personalisation runs every session */}
-              {isAuthenticated ? (
-                <Link href="/onboarding">
-                  <Button size="lg" className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl">
-                    {t("Personalise & Start", "خصّص وابدأ")}
-                    <ArrowRight className="w-5 h-5 ml-2" />
+              <motion.p
+                variants={fadeUp}
+               
+                className="text-white/70 text-lg leading-relaxed max-w-lg"
+              >
+                {t(
+                  "Hikma is the adaptive learning companion built for blind, dyslexic, and ADHD learners. Voice-first. Keyboard-first. Curiosity-first.",
+                  "حكمة هو رفيق التعلم التكيفي المصمم للمكفوفين وذوي عسر القراءة واضطراب ADHD. الصوت أولاً. لوحة المفاتيح أولاً. الفضول أولاً."
+                )}
+              </motion.p>
+
+              <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
+                {isAuthenticated ? (
+                  <Link href="/onboarding">
+                    <Button
+                      size="lg"
+                      className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl"
+                      aria-label={t("Personalise and start learning", "تخصيص وبدء التعلم")}
+                    >
+                      {t("Personalise & Start", "تخصيص وبدء")}
+                      <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    size="lg"
+                    onClick={() => startLogin()}
+                    className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl"
+                    aria-label={t("Sign in and start personalising Hikma", "سجّل الدخول وابدأ تخصيص حكمة")}
+                  >
+                    {t("Sign in & Personalise", "سجّل الدخول وتخصيص")}
+                    <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
                   </Button>
-                </Link>
-              ) : (
-                <Button
-                  size="lg"
-                  className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl"
-                  onClick={() => startLogin()}
+                )}
+                <a
+                  href="#how-it-works"
+                  className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm font-medium h-14 px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white rounded-xl"
+                  aria-label={t("Learn how Hikma works", "تعرّف على كيفية عمل حكمة")}
                 >
-                  {t("Sign in & Personalise", "سجّل دخولك وخصّص")}
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              )}
-            </div>
+                  {t("How it works", "كيف يعمل")}
+                  <ChevronDown className="w-4 h-4" aria-hidden="true" />
+                </a>
+              </motion.div>
 
-            {/* Social proof */}
-            <p className="text-xs text-white/40 flex items-center gap-2">
-              <Accessibility className="w-3 h-3" />
-              {t("Built to MADA Qatar & WCAG 2.2 AA · Free to use", "متوافق مع مدى قطر و WCAG 2.2 AA · مجاني")}
-            </p>
-          </div>
+              <motion.p variants={fadeUp} className="text-white/40 text-xs flex items-center gap-2">
+                <Keyboard className="w-3.5 h-3.5" aria-hidden="true" />
+                {t("Built to MADA Qatar & WCAG 2.2 AA · Free to use", "مبني وفق معايير مادا قطر و WCAG 2.2 AA · مجاني")}
+              </motion.p>
+            </motion.div>
 
-          {/* Right: logo + subject pills */}
-          <div className="hidden lg:flex flex-col items-center gap-8 animate-arrive" style={{ animationDelay: "120ms" }}>
-            <img
-              src="/manus-storage/hikma-wordmark-clean_8b6e54cc.png"
-              alt="Hikma — حكمة"
-              className="w-80 object-contain"
-              style={{ filter: "brightness(0) invert(1)", opacity: 0.88 }}
-            />
+            {/* Right: logo + feature pills */}
+            <motion.div
+              className="flex flex-col items-center gap-8"
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl scale-110" aria-hidden="true" />
+                <img
+                  src={WORDMARK_URL}
+                  alt="Hikma حكمة — Educational App"
+                  className="relative w-72 sm:w-80 object-contain"
+                  style={{ filter: "brightness(0) invert(1)", opacity: 0.92 }}
+                />
+              </div>
+              {/* Floating feature pills */}
+              <div className="flex flex-wrap justify-center gap-2 max-w-xs">
+                {["Voice commands", "Keyboard nav", "ADHD mode", "Dyslexia font", "Screen reader", "Arabic + English"].map((tag, i) => (
+                  <motion.span
+                    key={tag}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + i * 0.06, duration: 0.4 }}
+                    className="text-[11px] font-medium px-3 py-1 rounded-full bg-white/10 text-white/70 border border-white/10 backdrop-blur-sm"
+                  >
+                    {tag}
+                  </motion.span>
+                ))}
+              </div>
+            </motion.div>
 
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/30 text-xs animate-bounce">
-          <ChevronRight className="w-4 h-4 rotate-90" />
-        </div>
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden="true"
+        >
+          <ChevronDown className="w-6 h-6 text-white/30" />
+        </motion.div>
       </section>
 
-      {/* ── How it works ── */}
-      <section className="py-20 bg-background">
-        <div className="container space-y-12">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-bold tracking-widest uppercase text-primary">{t("How it works", "كيف يعمل")}</span>
-            <h2 className="text-4xl font-bold">{t("Four steps to confident learning", "أربع خطوات نحو تعلم واثق")}</h2>
-          </div>
+      {/* ── How it works ──────────────────────────────────────────────── */}
+      <section id="how-it-works" className="py-24 bg-background" aria-label={t("How Hikma works", "كيف تعمل حكمة")}>
+        <div className="container max-w-5xl">
+          <motion.div
+            className="text-center mb-16 space-y-3"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeUp} className="text-xs font-bold tracking-widest uppercase text-primary">
+              {t("How it works", "كيف يعمل")}
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+              {t("Four steps to your best learning", "أربع خطوات لأفضل تعلم")}
+            </motion.h2>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {HOW_IT_WORKS.map((step, i) => {
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+            variants={stagger}
+          >
+            {HOW_IT_WORKS.map((step) => {
               const Icon = step.icon;
               return (
-                <div key={step.step} className="relative group" style={{ animationDelay: `${i * 80}ms` }}>
-                  <div className="p-6 rounded-2xl border border-border bg-card hover:border-primary hover:shadow-lg transition-all space-y-4 h-full">
-                    <div className="flex items-start justify-between">
-                      <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <Icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="text-4xl font-black text-muted-foreground/20">{step.step}</span>
-                    </div>
-                    <h3 className="font-bold text-lg leading-snug">{t(step.titleEn, step.titleAr)}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{t(step.descEn, step.descAr)}</p>
+                <motion.div
+                  key={step.step}
+                  variants={fadeUp}
+                  className="group relative bg-card border border-border rounded-3xl p-8 overflow-hidden hover:border-primary/40 hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="absolute top-6 right-6 text-5xl font-black text-muted/10 select-none" aria-hidden="true">
+                    {step.step}
                   </div>
-                </div>
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
+                    <Icon className="w-6 h-6 text-primary" aria-hidden="true" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">{t(step.titleEn, step.titleAr)}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{t(step.descEn, step.descAr)}</p>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── Hikma AI spotlight ── */}
-      <section className="py-20 bg-[rgb(var(--sage))]">
-        <div className="container grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <span className="text-xs font-bold tracking-widest uppercase text-primary">{t("Meet Hikma AI", "تعرّف على حكمة AI")}</span>
-            <h2 className="text-4xl font-bold leading-tight">
-              {t("A teacher, not a search engine", "معلم، لا محرك بحث")}
-            </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed">
-              {t(
-                "Hikma AI never just gives you the answer. It asks you questions, guides your thinking, and helps you discover the answer yourself — the way a great teacher does.",
-                "حكمة AI لا يعطيك الإجابة مباشرة. يطرح عليك أسئلة، يوجّه تفكيرك، ويساعدك على اكتشاف الإجابة بنفسك — كما يفعل المعلم الجيد."
-              )}
-            </p>
-            <div className="space-y-3">
-              {[
-                t("Asks guiding questions instead of giving answers", "يطرح أسئلة توجيهية بدلاً من إعطاء الإجابات"),
-                t("Adapts to your pace and learning style", "يتكيف مع وتيرتك وأسلوب تعلمك"),
-                t("Speaks Arabic and English fluently", "يتحدث العربية والإنجليزية بطلاقة"),
-                t("Available 24/7 — no waiting for a teacher", "متاح على مدار الساعة — لا انتظار"),
-              ].map(item => (
-                <div key={item} className="flex items-center gap-3 text-sm">
-                  <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs">✓</span>
-                  </div>
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
-            <Link href={isAuthenticated ? "/tutor" : "/onboarding"}>
-              <Button className="rounded-2xl font-bold px-6 h-12">
-                {t("Try Hikma AI", "جرّب حكمة AI")}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
+      {/* ── Accessibility features grid ───────────────────────────────── */}
+      <section className="py-24 bg-card border-y border-border" aria-label={t("Accessibility features", "ميزات إمكانية الوصول")}>
+        <div className="container max-w-5xl">
+          <motion.div
+            className="text-center mb-14 space-y-3"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+          >
+            <motion.p variants={fadeUp} className="text-xs font-bold tracking-widest uppercase text-primary">
+              {t("Built for everyone", "مبني للجميع")}
+            </motion.p>
+            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+              {t("Every learner deserves the right tools", "كل متعلم يستحق الأدوات المناسبة")}
+            </motion.h2>
+          </motion.div>
 
-          {/* Chat preview mockup */}
-          <div className="bg-card rounded-3xl border border-border shadow-xl p-6 space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-border">
-              <img src="/manus-storage/hikma-app-icon-clean_e261c2b4.png" alt="Hikma AI" className="w-9 h-9 rounded-xl object-cover" />
-              <div>
-                <p className="font-bold text-sm">Hikma AI</p>
-                <p className="text-xs text-muted-foreground">{t("Your learning guide", "مرشدك التعليمي")}</p>
-              </div>
-              <div className="ml-auto w-2 h-2 rounded-full bg-green-500" />
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex gap-2">
-                <img src="/manus-storage/hikma-app-icon-clean_e261c2b4.png" alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0 mt-0.5" />
-                <div className="bg-primary/10 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
-                  <p className="text-foreground">{t("Before I explain photosynthesis — what do you think plants need to make their own food?", "قبل أن أشرح البناء الضوئي — ماذا تظن أن النباتات تحتاج لصنع غذائها؟")}</p>
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end">
-                <div className="bg-primary rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%]">
-                  <p className="text-primary-foreground">{t("Sunlight and water?", "ضوء الشمس والماء؟")}</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <img src="/manus-storage/hikma-app-icon-clean_e261c2b4.png" alt="" className="w-7 h-7 rounded-lg object-cover flex-shrink-0 mt-0.5" />
-                <div className="bg-primary/10 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
-                  <p className="text-foreground">{t("Good start! You have two of the three. What gas do you think might also be involved?", "بداية جيدة! لديك اثنتان من الثلاثة. ما الغاز الذي تظن أنه قد يكون متضمناً أيضاً؟")}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Accessibility features ── */}
-      <section className="py-20 bg-background">
-        <div className="container space-y-12">
-          <div className="text-center space-y-3">
-            <span className="text-xs font-bold tracking-widest uppercase text-primary">{t("Built for everyone", "مبني للجميع")}</span>
-            <h2 className="text-4xl font-bold">{t("Accessibility is the architecture", "إمكانية الوصول هي البنية الأساسية")}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              {t("Not an add-on. Every feature was designed from day one for blind, dyslexic, and ADHD learners.", "ليست إضافة. كل ميزة صُممت من اليوم الأول للمكفوفين وذوي عسر القراءة واضطراب التركيز.")}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {ACCESSIBILITY_FEATURES.map(f => {
+          <motion.div
+            className="grid grid-cols-2 sm:grid-cols-4 gap-4"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+          >
+            {FEATURES.map((f) => {
               const Icon = f.icon;
               return (
-                <div key={f.en} className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-card hover:border-primary transition-colors">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-5 h-5 text-primary" />
+                <motion.div
+                  key={f.en}
+                  variants={fadeUp}
+                  className="flex flex-col items-center text-center gap-3 p-5 rounded-2xl bg-background border border-border hover:border-primary/30 transition-colors"
+                >
+                  <div className={`w-10 h-10 rounded-xl bg-current/10 flex items-center justify-center ${f.colour}`}>
+                    <Icon className="w-5 h-5" aria-hidden="true" />
                   </div>
-                  <span className="text-sm font-medium">{t(f.en, f.ar)}</span>
-                </div>
+                  <p className="text-xs font-semibold leading-snug">{t(f.en, f.ar)}</p>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── Final CTA ── */}
-      <section className="py-20 bg-[rgb(var(--forest-deep))] text-white">
-        <div className="container text-center space-y-8 max-w-3xl mx-auto">
-          <img
-            src="/manus-storage/hikma-app-icon-clean_e261c2b4.png"
-            alt="Hikma"
-            className="w-20 h-20 rounded-3xl object-cover mx-auto shadow-2xl"
-          />
-          <h2 className="text-4xl md:text-5xl font-bold leading-tight">
-            {t("Ready to learn at your own pace?", "مستعد للتعلم بوتيرتك الخاصة؟")}
-          </h2>
-          <p className="text-white/70 text-lg">
-            {t("Join learners across Qatar and beyond. Free, accessible, and built with care.", "انضم إلى المتعلمين في قطر وخارجها. مجاني، سهل الوصول، ومبني باهتمام.")}
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            {isAuthenticated ? (
-              <Link href="/onboarding">
-                <Button size="lg" className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl">
-                  {t("Personalise & Start", "خصّص وابدأ")}
-                  <ArrowRight className="w-5 h-5 ml-2" />
+      {/* ── Final CTA ─────────────────────────────────────────────────── */}
+      <section className="py-24 bg-[rgb(var(--nav-bg))]" aria-label={t("Get started", "ابدأ الآن")}>
+        <div className="container max-w-3xl text-center">
+          <motion.div
+            className="space-y-6"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+          >
+            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              {t("Ready to learn your way?", "هل أنت مستعد للتعلم بطريقتك؟")}
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-white/60 text-lg">
+              {t("Free. Accessible. Built for Qatar.", "مجاني. متاح للجميع. مبني لقطر.")}
+            </motion.p>
+            <motion.div variants={fadeUp} className="flex justify-center">
+              {isAuthenticated ? (
+                <Link href="/onboarding">
+                  <Button
+                    size="lg"
+                    className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl"
+                    aria-label={t("Personalise and start learning", "تخصيص وبدء التعلم")}
+                  >
+                    {t("Personalise & Start", "تخصيص وبدء")}
+                    <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
+                  </Button>
+                </Link>
+              ) : (
+                <Button
+                  size="lg"
+                  onClick={() => startLogin()}
+                  className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl"
+                  aria-label={t("Sign in and start personalising Hikma", "سجّل الدخول وابدأ تخصيص حكمة")}
+                >
+                  {t("Sign in & Personalise", "سجّل الدخول وتخصيص")}
+                  <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
                 </Button>
-              </Link>
-            ) : (
-              <Button
-                size="lg"
-                className="bg-white text-[rgb(var(--forest-deep))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl"
-                onClick={() => startLogin()}
-              >
-                {t("Sign in & Personalise", "سجّل دخولك وخصّص")}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            )}
-          </div>
-          <p className="text-xs text-white/40 flex items-center justify-center gap-2">
-            <Accessibility className="w-3 h-3" />
-            {t("MADA Qatar & WCAG 2.2 AA · Arabic & English · IGCSE Edexcel + Qatar MoEHE", "مدى قطر و WCAG 2.2 AA · عربي وإنجليزي · إيدكسيل + وزارة التعليم القطرية")}
-          </p>
+              )}
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-border bg-card py-6">
-        <div className="container flex items-center justify-between flex-wrap gap-4 text-xs text-muted-foreground">
+      {/* ── Footer ────────────────────────────────────────────────────── */}
+      <footer className="bg-[rgb(var(--nav-bg))] border-t border-white/10 py-8">
+        <div className="container max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 text-white/40 text-xs">
           <div className="flex items-center gap-2">
-            <img src="/manus-storage/hikma-app-icon-clean_e261c2b4.png" alt="Hikma" className="w-6 h-6 rounded-lg object-cover" />
-            <span className="font-semibold">Hikma — حكمة</span>
+            <img
+              src="/manus-storage/hikma-app-icon-clean_e261c2b4.png"
+              alt=""
+              className="w-6 h-6 rounded-lg"
+              aria-hidden="true"
+            />
+            <span className="font-semibold text-white/60">Hikma — حكمة</span>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/onboarding" className="hover:text-foreground transition-colors">{t("Onboarding", "التأهيل")}</Link>
-            <Link href="/shortcuts" className="hover:text-foreground transition-colors">{t("Shortcuts", "الاختصارات")}</Link>
-            <Link href="/ecc" className="hover:text-foreground transition-colors">{t("ECC", "المنهج الأساسي")}</Link>
-          </div>
-          <div className="flex items-center gap-1">
-            <Accessibility className="w-3 h-3" />
-            <span>{t("MADA & WCAG AA compliant", "متوافق مع مدى و WCAG AA")}</span>
-          </div>
+          <p>{t("Built to MADA Qatar & WCAG 2.2 AA standards", "مبني وفق معايير مادا قطر و WCAG 2.2 AA")}</p>
         </div>
       </footer>
+
     </div>
   );
 }
