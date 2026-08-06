@@ -1,11 +1,10 @@
 /**
- * useVoiceCommands — single continuous recognition loop with LLM fallback.
+ * useVoiceCommands — simple, direct voice commands.
  *
  * Architecture:
- * - ONE SpeechRecognition instance, continuous=true
- * - Wake word "Hikma" detected in every utterance
- * - After wake word, next utterance (or inline command) is the command
- * - Unknown commands → LLM intent parser via trpc.tutor.parseVoiceIntent
+ * - Unmute → mic is live → speak any command directly
+ * - No wake word required
+ * - Fast pattern matching first, LLM fallback for anything unrecognised
  * - Context-aware: knows which page the user is on
  */
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -33,11 +32,8 @@ interface UseVoiceCommandsOptions {
   locale?: string;
   onAction?: (action: VoiceCommandAction) => void;
   enabled?: boolean;
-  context?: string; // current page context for LLM
+  context?: string;
 }
-
-// Wake word patterns — generous matching
-const WAKE_WORDS = /\b(hikma|hekma|حكمة|يا حكمة|hey hikma|ok hikma|hi hikma)\b/i;
 
 // Fast pattern matching for common commands (no LLM needed)
 const COMMANDS: Array<{ patterns: RegExp[]; action: VoiceCommandAction; label: string }> = [
@@ -89,10 +85,9 @@ export function useVoiceCommands({
   context = "app",
 }: UseVoiceCommandsOptions = {}) {
   const [, navigate] = useLocation();
-  const [mode, setMode] = useState<"off" | "listening" | "awake">("off");
-  const modeRef = useRef<"off" | "listening" | "awake">("off");
+  const [isOn, setIsOn] = useState(false);
+  const isOnRef = useRef(false);
   const recRef = useRef<any>(null);
-  const awakeRef = useRef(false);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const contextRef = useRef(context);
   useEffect(() => { contextRef.current = context; }, [context]);
@@ -100,10 +95,8 @@ export function useVoiceCommands({
   // LLM fallback mutation
   const parseIntent = trpc.tutor.parseVoiceIntent.useMutation();
 
-  useEffect(() => { modeRef.current = mode; }, [mode]);
-
   const handleAction = useCallback((action: VoiceCommandAction, replyText?: string) => {
-    // Speak the confirmation if TTS is available
+    // Speak the confirmation
     if (replyText && "speechSynthesis" in window) {
       const utt = new SpeechSynthesisUtterance(replyText);
       utt.lang = lang;
@@ -112,7 +105,6 @@ export function useVoiceCommands({
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utt);
     }
-
     if (onAction) { onAction(action); return; }
     switch (action.type) {
       case "navigate": navigate(action.path); break;
@@ -131,7 +123,7 @@ export function useVoiceCommands({
 
   const startRecognition = useCallback(() => {
     const SpeechRecognition = getSpeechRecognition();
-    if (!SpeechRecognition || modeRef.current === "off") return;
+    if (!SpeechRecognition || !isOnRef.current) return;
     stopRecognition();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -144,101 +136,55 @@ export function useVoiceCommands({
     rec.onresult = (event: any) => {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (!event.results[i].isFinal) continue;
-        // Try all alternatives for better recognition
         const transcripts = Array.from({ length: event.results[i].length }, (_, j) =>
           (event.results[i][j]?.transcript ?? "").trim()
         ).filter(Boolean);
         const transcript = transcripts[0] ?? "";
         if (!transcript) continue;
 
-        // Check any alternative for wake word
-        const hasWakeWord = transcripts.some(t => WAKE_WORDS.test(t));
-
-        if (hasWakeWord) {
-          // Check for inline command in the same utterance
-          const withoutWake = transcript.replace(WAKE_WORDS, "").replace(/^[,،\s]+/, "").trim();
-          if (withoutWake.length > 1) {
-            const action = parseCommand(withoutWake);
-            if (action) {
-              const label = getLabelForAction(action);
-              toast.success(`Hikma: ${label}`, { id: "voice-cmd", duration: 2000 });
-              handleAction(action, label);
-              awakeRef.current = false;
-              setMode("listening");
-              return;
-            }
-            // Inline command not matched — try LLM
-            awakeRef.current = false;
-            setMode("listening");
-            parseIntent.mutate(
-              { transcript: withoutWake, context: contextRef.current, locale: locale === "ar" ? "ar" : "en" },
-              {
-                onSuccess: (result) => {
-                  if (result.action !== "unknown" && result.confidence > 0.6) {
-                    toast.success(`Hikma: ${result.reply || result.action}`, { id: "voice-cmd", duration: 2000 });
-                    handleAction({ type: result.action as any, path: result.path } as VoiceCommandAction, result.reply);
-                  } else {
-                    toast.info(`Heard: "${withoutWake}"`, { duration: 3000 });
-                  }
-                },
-              }
-            );
-            return;
-          }
-          // Wake word only — wait for next utterance
-          awakeRef.current = true;
-          setMode("awake");
-          const wakeMsg = locale === "ar" ? "حكمة تستمع…" : "Hikma is listening…";
-          toast.success(wakeMsg, { id: "voice-wake", duration: 3000 });
-          // Speak the confirmation
-          if ("speechSynthesis" in window) {
-            const utt = new SpeechSynthesisUtterance(wakeMsg);
-            utt.lang = lang; utt.rate = 1.1; utt.volume = 0.6;
-            window.speechSynthesis.speak(utt);
-          }
+        // Direct command matching — no wake word needed
+        const action = parseCommand(transcript);
+        if (action) {
+          const label = getLabelForAction(action);
+          toast.success(`✓ ${label}`, { id: "voice-cmd", duration: 2000 });
+          handleAction(action, label);
           return;
         }
 
-        if (awakeRef.current) {
-          awakeRef.current = false;
-          setMode("listening");
-          const action = parseCommand(transcript);
-          if (action) {
-            const label = getLabelForAction(action);
-            toast.success(`Hikma: ${label}`, { id: "voice-cmd", duration: 2000 });
-            handleAction(action, label);
-          } else {
-            // Unknown — use LLM
-            parseIntent.mutate(
-              { transcript, context: contextRef.current, locale: locale === "ar" ? "ar" : "en" },
-              {
-                onSuccess: (result) => {
-                  if (result.action !== "unknown" && result.confidence > 0.6) {
-                    toast.success(`Hikma: ${result.reply || result.action}`, { id: "voice-cmd", duration: 2000 });
-                    handleAction({ type: result.action as any, path: result.path } as VoiceCommandAction, result.reply);
-                  } else {
-                    toast.info(`Heard: "${transcript}" — say "Hikma, read this" or "Hikma, next"`, { duration: 4000 });
-                  }
-                },
+        // Unknown — use LLM fallback
+        parseIntent.mutate(
+          { transcript, context: contextRef.current, locale: locale === "ar" ? "ar" : "en" },
+          {
+            onSuccess: (result) => {
+              if (result.action !== "unknown" && result.confidence > 0.5) {
+                toast.success(`✓ ${result.reply || result.action}`, { id: "voice-cmd", duration: 2000 });
+                handleAction({ type: result.action as any, path: result.path } as VoiceCommandAction, result.reply);
+              } else {
+                // Show what was heard so user knows mic is working
+                toast.info(`Heard: "${transcript}"`, { duration: 3000 });
               }
-            );
+            },
+            onError: () => {
+              toast.info(`Heard: "${transcript}"`, { duration: 3000 });
+            },
           }
-        }
+        );
       }
     };
 
     rec.onerror = (event: any) => {
       if (event.error === "not-allowed") {
-        setMode("off"); modeRef.current = "off";
+        setIsOn(false); isOnRef.current = false;
         toast.error("Microphone access denied. Allow microphone in browser settings.");
         return;
       }
+      // Other errors: just restart
     };
 
     rec.onend = () => {
-      if (modeRef.current !== "off") {
+      if (isOnRef.current) {
         restartTimerRef.current = setTimeout(() => {
-          if (modeRef.current !== "off") startRecognition();
+          if (isOnRef.current) startRecognition();
         }, 300);
       }
     };
@@ -248,10 +194,9 @@ export function useVoiceCommands({
   }, [lang, locale, handleAction, stopRecognition, parseIntent]);
 
   const toggleVoice = useCallback(async () => {
-    if (modeRef.current !== "off") {
+    if (isOnRef.current) {
       stopRecognition();
-      awakeRef.current = false;
-      setMode("off"); modeRef.current = "off";
+      setIsOn(false); isOnRef.current = false;
       toast.info(locale === "ar" ? "الأوامر الصوتية متوقفة" : "Voice commands off", { duration: 2000 });
       return;
     }
@@ -265,25 +210,25 @@ export function useVoiceCommands({
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(t => t.stop());
-    } catch (err: any) {
+    } catch {
       toast.error("Microphone access denied. Allow it in browser settings.");
       return;
     }
 
-    setMode("listening"); modeRef.current = "listening";
+    setIsOn(true); isOnRef.current = true;
     const onMsg = locale === "ar"
-      ? 'الأوامر الصوتية مفعّلة — قل "حكمة" ثم أمرك'
-      : 'Voice on — say "Hikma" then your command';
-    toast.success(onMsg, { duration: 4000 });
+      ? "الأوامر الصوتية مفعّلة — تكلّم الآن"
+      : "Voice on — speak your command";
+    toast.success(onMsg, { duration: 3000 });
     startRecognition();
   }, [locale, startRecognition, stopRecognition]);
 
   useEffect(() => () => { stopRecognition(); }, [stopRecognition]);
 
   return {
-    mode,
-    isListening: mode === "listening",
-    isAwake: mode === "awake",
+    mode: isOn ? "listening" : "off" as "off" | "listening",
+    isListening: isOn,
+    isAwake: false,
     toggleVoice,
     isSupported: getSpeechRecognition() !== null,
   };

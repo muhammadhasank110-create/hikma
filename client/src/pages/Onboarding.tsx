@@ -393,7 +393,7 @@ function StepVoicePreferences({ data, onChange, locale }: { data: OnboardingData
           <div>
             <p className="font-semibold">{t("Voice commands", "الأوامر الصوتية")}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {t('Say "Hikma" to activate, then give a command. Works in Chrome and Edge.', 'قل "حكمة" للتفعيل ثم أعطِ أمراً. يعمل في Chrome و Edge.')}
+              {t('Unmute the mic and speak your command. Works in Chrome and Edge.', 'افتح الميكروفون وتكلّم بأمرك مباشرة. يعمل في Chrome و Edge.')}
             </p>
           </div>
           <button
@@ -403,17 +403,17 @@ function StepVoicePreferences({ data, onChange, locale }: { data: OnboardingData
             tabIndex={0}
             onClick={() => onChange({ voiceEnabled: !data.voiceEnabled })}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ voiceEnabled: !data.voiceEnabled }); }}}
-            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.voiceEnabled ? "bg-primary" : "bg-muted"}`}
+            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.voiceEnabled ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"}`}
           >
             <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${data.voiceEnabled ? "translate-x-6" : "translate-x-0.5"}`} />
           </button>
         </div>
         {data.voiceEnabled && (
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-            <p>• {t('"Hikma, open tutor" — opens Hikma AI', '"حكمة، افتح المعلم" — يفتح حكمة AI')}</p>
-            <p>• {t('"Hikma, next section" — moves forward', '"حكمة، القسم التالي" — ينتقل للأمام')}</p>
-            <p>• {t('"Hikma, read aloud" — reads the page', '"حكمة، اقرأ بصوت" — يقرأ الصفحة')}</p>
-            <p>• {t('"Hikma, go home" — goes to dashboard', '"حكمة، الرئيسية" — يذهب للوحة التحكم')}</p>
+            <p>• {t('"Open tutor" — opens Hikma AI', '"افتح المعلم" — يفتح حكمة AI')}</p>
+            <p>• {t('"Next section" — moves forward', '"القسم التالي" — ينتقل للأمام')}</p>
+            <p>• {t('"Read aloud" — reads the page', '"اقرأ بصوت" — يقرأ الصفحة')}</p>
+            <p>• {t('"Go home" — goes to dashboard', '"الرئيسية" — يذهب للوحة التحكم')}</p>
           </div>
         )}
       </div>
@@ -433,7 +433,7 @@ function StepVoicePreferences({ data, onChange, locale }: { data: OnboardingData
             tabIndex={0}
             onClick={() => onChange({ autoNarrate: !data.autoNarrate })}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ autoNarrate: !data.autoNarrate }); }}}
-            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.autoNarrate ? "bg-primary" : "bg-muted"}`}
+            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.autoNarrate ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"}`}
           >
             <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${data.autoNarrate ? "translate-x-6" : "translate-x-0.5"}`} />
           </button>

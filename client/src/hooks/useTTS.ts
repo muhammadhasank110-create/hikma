@@ -131,6 +131,11 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     if (!text) return;
     cleanedTextRef.current = text;
     stop();
+    // Unlock audio context on first user-triggered speak (Chrome autoplay policy)
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContext) { const ctx = new AudioContext(); ctx.resume().catch(() => {}); }
+    } catch {}
     if (hasElevenLabs) {
       speakWithElevenLabs(text);
     } else {

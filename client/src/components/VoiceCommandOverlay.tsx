@@ -78,9 +78,7 @@ export function VoiceCommandOverlay() {
   // Label describes what clicking will DO
   const label = isListening
     ? (locale === "ar" ? "إيقاف الاستماع" : "Mute — stop listening")
-    : isAwake
-    ? (locale === "ar" ? 'في وضع الانتظار — قل "حكمة"' : 'Listening — say "Hikma"')
-    : (locale === "ar" ? "تفعيل الأوامر الصوتية" : "Enable voice commands");
+    : (locale === "ar" ? "تفعيل الأوامر الصوتية — تكلّم بعد التفعيل" : "Enable voice — speak your command");
 
   return (
     <div
@@ -99,9 +97,7 @@ export function VoiceCommandOverlay() {
               : "bg-primary text-primary-foreground",
           ].join(" ")}
         >
-          {isListening
-            ? (locale === "ar" ? "يستمع…" : "Listening…")
-            : (locale === "ar" ? 'قل "حكمة"' : 'Say "Hikma"')}
+          {locale === "ar" ? "يستمع…" : "Listening…"}
         </span>
       )}
 
@@ -118,8 +114,6 @@ export function VoiceCommandOverlay() {
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
           isListening
             ? "bg-red-500 text-white scale-110"
-            : isAwake
-            ? "bg-primary text-primary-foreground"
             : "bg-muted/90 text-muted-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:scale-105",
         ].join(" ")}
       >
@@ -129,12 +123,12 @@ export function VoiceCommandOverlay() {
         }
 
         {/* Pulse ring when standby or listening */}
-        {(isAwake || isListening) && (
+        {isListening && (
           <span
             aria-hidden="true"
             className={[
               "absolute inset-0 rounded-full border-2 animate-ping opacity-40",
-              isListening ? "border-red-400" : "border-primary",
+              "border-red-400",
             ].join(" ")}
           />
         )}
