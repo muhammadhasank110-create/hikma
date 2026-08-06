@@ -22,7 +22,7 @@ import {
   ChevronLeft, ChevronRight, Check, Volume2
 } from "lucide-react";
 
-export const TOTAL_STEPS = 6;
+export const TOTAL_STEPS = 7;
 
 export type AccessibilityProfile = "blind" | "low_vision" | "adhd" | "dyslexia" | "none" | null;
 
@@ -37,6 +37,7 @@ export interface OnboardingData {
   theme: string;
   voiceEnabled: boolean;
   autoNarrate: boolean;
+  dailyGoalMinutes: number;
 }
 
 const PROFILES = [
@@ -549,6 +550,73 @@ export function StepVoice({ data, locale }: { data: OnboardingData; locale: stri
           )}
         </p>
       </div>
+    </div>
+  );
+}
+
+// ── Step: Daily Study Goal ─────────────────────────────────────────────────────
+const GOAL_OPTIONS = [
+  { minutes: 10, labelEn: "10 min",  descEn: "A quick daily check-in",           labelAr: "١٠ دقائق", descAr: "مراجعة يومية سريعة" },
+  { minutes: 20, labelEn: "20 min",  descEn: "A focused short session",           labelAr: "٢٠ دقيقة", descAr: "جلسة قصيرة مركّزة" },
+  { minutes: 30, labelEn: "30 min",  descEn: "A solid daily habit",               labelAr: "٣٠ دقيقة", descAr: "عادة يومية متينة" },
+  { minutes: 45, labelEn: "45 min",  descEn: "Deep learning sessions",            labelAr: "٤٥ دقيقة", descAr: "جلسات تعلّم عميق" },
+  { minutes: 60, labelEn: "1 hour",  descEn: "Intensive study",                   labelAr: "ساعة واحدة", descAr: "دراسة مكثّفة" },
+  { minutes: 90, labelEn: "1.5 hrs", descEn: "Exam preparation mode",             labelAr: "١.٥ ساعة", descAr: "وضع التحضير للامتحانات" },
+];
+
+export function StepDailyGoal({ data, onChange, locale }: { data: OnboardingData; onChange: (u: Partial<OnboardingData>) => void; locale: string }) {
+  const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  const selected = data.dailyGoalMinutes ?? 20;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold font-display">{t("How long do you want to study each day?", "كم دقيقة تريد أن تدرس كل يوم؟")}</h2>
+        <p className="text-muted-foreground mt-1 text-sm">{t("We'll remind you and track your streak. You can change this any time in Settings.", "سنذكّرك ونتابع سلسلة دراستك. يمكنك تغيير هذا في الإعدادات في أي وقت.")}</p>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" role="radiogroup" aria-label={t("Daily study goal options", "خيارات الهدف اليومي")}>
+        {GOAL_OPTIONS.map((opt) => {
+          const isSelected = selected === opt.minutes;
+          return (
+            <button
+              key={opt.minutes}
+              role="radio"
+              aria-checked={isSelected}
+              tabIndex={isSelected ? 0 : -1}
+              onClick={() => onChange({ dailyGoalMinutes: opt.minutes })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ dailyGoalMinutes: opt.minutes }); }
+              }}
+              className={[
+                "flex flex-col items-center justify-center gap-1 p-4 rounded-xl border-2 text-center transition-all",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+                isSelected
+                  ? "border-primary bg-primary/10 shadow-md"
+                  : "border-border hover:border-primary/40 hover:bg-muted",
+              ].join(" ")}
+              aria-label={`${locale === "ar" ? opt.labelAr : opt.labelEn} — ${locale === "ar" ? opt.descAr : opt.descEn}`}
+            >
+              <span className={`text-2xl font-bold font-display ${isSelected ? "text-primary" : "text-foreground"}`}>
+                {locale === "ar" ? opt.labelAr : opt.labelEn}
+              </span>
+              <span className="text-xs text-muted-foreground leading-tight">
+                {locale === "ar" ? opt.descAr : opt.descEn}
+              </span>
+              {isSelected && (
+                <span className="mt-1 text-[10px] font-semibold text-primary uppercase tracking-wide">
+                  {t("Selected", "محدد")}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-xs text-muted-foreground text-center">
+        {t(
+          `Your goal: ${selected} minutes per day. That's about ${Math.round(selected * 7 / 60 * 10) / 10} hours per week.`,
+          `هدفك: ${selected} دقيقة يومياً. هذا حوالي ${Math.round(selected * 7 / 60 * 10) / 10} ساعات أسبوعياً.`
+        )}
+      </p>
     </div>
   );
 }

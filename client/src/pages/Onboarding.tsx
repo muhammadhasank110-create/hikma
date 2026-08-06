@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import {
   StepAccessibility, StepLanguage, StepCurriculum,
-  StepPersonalisation, StepVoicePreferences, StepVoice,
+  StepPersonalisation, StepVoicePreferences, StepVoice, StepDailyGoal,
   type OnboardingData, TOTAL_STEPS,
 } from "./OnboardingSteps";
 
@@ -46,6 +46,7 @@ export default function Onboarding() {
     theme: "light",
     voiceEnabled: false,
     autoNarrate: false,
+    dailyGoalMinutes: 20,
   });
 
   const updateData = useCallback((updates: Partial<OnboardingData>) => {
@@ -115,6 +116,7 @@ export default function Onboarding() {
       letterSpacing: data.accessibilityProfile === "dyslexia" ? 0.05 : 0,
       lineHeight: data.accessibilityProfile === "dyslexia" ? 1.8 : 1.5,
       overlayTint: (data.accessibilityProfile === "dyslexia" ? "yellow" : "none") as "none" | "blue" | "yellow" | "peach" | "green" | "grey",
+      dailyGoalMinutes: data.dailyGoalMinutes,
     };
     try {
       const effectiveLocale = (data.locale === "both" ? "en" : data.locale) as "en" | "ar";
@@ -146,7 +148,7 @@ export default function Onboarding() {
     }
   };
 
-  const stepTitles = ["Accessibility", "Language", "Curriculum", "Personalise", "Voice & Audio", "Preview"];
+  const stepTitles = ["Accessibility", "Language", "Curriculum", "Personalise", "Voice & Audio", "Daily Goal", "Preview"];
 
   return (
     <div className="min-h-screen bg-background flex flex-col" dir={data.locale === "ar" ? "rtl" : "ltr"}>
@@ -193,7 +195,8 @@ export default function Onboarding() {
           {step === 3 && <StepCurriculum data={data} onChange={updateData} locale={data.locale} />}
           {step === 4 && <StepPersonalisation data={data} onChange={updateData} locale={data.locale} />}
           {step === 5 && <StepVoicePreferences data={data} onChange={updateData} locale={data.locale} />}
-          {step === 6 && <StepVoice data={data} locale={data.locale} />}
+          {step === 6 && <StepDailyGoal data={data} onChange={updateData} locale={data.locale} />}
+          {step === 7 && <StepVoice data={data} locale={data.locale} />}
         </div>
       </div>
 

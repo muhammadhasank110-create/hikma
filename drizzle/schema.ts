@@ -92,6 +92,9 @@ export const learnerProfiles = mysqlTable("learner_profiles", {
   eccAreas: json("eccAreas").$type<string[]>().default([]),
   tviId: int("tviId"),
 
+  // Daily study goal
+  dailyGoalMinutes: int("dailyGoalMinutes").default(20).notNull(),
+
   // Onboarding
   onboardingComplete: boolean("onboardingComplete").default(false).notNull(),
   onboardingStep: int("onboardingStep").default(0).notNull(),

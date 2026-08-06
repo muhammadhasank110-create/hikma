@@ -40,6 +40,7 @@ export interface LearnerProfileState {
   inputMethod: "keyboard" | "pointer" | "switch" | "voice" | "braille_display";
   singleKeyShortcuts: boolean;
   onboardingComplete: boolean;
+  dailyGoalMinutes: number;
 }
 
 const defaultProfile: LearnerProfileState = {
@@ -75,6 +76,7 @@ const defaultProfile: LearnerProfileState = {
   inputMethod: "keyboard",
   singleKeyShortcuts: true,
   onboardingComplete: false,
+  dailyGoalMinutes: 20,
 };
 
 interface ProfileContextValue {
@@ -168,6 +170,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       ...(db.inputMethod && { inputMethod: db.inputMethod }),
       ...(db.singleKeyShortcuts != null && { singleKeyShortcuts: Boolean(db.singleKeyShortcuts) }),
       ...(db.onboardingComplete != null && { onboardingComplete: Boolean(db.onboardingComplete) }),
+      ...(db.dailyGoalMinutes != null && { dailyGoalMinutes: Number(db.dailyGoalMinutes) }),
     }));
     if (db.locale) setLocaleState(db.locale as Locale);
   }, [profileQuery.data]);

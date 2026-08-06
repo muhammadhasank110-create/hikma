@@ -1,0 +1,1 @@
+ALTER TABLE `learner_profiles` ADD `dailyGoalMinutes` int DEFAULT 20 NOT NULL;

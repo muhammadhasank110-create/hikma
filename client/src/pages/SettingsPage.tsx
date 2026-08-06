@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Volume2, Eye, Type, Keyboard, Globe, Accessibility } from "lucide-react";
+import { Volume2, Eye, Type, Keyboard, Globe, Accessibility , Zap} from "lucide-react";
 
 export default function SettingsPage() {
   const { profile, updateProfile, locale, setLocale } = useProfile();
@@ -190,7 +190,38 @@ export default function SettingsPage() {
         </Row>
       </Section>
 
-      {/* Cognition */}
+      {/* Daily Goal */}
+      <Section icon={Zap} title={t("Daily Study Goal", "الهدف اليومي للدراسة")}>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">{t("How many minutes do you want to study each day?", "كم دقيقة تريد أن تدرس كل يوم؟")}</p>
+          <div className="grid grid-cols-3 gap-2">
+            {[10, 20, 30, 45, 60, 90].map(mins => (
+              <button
+                key={mins}
+                onClick={() => updateProfile({ dailyGoalMinutes: mins })}
+                className={[
+                  "py-2 px-3 rounded-lg border text-sm font-medium transition-colors",
+                  profile.dailyGoalMinutes === mins
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/40 hover:bg-muted text-foreground",
+                ].join(" ")}
+                aria-pressed={profile.dailyGoalMinutes === mins}
+                aria-label={`${mins} ${t("minutes per day", "دقيقة يومياً")}`}
+              >
+                {mins}{t("m", "د")}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t(
+              `Current goal: ${profile.dailyGoalMinutes} min/day · ${Math.round(profile.dailyGoalMinutes * 7 / 60 * 10) / 10} hrs/week`,
+              `الهدف الحالي: ${profile.dailyGoalMinutes} دقيقة/يوم · ${Math.round(profile.dailyGoalMinutes * 7 / 60 * 10) / 10} ساعات/أسبوع`
+            )}
+          </p>
+        </div>
+      </Section>
+
+            {/* Cognition */}
       <Section icon={Accessibility} title={t("Focus & Attention", "التركيز والانتباه")}>
         <Row label={t("Chunk size", "حجم المقطع")}>
           <Select value={profile.chunkSize} onValueChange={(v: any) => updateProfile({ chunkSize: v })}>

@@ -15,6 +15,13 @@
       "when": 1785768598854,
       "tag": "0001_organic_magma",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786034774530,
+      "tag": "0002_third_silver_sable",
+      "breakpoints": true
     }
   ]
 }

@@ -56,6 +56,7 @@ export const profileRouter = router({
       singleKeyShortcuts: z.boolean().optional(),
       onboardingComplete: z.boolean().optional(),
       onboardingStep: z.number().int().optional(),
+      dailyGoalMinutes: z.number().int().min(5).max(240).optional(),
       locale: z.enum(["ar", "en"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {

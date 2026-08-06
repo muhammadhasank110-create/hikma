@@ -132,11 +132,11 @@ export default function Dashboard() {
                 desc: t(`${totalConcepts} total concepts`, `${totalConcepts} مفهوم إجمالاً`),
               },
               {
-                label: t("Streak", "السلسلة"),
-                value: "—",
+                label: t("Daily Goal", "الهدف اليومي"),
+                value: `${profile.dailyGoalMinutes}m`,
                 icon: Zap,
                 colour: "text-orange-600 bg-orange-50 dark:bg-orange-950/30",
-                desc: t("Daily learning streak", "سلسلة التعلم اليومية"),
+                desc: t(`Daily study goal: ${profile.dailyGoalMinutes} minutes`, `الهدف اليومي: ${profile.dailyGoalMinutes} دقيقة`),
               },
             ].map(stat => {
               const Icon = stat.icon;
