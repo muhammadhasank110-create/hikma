@@ -221,7 +221,15 @@ export default function LessonPage() {
         setTopicQuestion(data.question);
         setShowTopicQuestion(true);
         setTopicAnswer("");
+        sounds.questionAppear();
+      } else {
+        // No question generated — just advance
+        advanceSection();
       }
+    },
+    onError: () => {
+      // If question generation fails, just advance without blocking
+      advanceSection();
     },
   });
   // Tap-any-word definition
@@ -298,7 +306,7 @@ export default function LessonPage() {
       const title = locale === "ar"
         ? (currentSection.titleAr ?? currentSection.titleEn ?? "")
         : (currentSection.titleEn ?? "");
-      if (body.trim().length > 50) {
+      if (body.trim().length > 20) {
         setQuestionSectionIndex(sectionIndex);
         generateQuestion.mutate({
           topicTitle: title,

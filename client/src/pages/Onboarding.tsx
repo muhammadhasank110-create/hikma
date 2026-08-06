@@ -104,11 +104,11 @@ const YEAR_GROUPS = [
 
 function profileToSettings(profile: AccessibilityProfile): Partial<OnboardingData> {
   switch (profile) {
-    case "blind":      return { mode: "audio_first", theme: "dark",         fontScale: 1.1, speechRate: 0.9 };
-    case "low_vision": return { mode: "audio_first", theme: "high_contrast", fontScale: 1.3, speechRate: 1.0 };
-    case "adhd":       return { mode: "focus",       theme: "calm",          fontScale: 1.1, speechRate: 1.0 };
-    case "dyslexia":   return { mode: "reading",     theme: "cream",         fontScale: 1.15, speechRate: 0.9 };
-    default:           return { mode: "reading",     theme: "light",         fontScale: 1.0, speechRate: 1.0 };
+    case "blind":      return { mode: "audio_first", theme: "dark",         fontScale: 1.1, speechRate: 0.9, autoNarrate: true, voiceEnabled: true };
+    case "low_vision": return { mode: "audio_first", theme: "high_contrast", fontScale: 1.3, speechRate: 1.0, autoNarrate: true, voiceEnabled: true };
+    case "adhd":       return { mode: "focus",       theme: "calm",          fontScale: 1.1, speechRate: 1.0, autoNarrate: false, voiceEnabled: false };
+    case "dyslexia":   return { mode: "reading",     theme: "cream",         fontScale: 1.15, speechRate: 0.9, autoNarrate: false, voiceEnabled: false };
+    default:           return { mode: "reading",     theme: "light",         fontScale: 1.0, speechRate: 1.0, autoNarrate: false, voiceEnabled: false };
   }
 }
 

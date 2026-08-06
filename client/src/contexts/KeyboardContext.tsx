@@ -1,19 +1,9 @@
 /**
- * KeyboardContext — Professional keyboard navigation for Hikma.
+ * KeyboardContext — True 2D spatial keyboard navigation for Hikma.
  *
- * Design principles (based on WCAG 2.2, APG patterns, Duolingo/Khan Academy):
- * 1. Tab / Shift+Tab — browser default, never override
- * 2. WASD / Arrow keys — move focus between ALL visible interactive elements
- * 3. Enter / Space — activate the focused element (click it)
- * 4. Escape — close modals, overlays, exit focus mode
- * 5. Skip text inputs — never steal keys from input fields
- * 6. Visual focus ring — always visible when keyboard is active
- *
- * Implementation:
- * - Uses getBoundingClientRect() to find visible elements (not offsetParent)
- * - Sorts elements by visual position (top → bottom, left → right)
- * - Plays a soft click sound on navigation
- * - Sets data-keyboard-nav on body to show CSS focus rings
+ * Up/Down (W/S) moves to the nearest element ABOVE/BELOW.
+ * Left/Right (A/D) moves to the nearest element on the same row.
+ * Enter/Space activates the focused element.
  */
 import { createContext, useContext, useEffect, useRef, ReactNode } from "react";
 import { sounds } from "@/hooks/useSounds";
@@ -41,46 +31,88 @@ const FOCUSABLE_SELECTOR = [
   "[role='switch']",
 ].join(",");
 
-/** Returns all visible, focusable elements sorted by visual position */
+interface Rect { top: number; left: number; bottom: number; right: number; cx: number; cy: number; }
+
+function getRect(el: HTMLElement): Rect {
+  const r = el.getBoundingClientRect();
+  return { top: r.top, left: r.left, bottom: r.bottom, right: r.right, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+}
+
 function getVisibleFocusables(): HTMLElement[] {
   const all = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
   return all.filter(el => {
-    const rect = el.getBoundingClientRect();
-    // Must have non-zero size and be within the viewport (or just below it)
-    return (
-      rect.width > 0 &&
-      rect.height > 0 &&
-      rect.top < window.innerHeight + 200 &&
-      rect.bottom > -200
-    );
-  }).sort((a, b) => {
-    const ra = a.getBoundingClientRect();
-    const rb = b.getBoundingClientRect();
-    // Sort top-to-bottom, then left-to-right
-    if (Math.abs(ra.top - rb.top) > 10) return ra.top - rb.top;
-    return ra.left - rb.left;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && r.top < window.innerHeight + 200 && r.bottom > -200;
   });
 }
 
-/** Check if the active element should receive arrow keys natively */
 function shouldPassThrough(el: Element | null): boolean {
   if (!el) return false;
   const tag = el.tagName.toLowerCase();
   const type = (el as HTMLInputElement).type?.toLowerCase();
   const role = el.getAttribute("role");
   return (
-    tag === "input" ||
-    tag === "textarea" ||
-    tag === "select" ||
-    (tag === "input" && (type === "range" || type === "number")) ||
-    role === "slider" ||
-    role === "spinbutton" ||
-    role === "listbox" ||
-    role === "combobox" ||
-    // Inside a scrollable container that should scroll
-    (el.closest('[role="listbox"]') !== null) ||
-    (el.closest('[role="combobox"]') !== null)
+    tag === "input" || tag === "textarea" || tag === "select" ||
+    type === "range" || type === "number" ||
+    role === "slider" || role === "spinbutton" || role === "listbox" || role === "combobox" ||
+    el.closest('[role="listbox"]') !== null || el.closest('[role="combobox"]') !== null
   );
+}
+
+/** Find the best candidate in a given direction using spatial proximity */
+function findNearest(
+  current: Rect,
+  candidates: { el: HTMLElement; rect: Rect }[],
+  direction: "up" | "down" | "left" | "right"
+): HTMLElement | null {
+  let best: { el: HTMLElement; dist: number } | null = null;
+
+  for (const c of candidates) {
+    let valid = false;
+    let dist = Infinity;
+
+    switch (direction) {
+      case "down":
+        // Element must be below (its top > current center Y)
+        valid = c.rect.cy > current.cy + 5;
+        if (valid) {
+          const dy = c.rect.cy - current.cy;
+          const dx = Math.abs(c.rect.cx - current.cx);
+          dist = dy + dx * 0.3; // Prefer elements directly below
+        }
+        break;
+      case "up":
+        valid = c.rect.cy < current.cy - 5;
+        if (valid) {
+          const dy = current.cy - c.rect.cy;
+          const dx = Math.abs(c.rect.cx - current.cx);
+          dist = dy + dx * 0.3;
+        }
+        break;
+      case "right":
+        valid = c.rect.cx > current.cx + 5;
+        if (valid) {
+          const dx = c.rect.cx - current.cx;
+          const dy = Math.abs(c.rect.cy - current.cy);
+          dist = dx + dy * 0.3;
+        }
+        break;
+      case "left":
+        valid = c.rect.cx < current.cx - 5;
+        if (valid) {
+          const dx = current.cx - c.rect.cx;
+          const dy = Math.abs(c.rect.cy - current.cy);
+          dist = dx + dy * 0.3;
+        }
+        break;
+    }
+
+    if (valid && dist < (best?.dist ?? Infinity)) {
+      best = { el: c.el, dist };
+    }
+  }
+
+  return best?.el ?? null;
 }
 
 export function KeyboardProvider({ children }: { children: ReactNode }) {
@@ -89,7 +121,6 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const body = document.body;
 
-    // Activate keyboard mode on any key press, deactivate on mouse click
     const onKeyDown = (e: KeyboardEvent) => {
       if (!isKeyboardActiveRef.current) {
         isKeyboardActiveRef.current = true;
@@ -97,56 +128,56 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
       }
 
       const active = document.activeElement as HTMLElement | null;
-
-      // Never steal keys from text inputs
       if (shouldPassThrough(active)) return;
 
       const key = e.key;
-      const isNav = ["w", "a", "s", "d", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"].includes(key);
+      const dirMap: Record<string, "up" | "down" | "left" | "right"> = {
+        ArrowUp: "up", w: "up", W: "up",
+        ArrowDown: "down", s: "down", S: "down",
+        ArrowLeft: "left", a: "left", A: "left",
+        ArrowRight: "right", d: "right", D: "right",
+      };
+
+      const direction = dirMap[key];
       const isActivate = key === "Enter" || key === " ";
 
-      if (isNav) {
+      if (direction) {
         e.preventDefault();
         const focusables = getVisibleFocusables();
         if (focusables.length === 0) return;
 
-        const currentIdx = active ? focusables.indexOf(active) : -1;
-        const isForward = key === "s" || key === "d" || key === "ArrowDown" || key === "ArrowRight";
-        const isBackward = key === "w" || key === "a" || key === "ArrowUp" || key === "ArrowLeft";
-
-        let nextIdx: number;
-        if (currentIdx === -1) {
-          nextIdx = 0;
-        } else if (isForward) {
-          nextIdx = Math.min(focusables.length - 1, currentIdx + 1);
-        } else if (isBackward) {
-          nextIdx = Math.max(0, currentIdx - 1);
-        } else {
+        // If nothing is focused, focus the first element
+        if (!active || active === document.body || !focusables.includes(active)) {
+          const first = focusables[0];
+          if (first) {
+            first.focus({ preventScroll: false });
+            first.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            sounds.click();
+            announceElement(first);
+          }
           return;
         }
 
-        const target = focusables[nextIdx];
-        if (target && target !== active) {
+        const currentRect = getRect(active);
+        const candidates = focusables
+          .filter(el => el !== active)
+          .map(el => ({ el, rect: getRect(el) }));
+
+        const target = findNearest(currentRect, candidates, direction);
+
+        if (target) {
           target.focus({ preventScroll: false });
           target.scrollIntoView({ block: "nearest", behavior: "smooth" });
           sounds.click();
-
-          // Announce element for screen readers / blind mode
-          const label =
-            target.getAttribute("aria-label") ||
-            target.getAttribute("title") ||
-            target.textContent?.trim().slice(0, 60) ||
-            target.tagName.toLowerCase();
-          // Dispatch a custom event that useAccessibilityProfile can listen to
-          window.dispatchEvent(new CustomEvent("hikma:focus-announce", { detail: { label } }));
+          announceElement(target);
         }
         return;
       }
 
       if (isActivate && active && active !== document.body) {
-        // Don't double-fire Enter on buttons/links (browser handles those)
         const tag = active.tagName.toLowerCase();
         const role = active.getAttribute("role");
+        // Don't double-fire on native interactive elements
         if (tag === "button" || tag === "a" || role === "button" || role === "link") return;
         e.preventDefault();
         active.click();
@@ -161,7 +192,6 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Use capture so we get the event before React handlers
     window.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("mousedown", onMouseDown, true);
 
@@ -176,6 +206,15 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
       {children}
     </KeyboardContext.Provider>
   );
+}
+
+function announceElement(el: HTMLElement) {
+  const label =
+    el.getAttribute("aria-label") ||
+    el.getAttribute("title") ||
+    el.textContent?.trim().slice(0, 80) ||
+    el.tagName.toLowerCase();
+  window.dispatchEvent(new CustomEvent("hikma:focus-announce", { detail: { label } }));
 }
 
 export function useKeyboard() {
