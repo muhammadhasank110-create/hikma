@@ -548,3 +548,17 @@
   outline: 3px solid #fff !important;
   outline-offset: 3px !important;
 }
+
+/* ── Keyboard navigation focus rings ─────────────────────────────────────── */
+/* Only show strong focus rings when user is navigating by keyboard           */
+[data-keyboard-nav] *:focus-visible,
+[data-keyboard-nav] *:focus {
+  outline: 3px solid oklch(from rgb(var(--forest-deep)) l c h) !important;
+  outline-offset: 3px !important;
+  border-radius: 4px;
+}
+[data-theme="high_contrast"][data-keyboard-nav] *:focus-visible,
+[data-theme="high_contrast"][data-keyboard-nav] *:focus {
+  outline: 3px solid #ffff00 !important;
+  outline-offset: 3px !important;
+}

@@ -1,8 +1,13 @@
 /**
- * VoiceCommandOverlay — floating mic badge with three states:
- *  OFF      → grey mic-off icon (click to enable)
- *  STANDBY  → green pulsing mic icon (waiting for "Hikma" wake word)
- *  COMMAND  → red pulsing mic icon (actively listening for command)
+ * VoiceCommandOverlay — floating mic button (bottom-left).
+ *
+ * States:
+ *  OFF      → grey MicOff icon — click to enable voice commands
+ *  STANDBY  → green Mic icon with pulse ring — waiting for "Hikma" wake word
+ *  COMMAND  → red Mic icon with pulse — actively listening for a command
+ *
+ * Mute = OFF state. Unmute = STANDBY state.
+ * The button label always describes what clicking it will DO next.
  */
 import { Mic, MicOff } from "lucide-react";
 import { useVoiceCommands, type VoiceCommandAction } from "@/hooks/useVoiceCommands";
@@ -56,7 +61,6 @@ export function VoiceCommandOverlay() {
         window.dispatchEvent(new CustomEvent("hikma:prev_section"));
         break;
       case "unknown":
-        // Handled inside the hook with a toast
         break;
       default:
         break;
@@ -71,44 +75,70 @@ export function VoiceCommandOverlay() {
 
   const isOff = mode === "off";
 
-  const ariaLabel = isListening
-    ? (locale === "ar" ? "إيقاف الاستماع" : "Stop listening")
+  // Label describes what clicking will DO
+  const label = isListening
+    ? (locale === "ar" ? "إيقاف الاستماع" : "Mute — stop listening")
     : isStandby
-    ? (locale === "ar" ? 'في وضع الانتظار — قل "حكمة"' : 'Standby — say "Hikma" to command')
+    ? (locale === "ar" ? 'في وضع الانتظار — قل "حكمة"' : 'Listening — say "Hikma"')
     : (locale === "ar" ? "تفعيل الأوامر الصوتية" : "Enable voice commands");
 
   return (
-    <button
-      onClick={toggleVoice}
-      aria-label={ariaLabel}
-      aria-pressed={!isOff}
-      title={ariaLabel}
-      className={[
-        "fixed bottom-6 right-6 z-[300] w-12 h-12 rounded-full shadow-lg",
-        "flex items-center justify-center transition-all duration-200 relative",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-        isListening
-          ? "bg-red-500 text-white animate-pulse scale-110"
-          : isStandby
-          ? "bg-primary text-primary-foreground scale-100"
-          : "bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:scale-105",
-      ].join(" ")}
+    <div
+      className="fixed bottom-6 left-6 z-[300] flex flex-col items-start gap-1"
+      role="region"
+      aria-label={locale === "ar" ? "الأوامر الصوتية" : "Voice commands"}
     >
-      {isOff ? (
-        <MicOff className="w-5 h-5" />
-      ) : (
-        <Mic className={`w-5 h-5 ${isStandby ? "opacity-80" : ""}`} />
-      )}
-      {/* Standby pulse ring */}
-      {isStandby && (
+      {/* Status label — only shown when active */}
+      {!isOff && (
         <span
-          aria-hidden="true"
-          className="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-30"
-        />
+          aria-live="polite"
+          className={[
+            "text-xs font-semibold px-2 py-0.5 rounded-full select-none pointer-events-none",
+            isListening
+              ? "bg-red-500 text-white"
+              : "bg-primary text-primary-foreground",
+          ].join(" ")}
+        >
+          {isListening
+            ? (locale === "ar" ? "يستمع…" : "Listening…")
+            : (locale === "ar" ? 'قل "حكمة"' : 'Say "Hikma"')}
+        </span>
       )}
-      {isListening && (
-        <span className="sr-only">{locale === "ar" ? "يستمع للأوامر…" : "Listening for commands…"}</span>
-      )}
-    </button>
+
+      {/* Mic button */}
+      <button
+        onClick={toggleVoice}
+        aria-label={label}
+        aria-pressed={!isOff}
+        title={label}
+        className={[
+          "relative w-14 h-14 rounded-full shadow-xl",
+          "flex items-center justify-center",
+          "transition-all duration-200",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
+          isListening
+            ? "bg-red-500 text-white scale-110"
+            : isStandby
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted/90 text-muted-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:scale-105",
+        ].join(" ")}
+      >
+        {isOff
+          ? <MicOff className="w-6 h-6" aria-hidden="true" />
+          : <Mic className="w-6 h-6" aria-hidden="true" />
+        }
+
+        {/* Pulse ring when standby or listening */}
+        {(isStandby || isListening) && (
+          <span
+            aria-hidden="true"
+            className={[
+              "absolute inset-0 rounded-full border-2 animate-ping opacity-40",
+              isListening ? "border-red-400" : "border-primary",
+            ].join(" ")}
+          />
+        )}
+      </button>
+    </div>
   );
 }

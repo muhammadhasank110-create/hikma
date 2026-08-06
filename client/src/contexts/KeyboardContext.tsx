@@ -45,6 +45,77 @@ export function KeyboardProvider({ children }: { children: React.ReactNode }) {
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
   const [shortcutSheetOpen, setShortcutSheetOpen] = React.useState(false);
 
+  // ── Keyboard-nav mode detection ───────────────────────────────────────────
+  // Add data-keyboard-nav to <body> when user presses any key so focus rings
+  // are always visible. Remove it on mouse click.
+  useEffect(() => {
+    const onKey = () => document.body.setAttribute("data-keyboard-nav", "true");
+    const onMouse = () => document.body.removeAttribute("data-keyboard-nav");
+    window.addEventListener("keydown", onKey, true);
+    window.addEventListener("mousedown", onMouse, true);
+    return () => {
+      window.removeEventListener("keydown", onKey, true);
+      window.removeEventListener("mousedown", onMouse, true);
+    };
+  }, []);
+
+  // ── Arrow key + Enter navigation ─────────────────────────────────────────
+  useEffect(() => {
+    const FOCUSABLE = [
+      'a[href]', 'button:not([disabled])', 'input:not([disabled])',
+      'select:not([disabled])', 'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])', '[role="button"]',
+      '[role="link"]', '[role="menuitem"]', '[role="option"]',
+      '[role="tab"]', '[role="checkbox"]', '[role="radio"]',
+    ].join(',');
+
+    const getFocusables = (): HTMLElement[] =>
+      Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(el => {
+        if (el.offsetParent === null) return false;
+        const s = window.getComputedStyle(el);
+        return s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
+      });
+
+    const navHandler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const tag = target.tagName;
+      const isTextInput = (tag === 'INPUT' && !['checkbox','radio','button','submit','reset'].includes((target as HTMLInputElement).type))
+        || tag === 'TEXTAREA' || target.isContentEditable;
+
+      // Arrow keys: move focus (skip inside text inputs)
+      if (!isTextInput && (e.key === 'ArrowDown' || e.key === 'ArrowRight')) {
+        // Don't override if inside a select, slider, or combobox
+        if (tag === 'SELECT' || target.getAttribute('role') === 'combobox') return;
+        e.preventDefault();
+        const all = getFocusables();
+        const idx = all.indexOf(document.activeElement as HTMLElement);
+        (all[idx + 1] ?? all[0])?.focus();
+        return;
+      }
+      if (!isTextInput && (e.key === 'ArrowUp' || e.key === 'ArrowLeft')) {
+        if (tag === 'SELECT' || target.getAttribute('role') === 'combobox') return;
+        e.preventDefault();
+        const all = getFocusables();
+        const idx = all.indexOf(document.activeElement as HTMLElement);
+        (all[idx - 1] ?? all[all.length - 1])?.focus();
+        return;
+      }
+
+      // Enter / Space: click any focused non-native element
+      if (e.key === 'Enter' && !isTextInput) {
+        const active = document.activeElement as HTMLElement;
+        if (!active) return;
+        // Native interactive elements already handle Enter — only intercept custom ones
+        if (['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(active.tagName)) return;
+        e.preventDefault();
+        active.click();
+      }
+    };
+
+    window.addEventListener('keydown', navHandler, true);
+    return () => window.removeEventListener('keydown', navHandler, true);
+  }, []);
+
   const registerShortcut = useCallback((shortcut: Shortcut) => {
     shortcutsRef.current.set(shortcut.id, shortcut);
     return () => shortcutsRef.current.delete(shortcut.id);

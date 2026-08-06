@@ -83,6 +83,7 @@ interface ProfileContextValue {
   dir: "ltr" | "rtl";
   setLocale: (locale: Locale) => void;
   updateProfile: (updates: Partial<LearnerProfileState>) => void;
+  updateProfileAsync: (updates: Partial<LearnerProfileState>) => Promise<void>;
   setMode: (mode: LearnerMode) => void;
   isLoading: boolean;
 }
@@ -93,6 +94,7 @@ const ProfileContext = createContext<ProfileContextValue>({
   dir: "ltr",
   setLocale: () => {},
   updateProfile: () => {},
+  updateProfileAsync: async () => {},
   setMode: () => {},
   isLoading: false,
 });
@@ -108,7 +110,10 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   // Load profile from DB when authenticated
   const profileQuery = trpc.profile.get.useQuery(undefined, {
     enabled: isAuthenticated,
-    staleTime: 60_000,
+    // Never auto-refetch — we manage state optimistically in updateProfile.
+    // Only refetch on explicit invalidation (e.g. after mutation error).
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
   const utils = trpc.useUtils();
   const updateProfileMutation = trpc.profile.update.useMutation({
@@ -210,6 +215,15 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Async version — awaits the DB write before resolving.
+  // Use this in Onboarding's handleFinish so navigation happens AFTER the DB is updated.
+  const updateProfileAsync = async (updates: Partial<LearnerProfileState>) => {
+    setProfile(prev => ({ ...prev, ...updates }));
+    if (isAuthenticated) {
+      await updateProfileMutation.mutateAsync(updates as any);
+    }
+  };
+
   const setMode = (mode: LearnerMode) => {
     const modeDefaults: Record<LearnerMode, Partial<LearnerProfileState>> = {
       audio_first: { mode, primaryModality: "audio", autoNarrate: true, earcons: true, theme: "light" },
@@ -221,7 +235,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <ProfileContext.Provider value={{ profile, locale, dir, setLocale, updateProfile, setMode, isLoading }}>
+    <ProfileContext.Provider value={{ profile, locale, dir, setLocale, updateProfile, updateProfileAsync, setMode, isLoading }}>
       {children}
     </ProfileContext.Provider>
   );

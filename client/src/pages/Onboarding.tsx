@@ -436,7 +436,7 @@ function StepVoice({ data, onChange, locale }: { data: OnboardingData; onChange:
 // ── Main Onboarding Component ──────────────────────────────────────────────────
 export default function Onboarding() {
   const [, navigate] = useLocation();
-  const { updateProfile, setLocale } = useProfile();
+  const { updateProfile, updateProfileAsync, setLocale } = useProfile();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const stepRef = useRef<HTMLDivElement>(null);
@@ -497,8 +497,9 @@ export default function Onboarding() {
       const effectiveLocale = (data.locale === "both" ? "en" : data.locale) as "en" | "ar";
       setLocale(effectiveLocale);
 
-      // Save all settings to DB via updateProfile
-      updateProfile({
+      // Save all settings to DB via updateProfileAsync — await so DB is written BEFORE navigation.
+      // This prevents the profileQuery refetch from overwriting the new theme/settings.
+      await updateProfileAsync({
         mode: data.mode,
         curriculum: curriculumMap[data.curriculum] ?? "IGCSE Edexcel",
         theme: data.theme as any,
