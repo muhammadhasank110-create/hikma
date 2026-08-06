@@ -71,9 +71,13 @@ export function KeyboardProvider({ children }: { children: React.ReactNode }) {
 
     const getFocusables = (): HTMLElement[] =>
       Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(el => {
-        if (el.offsetParent === null) return false;
+        // offsetParent is null for position:fixed elements, so use getBoundingClientRect instead
+        const rect = el.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) return false;
         const s = window.getComputedStyle(el);
-        return s.display !== 'none' && s.visibility !== 'hidden' && s.opacity !== '0';
+        if (s.display === 'none' || s.visibility === 'hidden') return false;
+        if ((el as HTMLButtonElement).disabled) return false;
+        return true;
       });
 
     const navHandler = (e: KeyboardEvent) => {

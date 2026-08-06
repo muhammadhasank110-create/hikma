@@ -19,7 +19,7 @@ import {
   ChevronLeft, ChevronRight, Check, Volume2
 } from "lucide-react";
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 type AccessibilityProfile = "blind" | "low_vision" | "adhd" | "dyslexia" | "none" | null;
 
@@ -32,6 +32,8 @@ interface OnboardingData {
   fontScale: number;
   speechRate: number;
   theme: string;
+  voiceEnabled: boolean;
+  autoNarrate: boolean;
 }
 
 const PROFILES = [
@@ -177,7 +179,7 @@ function StepAccessibility({ data, onChange, locale }: {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm">{t(profile.titleEn, profile.titleAr)}</span>
+                    <span className="font-semibold text-sm text-foreground">{t(profile.titleEn, profile.titleAr)}</span>
                     {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" aria-hidden="true" />}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{t(profile.descEn, profile.descAr)}</p>
@@ -373,7 +375,93 @@ function StepPersonalisation({ data, onChange, locale }: { data: OnboardingData;
   );
 }
 
-// ── Step 5: Voice preview ──────────────────────────────────────────────────────
+
+// ── Step 5: Voice & Audio Preferences ─────────────────────────────────────────
+function StepVoicePreferences({ data, onChange, locale }: { data: OnboardingData; onChange: (u: Partial<OnboardingData>) => void; locale: string }) {
+  const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  return (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">{t("Voice & Audio", "الصوت والصوتيات")}</h2>
+        <p className="text-muted-foreground text-sm">
+          {t("Set up how Hikma speaks and listens for you.", "اضبط كيف تتحدث حكمة وتستمع إليك.")}
+        </p>
+      </div>
+      {/* Voice commands */}
+      <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-semibold">{t("Voice commands", "الأوامر الصوتية")}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t('Say "Hikma" to activate, then give a command. Works in Chrome and Edge.', 'قل "حكمة" للتفعيل ثم أعطِ أمراً. يعمل في Chrome و Edge.')}
+            </p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={data.voiceEnabled}
+            aria-label={t("Enable voice commands", "تفعيل الأوامر الصوتية")}
+            tabIndex={0}
+            onClick={() => onChange({ voiceEnabled: !data.voiceEnabled })}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ voiceEnabled: !data.voiceEnabled }); }}}
+            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.voiceEnabled ? "bg-primary" : "bg-muted"}`}
+          >
+            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${data.voiceEnabled ? "translate-x-6" : "translate-x-0.5"}`} />
+          </button>
+        </div>
+        {data.voiceEnabled && (
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 text-xs text-muted-foreground space-y-1">
+            <p>• {t('"Hikma, open tutor" — opens Hikma AI', '"حكمة، افتح المعلم" — يفتح حكمة AI')}</p>
+            <p>• {t('"Hikma, next section" — moves forward', '"حكمة، القسم التالي" — ينتقل للأمام')}</p>
+            <p>• {t('"Hikma, read aloud" — reads the page', '"حكمة، اقرأ بصوت" — يقرأ الصفحة')}</p>
+            <p>• {t('"Hikma, go home" — goes to dashboard', '"حكمة، الرئيسية" — يذهب للوحة التحكم')}</p>
+          </div>
+        )}
+      </div>
+      {/* Auto-narrate */}
+      <div className="bg-card border border-border rounded-2xl p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-semibold">{t("Auto-read lessons aloud", "قراءة الدروس تلقائياً")}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {t("Hikma will automatically read each lesson section when it loads.", "ستقرأ حكمة كل قسم من الدرس تلقائياً عند تحميله.")}
+            </p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={data.autoNarrate}
+            aria-label={t("Auto-read lessons aloud", "قراءة الدروس تلقائياً")}
+            tabIndex={0}
+            onClick={() => onChange({ autoNarrate: !data.autoNarrate })}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ autoNarrate: !data.autoNarrate }); }}}
+            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.autoNarrate ? "bg-primary" : "bg-muted"}`}
+          >
+            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${data.autoNarrate ? "translate-x-6" : "translate-x-0.5"}`} />
+          </button>
+        </div>
+      </div>
+      {/* Note for blind users */}
+      {(data.accessibilityProfile === "blind" || data.accessibilityProfile === "low_vision") && (
+        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 text-sm">
+          <p className="font-semibold text-blue-800 dark:text-blue-200">{t("Recommended for you", "موصى به لك")}</p>
+          <p className="text-blue-700 dark:text-blue-300 text-xs mt-1">
+            {t("Both voice commands and auto-read are recommended for your accessibility profile.", "يُوصى بتفعيل الأوامر الصوتية والقراءة التلقائية لملف إمكانية الوصول الخاص بك.")}
+          </p>
+          <button
+            tabIndex={0}
+            onClick={() => onChange({ voiceEnabled: true, autoNarrate: true })}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ voiceEnabled: true, autoNarrate: true }); }}}
+            className="mt-2 text-xs font-semibold text-blue-700 dark:text-blue-300 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label={t("Enable both voice commands and auto-read", "تفعيل الأوامر الصوتية والقراءة التلقائية")}
+          >
+            {t("Enable both →", "تفعيل كليهما →")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Step 6: Voice preview ──────────────────────────────────────────────────────
 function StepVoice({ data, locale }: { data: OnboardingData; locale: string }) {
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   const [tested, setTested] = useState(false);
@@ -456,6 +544,8 @@ export default function Onboarding() {
     fontScale: 1.0,
     speechRate: 1.0,
     theme: "light",
+    voiceEnabled: false,
+    autoNarrate: false,
   });
 
   const updateData = useCallback((updates: Partial<OnboardingData>) => {
@@ -500,7 +590,7 @@ export default function Onboarding() {
         theme: data.theme as any,
         fontScale: data.fontScale,
         speechRate: data.speechRate,
-        autoNarrate: data.mode === "audio_first",
+        autoNarrate: data.autoNarrate || data.mode === "audio_first",
         reduceMotion: data.accessibilityProfile === "adhd",
         fontFamily: data.accessibilityProfile === "dyslexia" ? "atkinson" : "atkinson",
         letterSpacing: data.accessibilityProfile === "dyslexia" ? 0.05 : 0,
@@ -517,7 +607,7 @@ export default function Onboarding() {
     }
   };
 
-  const stepTitles = ["Accessibility", "Language", "Curriculum", "Personalise", "Voice"];
+  const stepTitles = ["Accessibility", "Language", "Curriculum", "Personalise", "Voice & Audio", "Preview"];
 
   return (
     <div className="min-h-screen bg-background flex flex-col" dir={data.locale === "ar" ? "rtl" : "ltr"}>
@@ -563,7 +653,8 @@ export default function Onboarding() {
           {step === 2 && <StepLanguage data={data} onChange={updateData} locale={data.locale} />}
           {step === 3 && <StepCurriculum data={data} onChange={updateData} locale={data.locale} />}
           {step === 4 && <StepPersonalisation data={data} onChange={updateData} locale={data.locale} />}
-          {step === 5 && <StepVoice data={data} locale={data.locale} />}
+          {step === 5 && <StepVoicePreferences data={data} onChange={updateData} locale={data.locale} />}
+          {step === 6 && <StepVoice data={data} locale={data.locale} />}
         </div>
       </div>
 

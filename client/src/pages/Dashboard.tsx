@@ -1,21 +1,41 @@
+/**
+ * Dashboard — professional, accessibility-first home screen.
+ *
+ * Design principles:
+ * - Large tap targets (min 48px)
+ * - High contrast text on all backgrounds
+ * - Clear visual hierarchy: greeting → quick actions → subjects
+ * - Keyboard navigable: Tab moves through all cards, Enter activates
+ * - Screen reader: all cards have aria-label with full context
+ * - No decorative icons without aria-hidden
+ */
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useProfile } from "@/contexts/ProfileContext";
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { startLogin } from "@/const";
 import {
-  BookOpen, Bot, TrendingUp, Layers, ChevronRight,
-  GraduationCap, Star, Clock, Target, Zap
+  Bot, TrendingUp, Layers, ChevronRight,
+  GraduationCap, Star, BookOpen, Zap
 } from "lucide-react";
 
-const SUBJECT_ICONS: Record<string, any> = {
-  Mathematics: "📐", Science: "🔬", English: "📖",
-  Biology: "🌿", Physics: "⚡", Chemistry: "🧪",
+const CURRICULUM_LABEL: Record<string, string> = {
+  igcse_edexcel: "IGCSE Edexcel",
+  qatar_moehe: "Qatar MoEHE",
+  igcse_caie: "IGCSE Cambridge",
+  gcse: "GCSE (UK)",
+  ib: "IB",
+  a_level: "A Level",
+  none: "",
+};
+
+const MODE_LABEL: Record<string, string> = {
+  audio_first: "Audio-First",
+  focus: "Focus",
+  reading: "Reading",
+  custom: "Custom",
 };
 
 export default function Dashboard() {
@@ -25,163 +45,207 @@ export default function Dashboard() {
 
   const { data: curricula, isLoading: loadingCurricula } = trpc.curriculum.list.useQuery();
   const { data: mastery } = trpc.progress.getMastery.useQuery(undefined, { enabled: isAuthenticated });
-  const { data: eccAreas } = trpc.ecc.areas.useQuery();
 
   const masteredCount = mastery?.filter(m => m.level >= 4).length ?? 0;
   const totalConcepts = mastery?.length ?? 0;
-  const progressPct = totalConcepts > 0 ? Math.round((masteredCount / totalConcepts) * 100) : 0;
+  const inProgressCount = mastery?.filter(m => m.level > 0 && m.level < 4).length ?? 0;
 
   const greeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t("Good morning", "صباح الخير");
-    if (hour < 17) return t("Good afternoon", "مساء الخير");
+    const h = new Date().getHours();
+    if (h < 12) return t("Good morning", "صباح الخير");
+    if (h < 17) return t("Good afternoon", "مساء الخير");
     return t("Good evening", "مساء النور");
   };
 
+  const currLabel = CURRICULUM_LABEL[profile.curriculum ?? ""] || "";
+  const modeLabel = MODE_LABEL[profile.mode ?? "reading"] || "Reading";
+
   return (
-    <div className="container py-8 space-y-8 max-w-5xl">
-      {/* Hero greeting */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div className="space-y-1 animate-arrive">
-          <p className="text-sm text-muted-foreground">{greeting()}</p>
-          <h1 className="text-2xl font-bold">
-            {isAuthenticated ? user?.name : t("Welcome to Hikma", "أهلاً بك في حكمة")}
-          </h1>
-          <div className="flex items-center gap-2 flex-wrap mt-1">
-          {profile.curriculum !== "none" && (
-             <Badge variant="secondary" className="text-xs">
-                {profile.curriculum === "qatar_moehe" ? "Qatar MoEHE" :
-                 profile.curriculum === "igcse_edexcel" ? "IGCSE Edexcel" :
-                 profile.curriculum.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
-             </Badge>
-           )}
-           <Badge variant="outline" className="text-xs capitalize">
-              {t(
-                profile.mode === "audio_first" ? "Audio-First Mode" :
-                profile.mode === "focus" ? "Focus Mode" :
-                profile.mode === "reading" ? "Reading Mode" : "Custom Mode",
-                profile.mode === "audio_first" ? "وضع الصوت أولاً" :
-                profile.mode === "focus" ? "وضع التركيز" :
-                profile.mode === "reading" ? "وضع القراءة" : "وضع مخصص"
-              )}
-           </Badge>
+    <main id="main-content" className="container py-8 space-y-10 max-w-4xl" aria-label={t("Dashboard", "لوحة التحكم")}>
+
+      {/* ── Greeting ──────────────────────────────────────────────────── */}
+      <section aria-label={t("Welcome", "مرحباً")}>
+        <p className="text-sm text-muted-foreground font-medium" aria-hidden="true">{greeting()}</p>
+        <h1 className="text-3xl font-bold mt-1 tracking-tight">
+          {isAuthenticated ? user?.name : t("Welcome to Hikma", "أهلاً بك في حكمة")}
+        </h1>
+        {(currLabel || modeLabel) && (
+          <div className="flex items-center gap-2 mt-3 flex-wrap" aria-label={t("Your profile", "ملفك الشخصي")}>
+            {currLabel && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                <GraduationCap className="w-3 h-3" aria-hidden="true" />
+                {currLabel}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-muted text-muted-foreground border border-border">
+              {modeLabel} {t("Mode", "وضع")}
+            </span>
           </div>
-        </div>
+        )}
         {!isAuthenticated && (
-          <Button onClick={() => startLogin()} className="animate-arrive animate-arrive-delay-1">
+          <Button
+            onClick={() => startLogin()}
+            className="mt-4"
+            aria-label={t("Sign in to save your progress and personalise Hikma", "سجّل الدخول لحفظ تقدمك وتخصيص حكمة")}
+          >
             {t("Sign in to save progress", "سجّل الدخول لحفظ تقدمك")}
           </Button>
         )}
-      </div>
+      </section>
 
-      {/* Quick stats */}
+      {/* ── Stats row (authenticated only) ────────────────────────────── */}
       {isAuthenticated && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-arrive animate-arrive-delay-1">
-          {[
-            { icon: Star, label: t("Mastered", "مُتقَن"), value: masteredCount, color: "text-yellow-600" },
-            { icon: TrendingUp, label: t("Progress", "التقدم"), value: `${progressPct}%`, color: "text-green-600" },
-            { icon: Target, label: t("Concepts", "المفاهيم"), value: totalConcepts, color: "text-blue-600" },
-            { icon: Zap, label: t("Streak", "السلسلة"), value: "—", color: "text-orange-600" },
-          ].map(({ icon: Icon, label, value, color }) => (
-            <Card key={label} className="hover:border-primary/50 transition-colors">
-              <CardContent className="p-4 flex items-center gap-3">
-                <Icon className={`w-5 h-5 ${color} flex-shrink-0`} />
-                <div>
-                 <p className="text-xs text-muted-foreground">{label}</p>
-                  <p className="text-lg font-bold tabular-nums [font-variant-numeric:normal]">{value}</p>
+        <section aria-label={t("Your learning stats", "إحصائيات تعلمك")}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              {
+                label: t("Mastered", "أتقنت"),
+                value: masteredCount,
+                icon: Star,
+                colour: "text-amber-600 bg-amber-50 dark:bg-amber-950/30",
+                desc: t(`${masteredCount} concepts fully mastered`, `${masteredCount} مفهوم مُتقَن بالكامل`),
+              },
+              {
+                label: t("In Progress", "قيد التعلم"),
+                value: inProgressCount,
+                icon: TrendingUp,
+                colour: "text-green-700 bg-green-50 dark:bg-green-950/30",
+                desc: t(`${inProgressCount} concepts in progress`, `${inProgressCount} مفهوم قيد التعلم`),
+              },
+              {
+                label: t("Total Concepts", "إجمالي المفاهيم"),
+                value: totalConcepts,
+                icon: BookOpen,
+                colour: "text-blue-700 bg-blue-50 dark:bg-blue-950/30",
+                desc: t(`${totalConcepts} total concepts`, `${totalConcepts} مفهوم إجمالاً`),
+              },
+              {
+                label: t("Streak", "السلسلة"),
+                value: "—",
+                icon: Zap,
+                colour: "text-orange-600 bg-orange-50 dark:bg-orange-950/30",
+                desc: t("Daily learning streak", "سلسلة التعلم اليومية"),
+              },
+            ].map(stat => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className="bg-card border border-border rounded-2xl p-4 space-y-2"
+                  aria-label={stat.desc}
+                >
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${stat.colour}`}>
+                    <Icon className="w-4 h-4" aria-hidden="true" />
+                  </div>
+                  <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
+                  <p className="text-2xl font-bold leading-none">{stat.value}</p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-arrive animate-arrive-delay-2">
-        <Link href="/tutor">
-          <Card className="cursor-pointer hover:border-primary hover:shadow-md transition-all group h-full">
-            <CardContent className="p-5 flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                <Bot className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">{t("Hikma AI", "حكمة AI")}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{t("A calm space to ask anything", "مساحة هادئة لطرح أي سؤال")}</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto flex-shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/progress">
-          <Card className="cursor-pointer hover:border-primary hover:shadow-md transition-all group h-full">
-            <CardContent className="p-5 flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-green-100 group-hover:bg-green-200 transition-colors">
-                <TrendingUp className="w-5 h-5 text-green-700" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">{t("My Progress", "تقدمي")}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{t("See how far you've arrived", "شاهد مدى تقدمك في رحلتك")}</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto flex-shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/ecc">
-          <Card className="cursor-pointer hover:border-primary hover:shadow-md transition-all group h-full">
-            <CardContent className="p-5 flex items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-purple-100 group-hover:bg-purple-200 transition-colors">
-                <Layers className="w-5 h-5 text-purple-700" />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">{t("ECC", "المنهج الموسّع")}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{t("9 foundational skill areas", "9 مجالات مهارية أساسية")}</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto flex-shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
-
-      {/* Curricula / Subjects */}
-      <div className="space-y-4 animate-arrive animate-arrive-delay-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">{t("Your Curricula", "مناهجك الدراسية")}</h2>
+      {/* ── Quick actions ──────────────────────────────────────────────── */}
+      <section aria-label={t("Quick actions", "الإجراءات السريعة")}>
+        <h2 className="text-base font-semibold text-muted-foreground mb-3 uppercase tracking-wide text-xs">
+          {t("Quick access", "وصول سريع")}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            {
+              href: "/tutor",
+              icon: Bot,
+              iconBg: "bg-primary/10 text-primary",
+              title: t("Hikma AI", "حكمة AI"),
+              desc: t("Ask anything. Get guided, not told.", "اسأل أي شيء. احصل على توجيه، لا إجابات."),
+              ariaLabel: t("Open Hikma AI — your Socratic learning companion", "افتح حكمة AI — رفيقك في التعلم السقراطي"),
+            },
+            {
+              href: "/progress",
+              icon: TrendingUp,
+              iconBg: "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400",
+              title: t("My Progress", "تقدمي"),
+              desc: t("Track your mastery journey.", "تتبع رحلة إتقانك."),
+              ariaLabel: t("View my learning progress and mastery", "عرض تقدمي في التعلم والإتقان"),
+            },
+            {
+              href: "/ecc",
+              icon: Layers,
+              iconBg: "bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400",
+              title: t("ECC", "المنهج الموسّع"),
+              desc: t("9 foundational life skills.", "9 مهارات حياتية أساسية."),
+              ariaLabel: t("Open Expanded Core Curriculum — 9 foundational skill areas", "افتح المنهج الأساسي الموسّع — 9 مجالات مهارية أساسية"),
+            },
+          ].map(action => {
+            const Icon = action.icon;
+            return (
+              <Link key={action.href} href={action.href}>
+                <div
+                  role="link"
+                  tabIndex={0}
+                  aria-label={action.ariaLabel}
+                  className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-4 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (e.currentTarget as HTMLElement).click(); }}}
+                >
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${action.iconBg}`}>
+                    <Icon className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{action.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{action.desc}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0 group-hover:text-primary transition-colors" aria-hidden="true" />
+                </div>
+              </Link>
+            );
+          })}
         </div>
+      </section>
+
+      {/* ── Subjects / Curricula ───────────────────────────────────────── */}
+      <section aria-label={t("Your subjects", "موادك الدراسية")}>
+        <h2 className="text-base font-semibold text-muted-foreground mb-3 uppercase tracking-wide text-xs">
+          {t("Subjects", "المواد الدراسية")}
+        </h2>
         {loadingCurricula ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1,2].map(i => <Skeleton key={i} className="h-28 rounded-xl" />)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[1, 2].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {curricula?.map(curr => (
               <Link key={curr.id} href={`/subjects/${curr.id}`}>
-                <Card className="cursor-pointer hover:border-primary hover:shadow-md transition-all group">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="w-4 h-4 text-primary" />
-                        <span className="font-semibold text-sm">
-                          {locale === "ar" ? curr.titleAr : curr.titleEn}
-                        </span>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="secondary" className="text-xs">{curr.board}</Badge>
-                      <Badge variant="outline" className="text-xs">{curr.region ?? curr.family}</Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div
+                  role="link"
+                  tabIndex={0}
+                  aria-label={t(
+                    `${curr.titleEn} — ${curr.board} curriculum. Click to view subjects.`,
+                    `${curr.titleAr} — منهج ${curr.board}. انقر لعرض المواد.`
+                  )}
+                  className="group bg-card border border-border rounded-2xl p-5 flex items-center gap-4 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (e.currentTarget as HTMLElement).click(); }}}
+                >
+                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <GraduationCap className="w-5 h-5 text-primary" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm">{locale === "ar" ? curr.titleAr : curr.titleEn}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{curr.board}</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" aria-hidden="true" />
+                </div>
               </Link>
             ))}
             {curricula?.length === 0 && (
-              <p className="text-muted-foreground text-sm col-span-full">
-                {t("No curricula loaded yet.", "لم يتم تحميل أي مناهج بعد.")}
+              <p className="text-muted-foreground text-sm col-span-full py-4">
+                {t("No subjects loaded yet. Complete onboarding to see your subjects.", "لم يتم تحميل أي مواد بعد. أكمل الإعداد لرؤية موادك.")}
               </p>
             )}
           </div>
         )}
-      </div>
-    </div>
+      </section>
+
+    </main>
   );
 }
