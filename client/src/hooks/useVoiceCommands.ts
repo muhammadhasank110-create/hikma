@@ -18,6 +18,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { useSpeech } from "@/contexts/SpeechContext";
 
 export type VoiceCommandAction =
   | { type: "navigate"; path: string }
@@ -32,12 +33,15 @@ export type VoiceCommandAction =
   | { type: "prev_section" }
   | { type: "open_tutor" }
   | { type: "answer_question" }
+  | { type: "ask_tutor" }
   | { type: "unknown"; transcript: string };
 
 interface UseVoiceCommandsOptions {
   lang?: string;
   locale?: string;
   onAction?: (action: VoiceCommandAction) => void;
+  /** Called when the LLM returns ask_tutor — receives the raw transcript */
+  onAskTutor?: (transcript: string) => void;
   enabled?: boolean;
   context?: string;
 }
@@ -92,11 +96,13 @@ export function useVoiceCommands({
   lang = "en-GB",
   locale = "en",
   onAction,
+  onAskTutor,
   enabled = true,
   context = "app",
 }: UseVoiceCommandsOptions = {}) {
   const [, navigate] = useLocation();
-  const [isOn, setIsOn] = useState(false);
+  const speech = useSpeech();
+    const [isOn, setIsOn] = useState(false);
   const isOnRef = useRef(false);
   const recRef = useRef<any>(null);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -135,13 +141,9 @@ export function useVoiceCommands({
     // The caller handles the action AND speaks its own reply — don't double up.
     if (onAction) { onAction(action); return; }
 
-    if (replyText && "speechSynthesis" in window) {
-      const utt = new SpeechSynthesisUtterance(replyText);
-      utt.lang = lang;
-      utt.rate = 1.1;
-      utt.volume = 0.7;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utt);
+    if (replyText) {
+      // Use the shared speech service so voice commands use ElevenLabs voice
+      speech.speak(replyText, { priority: "assertive" });
     }
     switch (action.type) {
       case "navigate": navigate(action.path); break;
@@ -187,13 +189,19 @@ export function useVoiceCommands({
         const transcript = transcripts[0] ?? "";
         if (!transcript) continue;
 
-        // Direct command matching — no wake word needed
-        const action = parseCommand(transcript);
-        if (action) {
-          const label = getLabelForAction(action);
-          toast.success(`✓ ${label}`, { id: "voice-cmd", duration: 2000 });
-          handleAction(action, label);
-          return;
+        // INVERTED MATCHING ORDER (Task 4):
+        // Only stop/next/prev/back use instant regex — they need to be instant
+        // and misfire harmlessly. Everything else goes to parseVoiceIntent to
+        // prevent false matches (e.g. "I don't understand this science bit" navigating away).
+        const INSTANT_COMMANDS = /\b(stop|silence|quiet|pause|أوقف|صمت|توقف|next|التالي|previous|prev|السابق|back|رجوع|go back)\b/i;
+        if (INSTANT_COMMANDS.test(transcript)) {
+          const action = parseCommand(transcript);
+          if (action) {
+            const label = getLabelForAction(action);
+            toast.success(`✓ ${label}`, { id: "voice-cmd", duration: 2000 });
+            handleAction(action, label);
+            return;
+          }
         }
 
         // Unknown — use LLM fallback
@@ -201,8 +209,16 @@ export function useVoiceCommands({
           { transcript, context: contextRef.current, locale: locale === "ar" ? "ar" : "en" },
           {
             onSuccess: (result) => {
+              if (result.action === "ask_tutor") {
+                // Route to the voice chat panel — do not navigate anywhere
+                if (onAskTutor) {
+                  onAskTutor(transcript);
+                } else {
+                  toast.info(`Heard: "${transcript}"`, { duration: 3000 });
+                }
+                return;
+              }
               if (result.action !== "unknown" && result.confidence > 0.5) {
-                // `navigate` without a path would send the router to undefined.
                 if (result.action === "navigate" && !result.path) {
                   toast.info(`Heard: "${transcript}"`, { duration: 3000 });
                   return;
@@ -210,12 +226,17 @@ export function useVoiceCommands({
                 toast.success(`✓ ${result.reply || result.action}`, { id: "voice-cmd", duration: 2000 });
                 handleAction({ type: result.action as any, path: result.path } as VoiceCommandAction, result.reply);
               } else {
-                // Show what was heard so user knows mic is working
                 toast.info(`Heard: "${transcript}"`, { duration: 3000 });
               }
             },
-            onError: () => {
-              toast.info(`Heard: "${transcript}"`, { duration: 3000 });
+            onError: (err: any) => {
+              if (err?.data?.code === "UNAUTHORIZED" || err?.message?.includes("UNAUTHORIZED")) {
+                toast.error(locale === "ar"
+                  ? "يرجى تسجيل الدخول لاستخدام الأوامر الصوتية"
+                  : "Please sign in to use voice commands");
+              } else {
+                toast.info(`Heard: "${transcript}"`, { duration: 3000 });
+              }
             },
           }
         );

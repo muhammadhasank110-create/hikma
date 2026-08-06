@@ -4,6 +4,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
+import { SpeechProvider } from "./contexts/SpeechContext";
 import { KeyboardProvider } from "./contexts/KeyboardContext";
 import { AriaLiveProvider } from "./contexts/AriaLiveContext";
 import AppShell from "./components/AppShell";
@@ -79,6 +80,7 @@ export default function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <ProfileProvider>
+      <SpeechProvider>
           <KeyboardProvider>
             <AriaLiveProvider>
               <TooltipProvider>
@@ -87,7 +89,8 @@ export default function App() {
               </TooltipProvider>
             </AriaLiveProvider>
           </KeyboardProvider>
-        </ProfileProvider>
+        </SpeechProvider>
+      </ProfileProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useGridNavigation } from "@/hooks/useGridNavigation";
+import { useAriaLive } from "@/contexts/AriaLiveContext";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -201,6 +203,11 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [location] = useLocation();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  // Lane-constrained keyboard navigation for the nav bar
+  const navLinksRef = useRef<HTMLDivElement>(null);
+  useGridNavigation(navLinksRef, { disableWASD: false });
+  const navRightRef = useRef<HTMLDivElement>(null);
+  useGridNavigation(navRightRef, { disableWASD: false });
 
   const visibleItems = NAV_ITEMS.filter(item => {
     if (!item.roles) return true;
@@ -224,7 +231,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
         </Link>
 
         {/* Desktop nav links */}
-        <div className="hidden md:flex items-center gap-1 flex-1 overflow-x-auto">
+        <div ref={navLinksRef} className="hidden md:flex items-center gap-1 flex-1 overflow-x-auto" role="toolbar" aria-label="Navigation links">
           {visibleItems.slice(0, 6).map(item => {
             const Icon = item.icon;
             const isActive = location === item.href || location.startsWith(item.href + "/");
@@ -247,7 +254,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
         </div>
 
         {/* Right side controls */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div ref={navRightRef} className="flex items-center gap-2 flex-shrink-0" role="toolbar" aria-label="Navigation controls">
           {/* Command palette */}
           <button
             onClick={() => setCmdOpen(true)}
@@ -363,12 +370,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   // Play navigate sound on route change
   const prevLocationRef = React.useRef(location);
+  const { announce } = useAriaLive();
   useEffect(() => {
     if (prevLocationRef.current !== location) {
       prevLocationRef.current = location;
       playSound("navigate");
+      // Move focus to the page's h1 after route change so screen reader users
+      // are not left on document.body after navigation.
+      requestAnimationFrame(() => {
+        const h1 = document.querySelector<HTMLElement>("main h1, #main-content h1, [role='main'] h1");
+        if (h1) {
+          if (!h1.hasAttribute("tabindex")) h1.setAttribute("tabindex", "-1");
+          h1.focus({ preventScroll: false });
+          // Announce the page title via aria-live for screen readers
+          announce(h1.textContent?.trim() ?? "Page loaded", "polite");
+        } else {
+          // Fallback: focus the main element
+          const main = document.getElementById("main-content");
+          if (main) main.focus({ preventScroll: false });
+        }
+      });
     }
-  }, [location]);
+  }, [location, announce]);
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       {/* Skip to main content — visible on focus for keyboard/screen-reader users */}

@@ -79,12 +79,27 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   const onBoundaryRef = useRef(onBoundary);
   useEffect(() => { onBoundaryRef.current = onBoundary; }, [onBoundary]);
 
-  // Check if ElevenLabs is configured
+  // Check if ElevenLabs is configured — retry once after 2s on failure
   useEffect(() => {
-    fetch("/api/tts/config")
-      .then(r => r.json())
-      .then(d => setHasElevenLabs(!!d.hasElevenLabs))
-      .catch(() => setHasElevenLabs(false));
+    let retried = false;
+    const doFetch = () =>
+      fetch("/api/tts/config")
+        .then(r => r.json())
+        .then(d => {
+          // Log the result so a missing ELEVENLABS_API_KEY is visible in DevTools
+          console.log("[useTTS] /api/tts/config →", d);
+          setHasElevenLabs(!!d.hasElevenLabs);
+        })
+        .catch(err => {
+          console.warn("[useTTS] /api/tts/config failed:", err);
+          if (!retried) {
+            retried = true;
+            setTimeout(doFetch, 2000);
+          } else {
+            setHasElevenLabs(false);
+          }
+        });
+    doFetch();
   }, []);
 
   const stopHighlightLoop = useCallback(() => {

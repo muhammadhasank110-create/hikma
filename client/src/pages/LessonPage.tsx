@@ -36,8 +36,18 @@ export default function LessonPage() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") s.nextSection();
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") s.prevSection();
+      // Arrow-key section navigation fires ONLY when focus is on the lesson body or document.body.
+      // When focus is inside a toolbar, card grid, or nav bar, useGridNavigation handles the event
+      // and calls stopPropagation() — so we never see it here.
+      // WASD is disabled on LessonPage because 's' is already bound to simplify-section.
+      const focusOnBody = !e.target || e.target === document.body;
+      const focusOnLessonContent = e.target instanceof HTMLElement &&
+        (e.target.closest('[data-lesson-content]') !== null || e.target === document.body);
+      const allowSectionNav = focusOnBody || focusOnLessonContent;
+      if (allowSectionNav) {
+        if (e.key === "ArrowRight" || e.key === "ArrowDown") s.nextSection();
+        if (e.key === "ArrowLeft" || e.key === "ArrowUp") s.prevSection();
+      }
       if (e.key === "Enter") {
         if (s.showTopicQuestion && s.topicAnswer.trim()) { s.advanceSection(); return; }
         if (!s.showTopicQuestion) { s.nextSection(); return; }
@@ -182,7 +192,7 @@ export default function LessonPage() {
                 <h2 className={`text-lg font-bold font-display ${s.isFocused ? "text-white" : ""}`}>
                   {locale === "ar" ? (s.currentSection.titleAr ?? s.currentSection.titleEn ?? "") : (s.currentSection.titleEn ?? "")}
                 </h2>
-                <div className={`prose max-w-none ${s.isFocused ? "prose-invert text-base leading-[1.9] tracking-wide" : "prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`} onClick={s.handleWordClick}>
+                <div data-lesson-content className={`prose max-w-none ${s.isFocused ? "prose-invert text-base leading-[1.9] tracking-wide" : "prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`} onClick={s.handleWordClick}>
                   {s.highlightedWords.length > 0 && s.highlightIndex >= 0 ? (
                     <p className="leading-relaxed">
                       {s.highlightedWords.map((word, i) => (

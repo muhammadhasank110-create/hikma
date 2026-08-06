@@ -80,7 +80,7 @@ export default function Dashboard() {
       {/* ── Greeting ──────────────────────────────────────────────────── */}
       <section aria-label={t("Welcome", "مرحباً")}>
         <p className="text-sm text-muted-foreground font-medium" aria-hidden="true">{greeting()}</p>
-        <h1 className="text-3xl font-bold mt-1 tracking-tight">
+        <h1 className="text-3xl font-bold mt-1 tracking-tight" tabIndex={-1}>
           {isAuthenticated ? user?.name : t("Welcome to Hikma", "أهلاً بك في حكمة")}
         </h1>
         {(currLabel || modeLabel) && (

@@ -1,3 +1,4 @@
+import { useSpeech } from "@/contexts/SpeechContext";
 /**
  * Onboarding — 5-step personalisation flow.
  * Runs every session. Saves to DB on completion.
@@ -469,46 +470,15 @@ export function StepVoicePreferences({ data, onChange, locale }: { data: Onboard
 export function StepVoice({ data, locale }: { data: OnboardingData; locale: string }) {
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   const [tested, setTested] = useState(false);
+  const speech = useSpeech();
   const testVoice = () => {
     const text = locale === "ar"
       ? "مرحباً! أنا حكمة. سأساعدك على التعلم بطريقتك الخاصة."
       : "Hello! I'm Hikma. I'll help you learn in the way that works best for you.";
     setTested(true);
-    // Try ElevenLabs first for the warm Daniel/Bella voice
-    fetch("/api/tts/speak", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, locale: locale === "ar" ? "ar" : "en" }),
-    })
-      .then(res => {
-        if (!res.ok || res.headers.get("content-type")?.includes("json")) throw new Error("fallback");
-        return res.blob();
-      })
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audio.onended = () => URL.revokeObjectURL(url);
-        // Unlock AudioContext for Chrome autoplay policy
-        try {
-          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-          if (AudioCtx) { const c = new AudioCtx(); c.resume().catch(() => {}); }
-        } catch {}
-        audio.play().catch(() => speakBrowser(text, locale, data.speechRate));
-      })
-      .catch(() => speakBrowser(text, locale, data.speechRate));
+    // Use the shared speech service — routes through ElevenLabs for the warm Daniel/Bella voice
+    speech.speak(text, { priority: "polite", lang: locale === "ar" ? "ar-SA" : "en-GB" });
   };
-
-  function speakBrowser(text: string, locale: string, rate: number) {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = locale === "ar" ? "ar-SA" : "en-GB";
-    utt.rate = rate;
-    const voices = window.speechSynthesis.getVoices();
-    const langVoices = voices.filter(v => v.lang.startsWith(locale === "ar" ? "ar" : "en"));
-    if (langVoices[0]) utt.voice = langVoices[0];
-    window.speechSynthesis.speak(utt);
-  }
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">

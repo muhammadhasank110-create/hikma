@@ -16,6 +16,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useAriaLive } from "@/contexts/AriaLiveContext";
 import { Button } from "@/components/ui/button";
 import { useSounds } from "@/hooks/useSounds";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ export default function Onboarding() {
   const [, navigate] = useLocation();
   const { updateProfileAsync, setLocale } = useProfile();
   const [step, setStep] = useState(1);
+  const { announce } = useAriaLive();
   const sounds = useSounds();
   const [saving, setSaving] = useState(false);
   const stepRef = useRef<HTMLDivElement>(null);
@@ -140,6 +142,7 @@ export default function Onboarding() {
       }
       toast.success(data.locale === "ar" ? "مرحباً! تم إعداد حكمة لك." : "Welcome! Hikma is set up for you.");
       navigate("/dashboard");
+      announce("Profile saved. Welcome to Hikma!", "polite");
     } catch (err) {
       console.error(err);
       toast.error(data.locale === "ar" ? "تعذّر حفظ الإعدادات. حاول مرة أخرى." : "Could not save profile. Please try again.");

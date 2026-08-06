@@ -259,7 +259,8 @@ Rules:
 Map the transcript to ONE action. Return ONLY valid JSON:
 { "action": "<type>", "path": "<path if navigate>", "confidence": 0.0-1.0, "reply": "<spoken confirmation, max 8 words, in ${locale === "ar" ? "Arabic" : "English"}>" }
 
-Action types: navigate|go_home|go_back|read_aloud|stop_speech|next_section|prev_section|focus_mode|increase_font|decrease_font|open_tutor|answer_question|unknown
+Action types: navigate|go_home|go_back|read_aloud|stop_speech|next_section|prev_section|focus_mode|increase_font|decrease_font|open_tutor|answer_question|ask_tutor|unknown
+Return ask_tutor for ANY question (what is, how does, why, explain, tell me about, etc.) — these must NEVER match navigation actions.
 Paths for navigate: /dashboard /subjects/1 /tutor /progress /ecc /settings /onboarding
 
 Examples:
