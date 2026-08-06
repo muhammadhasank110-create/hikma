@@ -563,6 +563,21 @@ export default function Onboarding() {
   useEffect(() => {
     stepRef.current?.focus();
   }, [step]);
+  // Global Enter key: advance to next step (skip if focus is on a text input)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" && (target as HTMLInputElement).type === "text";
+      const isTextarea = target.tagName === "TEXTAREA";
+      if (isInput || isTextarea) return;
+      if (!canProceed()) return;
+      e.preventDefault();
+      handleNext();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const canProceed = () => {
     if (step === 1) return data.accessibilityProfile !== null;

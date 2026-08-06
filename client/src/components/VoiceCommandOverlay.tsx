@@ -67,7 +67,7 @@ export function VoiceCommandOverlay() {
     }
   };
 
-  const { mode, isListening, isStandby, toggleVoice } = useVoiceCommands({
+  const { mode, isListening, isAwake, toggleVoice } = useVoiceCommands({
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     onAction: handleAction,
     enabled: true,
@@ -78,7 +78,7 @@ export function VoiceCommandOverlay() {
   // Label describes what clicking will DO
   const label = isListening
     ? (locale === "ar" ? "إيقاف الاستماع" : "Mute — stop listening")
-    : isStandby
+    : isAwake
     ? (locale === "ar" ? 'في وضع الانتظار — قل "حكمة"' : 'Listening — say "Hikma"')
     : (locale === "ar" ? "تفعيل الأوامر الصوتية" : "Enable voice commands");
 
@@ -118,7 +118,7 @@ export function VoiceCommandOverlay() {
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
           isListening
             ? "bg-red-500 text-white scale-110"
-            : isStandby
+            : isAwake
             ? "bg-primary text-primary-foreground"
             : "bg-muted/90 text-muted-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:scale-105",
         ].join(" ")}
@@ -129,7 +129,7 @@ export function VoiceCommandOverlay() {
         }
 
         {/* Pulse ring when standby or listening */}
-        {(isStandby || isListening) && (
+        {(isAwake || isListening) && (
           <span
             aria-hidden="true"
             className={[

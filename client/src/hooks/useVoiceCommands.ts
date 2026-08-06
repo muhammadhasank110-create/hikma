@@ -1,15 +1,17 @@
 /**
- * useVoiceCommands — single continuous recognition loop.
+ * useVoiceCommands — single continuous recognition loop with LLM fallback.
  *
- * Simplified architecture:
- * - ONE SpeechRecognition instance, continuous=true, always running when enabled
- * - Listens for wake word "Hikma" in every utterance
- * - After wake word detected, the NEXT utterance (or inline command) is the command
- * - No complex state machine — just "off" | "listening" | "awake"
+ * Architecture:
+ * - ONE SpeechRecognition instance, continuous=true
+ * - Wake word "Hikma" detected in every utterance
+ * - After wake word, next utterance (or inline command) is the command
+ * - Unknown commands → LLM intent parser via trpc.tutor.parseVoiceIntent
+ * - Context-aware: knows which page the user is on
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 export type VoiceCommandAction =
   | { type: "navigate"; path: string }
@@ -22,46 +24,55 @@ export type VoiceCommandAction =
   | { type: "read_aloud" }
   | { type: "next_section" }
   | { type: "prev_section" }
+  | { type: "open_tutor" }
+  | { type: "answer_question" }
   | { type: "unknown"; transcript: string };
 
 interface UseVoiceCommandsOptions {
   lang?: string;
+  locale?: string;
   onAction?: (action: VoiceCommandAction) => void;
   enabled?: boolean;
+  context?: string; // current page context for LLM
 }
 
 // Wake word patterns — generous matching
-const WAKE_WORDS = /\b(hikma|hekma|hekma|حكمة|يا حكمة|hey hikma|ok hikma)\b/i;
+const WAKE_WORDS = /\b(hikma|hekma|حكمة|يا حكمة|hey hikma|ok hikma|hi hikma)\b/i;
 
-// Command patterns
+// Fast pattern matching for common commands (no LLM needed)
 const COMMANDS: Array<{ patterns: RegExp[]; action: VoiceCommandAction; label: string }> = [
-  { patterns: [/\b(home|dashboard|go home|main|رئيسي|الرئيسية)\b/i], action: { type: "go_home" }, label: "Go Home" },
-  { patterns: [/\b(back|go back|رجوع|السابق)\b/i], action: { type: "go_back" }, label: "Go Back" },
-  { patterns: [/\b(tutor|ai tutor|open tutor|hikma ai|ask hikma|المعلم|المساعد)\b/i], action: { type: "navigate", path: "/tutor" }, label: "Open Tutor" },
-  { patterns: [/\b(subjects?|lessons?|المواد|الدروس)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Open Subjects" },
-  { patterns: [/\b(math|maths|mathematics|رياضيات)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Open Maths" },
-  { patterns: [/\b(english|إنجليزي|اللغة الإنجليزية)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Open English" },
-  { patterns: [/\b(science|علوم)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Open Science" },
-  { patterns: [/\b(progress|my progress|تقدم|تقدمي)\b/i], action: { type: "navigate", path: "/progress" }, label: "Open Progress" },
-  { patterns: [/\b(settings?|إعدادات)\b/i], action: { type: "navigate", path: "/settings" }, label: "Open Settings" },
-  { patterns: [/\b(ecc|expanded core|المهارات الأساسية)\b/i], action: { type: "navigate", path: "/ecc" }, label: "Open ECC" },
-  { patterns: [/\b(next|next section|التالي|القسم التالي)\b/i], action: { type: "next_section" }, label: "Next Section" },
-  { patterns: [/\b(previous|prev|back section|السابق|القسم السابق)\b/i], action: { type: "prev_section" }, label: "Previous Section" },
-  { patterns: [/\b(read|read aloud|narrate|اقرأ|اقرأ بصوت)\b/i], action: { type: "read_aloud" }, label: "Read Aloud" },
-  { patterns: [/\b(stop|silence|quiet|أوقف|صمت)\b/i], action: { type: "stop_speech" }, label: "Stop Speech" },
-  { patterns: [/\b(bigger|larger|increase|font up|أكبر|تكبير)\b/i], action: { type: "increase_font" }, label: "Bigger Text" },
-  { patterns: [/\b(smaller|decrease|font down|أصغر|تصغير)\b/i], action: { type: "decrease_font" }, label: "Smaller Text" },
-  { patterns: [/\b(focus|focus mode|وضع التركيز)\b/i], action: { type: "focus_mode" }, label: "Focus Mode" },
+  { patterns: [/\b(home|dashboard|go home|main|رئيسي|الرئيسية)\b/i], action: { type: "go_home" }, label: "Going home" },
+  { patterns: [/\b(back|go back|رجوع|السابق)\b/i], action: { type: "go_back" }, label: "Going back" },
+  { patterns: [/\b(tutor|ai tutor|open tutor|hikma ai|ask hikma|المعلم|المساعد|افتح المعلم)\b/i], action: { type: "open_tutor" }, label: "Opening Hikma AI" },
+  { patterns: [/\b(subjects?|lessons?|المواد|الدروس)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening Subjects" },
+  { patterns: [/\b(math|maths|mathematics|رياضيات)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening Maths" },
+  { patterns: [/\b(english|إنجليزي|اللغة الإنجليزية)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening English" },
+  { patterns: [/\b(science|علوم)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening Science" },
+  { patterns: [/\b(progress|my progress|تقدم|تقدمي)\b/i], action: { type: "navigate", path: "/progress" }, label: "Opening Progress" },
+  { patterns: [/\b(settings?|إعدادات)\b/i], action: { type: "navigate", path: "/settings" }, label: "Opening Settings" },
+  { patterns: [/\b(ecc|expanded core|المهارات الأساسية)\b/i], action: { type: "navigate", path: "/ecc" }, label: "Opening ECC" },
+  { patterns: [/\b(next|next section|التالي|القسم التالي|continue|استمر)\b/i], action: { type: "next_section" }, label: "Next section" },
+  { patterns: [/\b(previous|prev|back section|السابق|القسم السابق)\b/i], action: { type: "prev_section" }, label: "Previous section" },
+  { patterns: [/\b(read|read (this|aloud|it)|start reading|narrate|اقرأ|اقرأ بصوت|ابدأ القراءة)\b/i], action: { type: "read_aloud" }, label: "Reading now" },
+  { patterns: [/\b(stop|silence|quiet|pause|أوقف|صمت|توقف)\b/i], action: { type: "stop_speech" }, label: "Stopped" },
+  { patterns: [/\b(bigger|larger|increase|font up|أكبر|تكبير)\b/i], action: { type: "increase_font" }, label: "Text bigger" },
+  { patterns: [/\b(smaller|decrease|font down|أصغر|تصغير)\b/i], action: { type: "decrease_font" }, label: "Text smaller" },
+  { patterns: [/\b(focus|focus mode|وضع التركيز|ركّز)\b/i], action: { type: "focus_mode" }, label: "Focus mode" },
+  { patterns: [/\b(answer|submit|my answer|أجب|إجابتي|أرسل)\b/i], action: { type: "answer_question" }, label: "Answering" },
 ];
 
 function parseCommand(text: string): VoiceCommandAction | null {
   const t = text.toLowerCase().trim();
   for (const cmd of COMMANDS) {
-    if (cmd.patterns.some(p => p.test(t))) {
-      return cmd.action;
-    }
+    if (cmd.patterns.some(p => p.test(t))) return cmd.action;
   }
   return null;
+}
+
+function getLabelForAction(action: VoiceCommandAction): string {
+  if (action.type === "unknown") return "";
+  const cmd = COMMANDS.find(c => c.action.type === action.type);
+  return cmd?.label ?? action.type;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,26 +81,47 @@ function getSpeechRecognition(): any {
   return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useVoiceCommands({ lang = "en-GB", onAction, enabled = true }: UseVoiceCommandsOptions = {}) {
+export function useVoiceCommands({
+  lang = "en-GB",
+  locale = "en",
+  onAction,
+  enabled = true,
+  context = "app",
+}: UseVoiceCommandsOptions = {}) {
   const [, navigate] = useLocation();
   const [mode, setMode] = useState<"off" | "listening" | "awake">("off");
   const modeRef = useRef<"off" | "listening" | "awake">("off");
   const recRef = useRef<any>(null);
-  const awakeRef = useRef(false); // true = next utterance is a command
+  const awakeRef = useRef(false);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const contextRef = useRef(context);
+  useEffect(() => { contextRef.current = context; }, [context]);
+
+  // LLM fallback mutation
+  const parseIntent = trpc.tutor.parseVoiceIntent.useMutation();
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
 
-  const handleAction = useCallback((action: VoiceCommandAction) => {
+  const handleAction = useCallback((action: VoiceCommandAction, replyText?: string) => {
+    // Speak the confirmation if TTS is available
+    if (replyText && "speechSynthesis" in window) {
+      const utt = new SpeechSynthesisUtterance(replyText);
+      utt.lang = lang;
+      utt.rate = 1.1;
+      utt.volume = 0.7;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utt);
+    }
+
     if (onAction) { onAction(action); return; }
     switch (action.type) {
       case "navigate": navigate(action.path); break;
       case "go_back": window.history.back(); break;
       case "go_home": navigate("/dashboard"); break;
+      case "open_tutor": navigate("/tutor"); break;
       default: break;
     }
-  }, [onAction, navigate]);
+  }, [onAction, navigate, lang]);
 
   const stopRecognition = useCallback(() => {
     if (restartTimerRef.current) { clearTimeout(restartTimerRef.current); restartTimerRef.current = null; }
@@ -100,7 +132,6 @@ export function useVoiceCommands({ lang = "en-GB", onAction, enabled = true }: U
   const startRecognition = useCallback(() => {
     const SpeechRecognition = getSpeechRecognition();
     if (!SpeechRecognition || modeRef.current === "off") return;
-
     stopRecognition();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,48 +139,89 @@ export function useVoiceCommands({ lang = "en-GB", onAction, enabled = true }: U
     rec.lang = lang;
     rec.continuous = true;
     rec.interimResults = false;
-    rec.maxAlternatives = 2;
+    rec.maxAlternatives = 3;
 
     rec.onresult = (event: any) => {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (!event.results[i].isFinal) continue;
-        const transcript = (event.results[i][0]?.transcript ?? "").trim();
+        // Try all alternatives for better recognition
+        const transcripts = Array.from({ length: event.results[i].length }, (_, j) =>
+          (event.results[i][j]?.transcript ?? "").trim()
+        ).filter(Boolean);
+        const transcript = transcripts[0] ?? "";
         if (!transcript) continue;
 
-        const hasWakeWord = WAKE_WORDS.test(transcript);
+        // Check any alternative for wake word
+        const hasWakeWord = transcripts.some(t => WAKE_WORDS.test(t));
 
         if (hasWakeWord) {
-          // Check for inline command: "Hikma, open tutor"
+          // Check for inline command in the same utterance
           const withoutWake = transcript.replace(WAKE_WORDS, "").replace(/^[,،\s]+/, "").trim();
           if (withoutWake.length > 1) {
             const action = parseCommand(withoutWake);
             if (action) {
-              toast.success(`Hikma: ${COMMANDS.find(c => c.action.type === action.type)?.label ?? "Done"}`, { id: "voice-cmd", duration: 2000 });
-              handleAction(action);
+              const label = getLabelForAction(action);
+              toast.success(`Hikma: ${label}`, { id: "voice-cmd", duration: 2000 });
+              handleAction(action, label);
               awakeRef.current = false;
               setMode("listening");
               return;
             }
+            // Inline command not matched — try LLM
+            awakeRef.current = false;
+            setMode("listening");
+            parseIntent.mutate(
+              { transcript: withoutWake, context: contextRef.current, locale: locale === "ar" ? "ar" : "en" },
+              {
+                onSuccess: (result) => {
+                  if (result.action !== "unknown" && result.confidence > 0.6) {
+                    toast.success(`Hikma: ${result.reply || result.action}`, { id: "voice-cmd", duration: 2000 });
+                    handleAction({ type: result.action as any, path: result.path } as VoiceCommandAction, result.reply);
+                  } else {
+                    toast.info(`Heard: "${withoutWake}"`, { duration: 3000 });
+                  }
+                },
+              }
+            );
+            return;
           }
           // Wake word only — wait for next utterance
           awakeRef.current = true;
           setMode("awake");
-          toast.success(lang.startsWith("ar") ? "حكمة تستمع… قل أمرك" : "Hikma is listening… say your command", { id: "voice-wake", duration: 3000 });
+          const wakeMsg = locale === "ar" ? "حكمة تستمع…" : "Hikma is listening…";
+          toast.success(wakeMsg, { id: "voice-wake", duration: 3000 });
+          // Speak the confirmation
+          if ("speechSynthesis" in window) {
+            const utt = new SpeechSynthesisUtterance(wakeMsg);
+            utt.lang = lang; utt.rate = 1.1; utt.volume = 0.6;
+            window.speechSynthesis.speak(utt);
+          }
           return;
         }
 
         if (awakeRef.current) {
-          // This utterance is the command
           awakeRef.current = false;
           setMode("listening");
           const action = parseCommand(transcript);
           if (action) {
-            const label = COMMANDS.find(c => c.action.type === action.type)?.label ?? "Done";
+            const label = getLabelForAction(action);
             toast.success(`Hikma: ${label}`, { id: "voice-cmd", duration: 2000 });
-            handleAction(action);
+            handleAction(action, label);
           } else {
-            // Unknown — show what was heard
-            toast.info(`Heard: "${transcript}" — try: "next section", "open tutor", "go home"`, { duration: 4000 });
+            // Unknown — use LLM
+            parseIntent.mutate(
+              { transcript, context: contextRef.current, locale: locale === "ar" ? "ar" : "en" },
+              {
+                onSuccess: (result) => {
+                  if (result.action !== "unknown" && result.confidence > 0.6) {
+                    toast.success(`Hikma: ${result.reply || result.action}`, { id: "voice-cmd", duration: 2000 });
+                    handleAction({ type: result.action as any, path: result.path } as VoiceCommandAction, result.reply);
+                  } else {
+                    toast.info(`Heard: "${transcript}" — say "Hikma, read this" or "Hikma, next"`, { duration: 4000 });
+                  }
+                },
+              }
+            );
           }
         }
       }
@@ -157,20 +229,13 @@ export function useVoiceCommands({ lang = "en-GB", onAction, enabled = true }: U
 
     rec.onerror = (event: any) => {
       if (event.error === "not-allowed") {
-        setMode("off");
-        modeRef.current = "off";
+        setMode("off"); modeRef.current = "off";
         toast.error("Microphone access denied. Allow microphone in browser settings.");
         return;
       }
-      if (event.error === "no-speech" || event.error === "aborted") {
-        // Normal — will restart via onend
-        return;
-      }
-      // Other errors — restart
     };
 
     rec.onend = () => {
-      // Auto-restart if still enabled
       if (modeRef.current !== "off") {
         restartTimerRef.current = setTimeout(() => {
           if (modeRef.current !== "off") startRecognition();
@@ -179,64 +244,45 @@ export function useVoiceCommands({ lang = "en-GB", onAction, enabled = true }: U
     };
 
     recRef.current = rec;
-    try { rec.start(); } catch (err) {
-      // If already started, ignore
-    }
-  }, [lang, handleAction, stopRecognition]);
+    try { rec.start(); } catch {}
+  }, [lang, locale, handleAction, stopRecognition, parseIntent]);
 
   const toggleVoice = useCallback(async () => {
     if (modeRef.current !== "off") {
-      // Turn off
       stopRecognition();
       awakeRef.current = false;
-      setMode("off");
-      modeRef.current = "off";
-      toast.info(lang.startsWith("ar") ? "الأوامر الصوتية متوقفة" : "Voice commands off", { duration: 2000 });
+      setMode("off"); modeRef.current = "off";
+      toast.info(locale === "ar" ? "الأوامر الصوتية متوقفة" : "Voice commands off", { duration: 2000 });
       return;
     }
 
-    // Turn on — check browser support first
     const SpeechRec = getSpeechRecognition();
     if (!SpeechRec) {
-      toast.error("Voice commands require Chrome or Edge. This browser does not support speech recognition.");
+      toast.error("Voice commands require Chrome or Edge.");
       return;
     }
 
-    // Request microphone permission
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(t => t.stop());
     } catch (err: any) {
-      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        toast.error("Microphone access denied. Click the lock icon in the address bar and allow microphone.");
-      } else {
-        toast.error("Microphone unavailable: " + (err.message ?? err.name));
-      }
+      toast.error("Microphone access denied. Allow it in browser settings.");
       return;
     }
 
-    setMode("listening");
-    modeRef.current = "listening";
-    toast.success(
-      lang.startsWith("ar")
-        ? 'الأوامر الصوتية مفعّلة — قل "حكمة" ثم أمرك'
-        : 'Voice on — say "Hikma" then your command (e.g. "Hikma, open tutor")',
-      { duration: 5000 }
-    );
+    setMode("listening"); modeRef.current = "listening";
+    const onMsg = locale === "ar"
+      ? 'الأوامر الصوتية مفعّلة — قل "حكمة" ثم أمرك'
+      : 'Voice on — say "Hikma" then your command';
+    toast.success(onMsg, { duration: 4000 });
     startRecognition();
-  }, [lang, startRecognition, stopRecognition]);
+  }, [locale, startRecognition, stopRecognition]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopRecognition();
-    };
-  }, [stopRecognition]);
+  useEffect(() => () => { stopRecognition(); }, [stopRecognition]);
 
   return {
     mode,
     isListening: mode === "listening",
-    isStandby: mode === "listening", // alias for compat
     isAwake: mode === "awake",
     toggleVoice,
     isSupported: getSpeechRecognition() !== null,

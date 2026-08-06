@@ -225,6 +225,53 @@ Rules:
       return { question };
     }),
 
+  // ── Voice intent parser ────────────────────────────────────────────────────
+  parseVoiceIntent: protectedProcedure
+    .input(z.object({
+      transcript: z.string(),
+      context: z.string().optional(),
+      locale: z.enum(["ar", "en"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const { transcript, context = "app", locale = "en" } = input;
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are Hikma AI's voice command interpreter. The user spoke in ${locale === "ar" ? "Arabic" : "English"}. Current context: ${context}.
+Map the transcript to ONE action. Return ONLY valid JSON:
+{ "action": "<type>", "path": "<path if navigate>", "confidence": 0.0-1.0, "reply": "<spoken confirmation, max 8 words, in ${locale === "ar" ? "Arabic" : "English"}>" }
+
+Action types: navigate|go_home|go_back|read_aloud|stop_speech|next_section|prev_section|focus_mode|increase_font|decrease_font|open_tutor|answer_question|unknown
+Paths for navigate: /dashboard /subjects/1 /tutor /progress /ecc /settings /onboarding
+
+Examples:
+"read this" → {"action":"read_aloud","confidence":0.95,"reply":"Reading now"}
+"next" → {"action":"next_section","confidence":0.9,"reply":"Next section"}
+"go home" → {"action":"go_home","confidence":0.95,"reply":"Going home"}
+"open the tutor" → {"action":"open_tutor","confidence":0.95,"reply":"Opening Hikma AI"}
+"bigger text" → {"action":"increase_font","confidence":0.9,"reply":"Text is bigger"}
+"اقرأ" → {"action":"read_aloud","confidence":0.95,"reply":"يقرأ الآن"}`,
+          },
+          { role: "user", content: transcript },
+        ],
+        response_format: { type: "json_object" as any },
+        maxTokens: 120,
+      });
+      try {
+        const raw = response.choices[0]?.message?.content;
+        const parsed = JSON.parse(typeof raw === "string" ? raw : "{}");
+        return {
+          action: (parsed.action as string) ?? "unknown",
+          path: (parsed.path as string) ?? undefined,
+          confidence: (parsed.confidence as number) ?? 0.5,
+          reply: (parsed.reply as string) ?? "",
+        };
+      } catch {
+        return { action: "unknown", path: undefined, confidence: 0, reply: "" };
+      }
+    }),
+
   getHistory: protectedProcedure
     .input(z.object({ sessionId: z.string() }))
     .query(async ({ ctx, input }) => {

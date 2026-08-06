@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useVoiceCommands } from "@/hooks/useVoiceCommands";
 
 interface Message {
   role: "user" | "assistant";
@@ -207,6 +208,29 @@ export default function TutorPage() {
       sendMessage();
     }
   };
+
+  // Voice commands wired into TutorPage
+  // When user says "Hikma, ask a question" or speaks into the tutor
+  const handleVoiceAction = useCallback((action: any) => {
+    switch (action.type) {
+      case "stop_speech": tts.stop(); break;
+      case "read_aloud":
+        // Read the last assistant message
+        const lastAssistant = [...messages].reverse().find(m => m.role === "assistant");
+        if (lastAssistant) speakText(lastAssistant.content);
+        break;
+      case "go_home": window.location.href = "/dashboard"; break;
+      case "navigate": window.location.href = action.path; break;
+      default: break;
+    }
+  }, [messages, speakText, tts]);
+
+  useVoiceCommands({
+    lang: locale === "ar" ? "ar-QA" : "en-GB",
+    locale,
+    context: "tutor",
+    onAction: handleVoiceAction,
+  });
 
   const startRecording = async () => {
     try {

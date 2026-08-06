@@ -413,6 +413,11 @@ export default function LessonPage() {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === "ArrowRight" || e.key === "ArrowDown") nextSection();
       if (e.key === "ArrowLeft" || e.key === "ArrowUp") prevSection();
+      // Enter = next section / submit answer (primary advance key)
+      if (e.key === "Enter") {
+        if (showTopicQuestion && topicAnswer.trim()) { advanceSection(); return; }
+        if (!showTopicQuestion) { nextSection(); return; }
+      }
       if (e.key === " ") { e.preventDefault(); readAloud(); }
       if (e.key === "r" || e.key === "R") readAloud();
       if (e.key === "f" || e.key === "F") setIsFocused(v => !v);
@@ -813,7 +818,7 @@ export default function LessonPage() {
           </Button>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground hidden sm:block">
-              {t("← → arrow keys", "مفاتيح الأسهم")}
+              {t("Enter / ← → to navigate", "Enter / الأسهم للتنقل")}
             </span>
             {/* Overwhelm escape hatch */}
             <Button
