@@ -14,7 +14,12 @@ import { eccRouter } from "./routers/ecc";
 export const appRouter = router({
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(({ ctx }) => {
+      if (!ctx.user) return null;
+      // Never expose the password hash to the client
+      const { passwordHash: _pw, ...safeUser } = ctx.user as any;
+      return safeUser;
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

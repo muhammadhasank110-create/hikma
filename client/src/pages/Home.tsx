@@ -6,7 +6,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { startLogin, startSignUp } from "@/const";
 import { useProfile } from "@/contexts/ProfileContext";
 import { motion, useReducedMotion } from "framer-motion";
 import {
