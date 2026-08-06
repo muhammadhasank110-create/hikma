@@ -35,7 +35,7 @@ export default function GuardianDashboard() {
           <h1 className="text-2xl font-bold font-display">{t("Guardian Dashboard", "لوحة ولي الأمر")}</h1>
           <p className="text-muted-foreground text-sm mt-1">{t(`Welcome, ${user?.name ?? "Guardian"}`, `مرحباً، ${user?.name ?? "ولي الأمر"}`)}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => toast.info(t("Coming soon", "قريباً"))}>
+        <Button variant="outline" size="sm" disabled aria-disabled="true" title={t("Notifications coming soon", "الإشعارات قريباً")}>
           <Bell className="w-4 h-4 mr-2" />
           {t("Weekly Report", "التقرير الأسبوعي")}
         </Button>
@@ -78,7 +78,7 @@ export default function GuardianDashboard() {
               <div className="text-center py-8 text-muted-foreground">
                 <TrendingUp className="w-8 h-8 mx-auto mb-3 opacity-40" />
                 <p className="text-sm">{t("Activity data will appear once your child starts learning.", "ستظهر بيانات النشاط بمجرد أن يبدأ طفلك في التعلم.")}</p>
-                <Button className="mt-4" variant="outline" onClick={() => toast.info(t("Link child account — coming soon", "ربط حساب الطفل — قريباً"))}>
+                <Button className="mt-4" variant="outline" disabled aria-disabled="true" title={t("Link child account — coming soon", "ربط حساب الطفل — قريباً")}>
                   {t("Link Child Account", "ربط حساب الطفل")}
                 </Button>
               </div>
@@ -130,7 +130,7 @@ export default function GuardianDashboard() {
             { label: t("Content Notifications", "إشعارات المحتوى"), desc: t("Get notified when your child completes a lesson or earns an achievement.", "احصل على إشعار عند إكمال طفلك لدرس أو حصوله على إنجاز.") },
             { label: t("Access Arrangements", "ترتيبات الوصول"), desc: t("View and manage your child's documented accommodations.", "عرض وإدارة التسهيلات الموثقة لطفلك.") },
           ].map((item, i) => (
-            <Card key={i} className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => toast.info(t("Coming soon", "قريباً"))}>
+            <Card key={i} className="transition-colors" aria-disabled="true">
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
                   <p className="font-medium text-sm">{item.label}</p>
@@ -148,14 +148,14 @@ export default function GuardianDashboard() {
               { title: t("Weekly Progress Report", "التقرير الأسبوعي"), desc: t("Summary of lessons completed, time spent, and mastery gains.", "ملخص الدروس المكتملة والوقت المستغرق ومكاسب الإتقان."), badge: "PDF" },
               { title: t("Normal Way of Working", "طريقة العمل الاعتيادية"), desc: t("MADA-aligned documentation for exam access arrangements.", "توثيق متوافق مع مادا لترتيبات الوصول الامتحانية."), badge: "MADA" },
             ].map((report, i) => (
-              <Card key={i} className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => toast.info(t("Report generation coming soon", "إنشاء التقارير قريباً"))}>
+              <Card key={i} className="transition-colors" aria-disabled="true" role="article">
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium text-sm">{report.title}</p>
                     <Badge variant="secondary" className="text-xs shrink-0">{report.badge}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">{report.desc}</p>
-                  <Button type="button" variant="outline" size="sm" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); toast.info(t("Report generation coming soon", "إنشاء التقارير قريباً")); }}>
+                  <Button type="button" variant="outline" size="sm" className="w-full mt-2" disabled aria-disabled="true" title={t("Report generation coming soon", "إنشاء التقارير قريباً")}>
                     <FileText className="w-3 h-3 mr-2" />
                     {t("Generate", "إنشاء")}
                   </Button>

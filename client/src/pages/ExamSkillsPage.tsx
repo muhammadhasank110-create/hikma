@@ -194,7 +194,7 @@ export default function ExamSkillsPage() {
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   return (
-    <div className="container py-8 max-w-3xl space-y-6 page-enter">
+    <div className="container py-8 max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold font-display">{t("Exam Skills", "مهارات الامتحان")}</h1>
         <p className="text-muted-foreground mt-1 text-sm">{t("Master command words, manage your time, and know your access arrangements.", "أتقن كلمات الأوامر، أدِر وقتك، واعرف ترتيبات الوصول الخاصة بك.")}</p>

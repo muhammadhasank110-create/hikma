@@ -154,7 +154,7 @@ export default function Home() {
 
               <motion.div variants={fadeUp} className="flex flex-wrap gap-3">
                 {isAuthenticated ? (
-                  <Link href="/onboarding">
+                  <Link href="/onboarding" asChild>
                     <Button
                       size="lg"
                       className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl"
@@ -347,7 +347,7 @@ export default function Home() {
             </motion.p>
             <motion.div variants={fadeUp} className="flex justify-center">
               {isAuthenticated ? (
-                <Link href="/onboarding">
+                <Link href="/onboarding" asChild>
                   <Button
                     size="lg"
                     className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl"

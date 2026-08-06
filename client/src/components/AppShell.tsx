@@ -15,7 +15,7 @@ import {
   ChevronRight, LogOut, LogIn, Layers, Star, FileText
 } from "lucide-react";
 import { startLogin } from "@/const";
-import { playTestSound } from "@/lib/sound";
+import { playTestSound, playSound } from "@/lib/sound";
 
 interface NavItem {
   href: string;
@@ -343,6 +343,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Hide shell on landing page
   const isLanding = location === "/";
 
+  // Play navigate sound on route change
+  const prevLocationRef = React.useRef(location);
+  useEffect(() => {
+    if (prevLocationRef.current !== location) {
+      prevLocationRef.current = location;
+      playSound("navigate");
+    }
+  }, [location]);
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       {/* Skip to main content — visible on focus for keyboard/screen-reader users */}
@@ -408,8 +416,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Command palette */}
       <CommandPalette />
 
+      {/* Sound announcer — required by sound.ts visualFlash() for screen reader announcements */}
+      <div id="sound-announcer" aria-live="polite" aria-atomic="true" className="sr-only" />
       {/* Main content */}
-      <main id="main-content" className="flex-1" tabIndex={-1}>
+      <main id="main-content" className="flex-1 page-enter" tabIndex={-1}>
         {children}
       </main>
 

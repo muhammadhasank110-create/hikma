@@ -97,7 +97,7 @@ export function VoiceCommandOverlay() {
         {isListening && (
           <span
             aria-hidden="true"
-            className="absolute inset-[-4px] rounded-full border-2 border-green-400 animate-ping opacity-60 pointer-events-none"
+            className="absolute inset-[-4px] rounded-full border-2 border-green-400 mic-ring pointer-events-none"
           />
         )}
         {/* Mic button */}

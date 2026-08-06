@@ -52,11 +52,11 @@ export default function TeacherDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => toast.info(t("Coming soon", "قريباً"))}>
+          <Button variant="outline" size="sm" disabled aria-disabled="true" title={t("Notifications coming soon", "الإشعارات قريباً")}>
             <Bell className="w-4 h-4 mr-2" />
             {t("Notifications", "الإشعارات")}
           </Button>
-          <Button size="sm" onClick={() => toast.info(t("Create class — coming soon", "إنشاء فصل — قريباً"))}>
+          <Button size="sm" disabled aria-disabled="true" title={t("Class creation coming soon", "إنشاء الفصول قريباً")}>
             <Plus className="w-4 h-4 mr-2" />
             {t("New Class", "فصل جديد")}
           </Button>
@@ -152,7 +152,7 @@ export default function TeacherDashboard() {
           ) : classes && classes.length > 0 ? (
             <div className="space-y-3">
               {classes.map((cls: any) => (
-                <Card key={cls.id} className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => toast.info(t("Class detail — coming soon", "تفاصيل الفصل — قريباً"))}>
+                <Card key={cls.id} className="transition-colors" aria-disabled="true" role="article">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -172,7 +172,7 @@ export default function TeacherDashboard() {
             <div className="text-center py-12 text-muted-foreground">
               <BookOpen className="w-8 h-8 mx-auto mb-3 opacity-40" />
               <p>{t("No classes yet. Create your first class to get started.", "لا توجد فصول بعد. أنشئ فصلك الأول للبدء.")}</p>
-              <Button className="mt-4" onClick={() => toast.info(t("Coming soon", "قريباً"))}>
+              <Button className="mt-4" disabled aria-disabled="true" title={t("Coming soon", "قريباً")}>
                 <Plus className="w-4 h-4 mr-2" />
                 {t("Create Class", "إنشاء فصل")}
               </Button>
@@ -201,14 +201,14 @@ export default function TeacherDashboard() {
               { title: t("IEP Progress Summary", "ملخص تقدم خطة التعليم الفردية"), desc: t("ECC area progress for learners with visual impairments.", "تقدم مجالات المنهج الأساسي الموسّع."), badge: "ECC" },
               { title: t("Attendance & Engagement", "الحضور والمشاركة"), desc: t("Session time, lesson completion rates, and tutor interactions.", "وقت الجلسة ومعدلات إتمام الدروس."), badge: "Analytics" },
             ].map((report, i) => (
-              <Card key={i} className="hover:border-primary/50 transition-colors cursor-pointer" onClick={() => toast.info(t("Report generation coming soon", "إنشاء التقارير قريباً"))}>
+              <Card key={i} className="transition-colors" aria-disabled="true">
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium text-sm">{report.title}</p>
                     <Badge variant="secondary" className="text-xs shrink-0">{report.badge}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">{report.desc}</p>
-                  <Button variant="outline" size="sm" className="w-full mt-2" onClick={e => { e.stopPropagation(); toast.info(t("Coming soon", "قريباً")); }}>
+                  <Button variant="outline" size="sm" className="w-full mt-2" disabled aria-disabled="true" title={t("Report generation coming soon", "إنشاء التقارير قريباً")}>
                     <FileText className="w-3 h-3 mr-2" />
                     {t("Generate Report", "إنشاء تقرير")}
                   </Button>

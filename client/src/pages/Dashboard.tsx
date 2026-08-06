@@ -73,7 +73,7 @@ export default function Dashboard() {
   }) ?? curricula;
 
   return (
-    <main id="main-content" className="container py-8 space-y-10 max-w-4xl page-enter" aria-label={t("Dashboard", "لوحة التحكم")}>
+    <main className="container py-8 space-y-10 max-w-4xl" aria-label={t("Dashboard", "لوحة التحكم")}>
 
       {/* ── Greeting ──────────────────────────────────────────────────── */}
       <section aria-label={t("Welcome", "مرحباً")}>

@@ -61,7 +61,7 @@ function visualFlash(color: string, label: string) {
   }
   // Brief border flash
   const el = document.createElement("div");
-  el.className = "sound-flash";
+  el.className = "sound-flash earcon-pulse";
   el.style.border = `3px solid ${color}`;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 450);
