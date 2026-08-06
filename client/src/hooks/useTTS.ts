@@ -9,8 +9,17 @@
  * - speak(text): start speaking
  * - stop(): stop speaking
  * - isSpeaking: boolean
- * - getCleanedText(raw): returns the cleaned text used for charIndex math
- * - onBoundary: callback for word-by-word highlight sync (browser only)
+ * - getCleanedText(raw): the exact string charIndex values refer to
+ * - onBoundary: callback for word-by-word highlight sync (both engines)
+ *
+ * Fixes (Aug 2026):
+ * - ElevenLabs highlighting is driven off audio.currentTime via rAF instead of
+ *   a fixed setInterval, so it cannot drift out of sync with playback.
+ * - The highlight timer is torn down on stop(); it used to keep running and
+ *   stack a second timer on the next section.
+ * - Word char offsets are computed against the cleaned string instead of
+ *   join(" ").length, which pointed at the space *before* each word.
+ * - cleanText is exported so callers highlight the same tokens we speak.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 
@@ -21,11 +30,28 @@ interface UseTTSOptions {
   onBoundary?: (charIndex: number, text: string) => void;
 }
 
-function cleanText(raw: string): string {
+/**
+ * The canonical cleaner. Anything that maps charIndex back to a word MUST use
+ * this exact function, or the indices refer to a different string.
+ */
+export function cleanText(raw: string): string {
   return raw
     .replace(/[#*_`~\[\]]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/** Start offset of each word within `cleaned`. */
+export function buildWordOffsets(cleaned: string): { words: string[]; offsets: number[] } {
+  const words = cleaned.split(" ").filter(Boolean);
+  const offsets: number[] = [];
+  let cursor = 0;
+  for (const w of words) {
+    const idx = cleaned.indexOf(w, cursor);
+    offsets.push(idx < 0 ? cursor : idx);
+    cursor = (idx < 0 ? cursor : idx) + w.length;
+  }
+  return { words, offsets };
 }
 
 function pickVoice(lang: string, hint?: string): SpeechSynthesisVoice | null {
@@ -48,6 +74,8 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const cleanedTextRef = useRef<string>("");
+  const rafRef = useRef<number | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const onBoundaryRef = useRef(onBoundary);
   useEffect(() => { onBoundaryRef.current = onBoundary; }, [onBoundary]);
 
@@ -59,18 +87,33 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       .catch(() => setHasElevenLabs(false));
   }, []);
 
+  const stopHighlightLoop = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  }, []);
+
   const stopBrowser = useCallback(() => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     utteranceRef.current = null;
   }, []);
 
   const stopElevenLabs = useCallback(() => {
+    stopHighlightLoop();
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
+      audioRef.current.onplay = null;
       audioRef.current.src = "";
       audioRef.current = null;
     }
-  }, []);
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
+    }
+  }, [stopHighlightLoop]);
 
   const stop = useCallback(() => {
     stopBrowser();
@@ -115,46 +158,52 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
+      objectUrlRef.current = url;
       const audio = new Audio(url);
       audioRef.current = audio;
-      // Time-based word highlighting for ElevenLabs (no onBoundary event)
-      const setupWordHighlight = () => {
-        const duration = audio.duration;
-        if (duration && isFinite(duration) && onBoundaryRef.current) {
-          const cleanedText = text.replace(/[#*_`~\[\]]/g, "").replace(/\s+/g, " ").trim();
-          const words = cleanedText.split(/\s+/);
-          const wordCount = words.length;
-          if (wordCount > 0) {
-            const msPerWord = (duration * 1000) / wordCount;
-            let wordIdx = 0;
-            const interval = setInterval(() => {
-              if (wordIdx >= wordCount) { clearInterval(interval); return; }
-              const charIndex = words.slice(0, wordIdx).join(" ").length;
-              onBoundaryRef.current?.(charIndex, cleanedText);
-              wordIdx++;
-            }, msPerWord);
-            const cleanup = () => {
-              clearInterval(interval);
-              setIsSpeaking(false);
-              URL.revokeObjectURL(url);
-            };
-            audio.onended = cleanup;
-            audio.onerror = cleanup;
-            return;
+
+      const { words, offsets } = buildWordOffsets(text);
+      let lastIdx = -1;
+
+      // Highlight is read off the real playback clock every frame, so it
+      // self-corrects instead of accumulating drift.
+      const tick = () => {
+        const a = audioRef.current;
+        if (!a || a.paused || a.ended) { rafRef.current = null; return; }
+        const dur = a.duration;
+        if (dur && isFinite(dur) && words.length && onBoundaryRef.current) {
+          const ratio = Math.min(1, Math.max(0, a.currentTime / dur));
+          const idx = Math.min(words.length - 1, Math.floor(ratio * words.length));
+          if (idx !== lastIdx) {
+            lastIdx = idx;
+            onBoundaryRef.current(offsets[idx], text);
           }
         }
-        audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
-        audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+        rafRef.current = requestAnimationFrame(tick);
       };
-      audio.onloadedmetadata = setupWordHighlight;
-      // Fallback if metadata loads after play
-      if (audio.readyState >= 1) setupWordHighlight();
+
+      const finish = () => {
+        stopHighlightLoop();
+        setIsSpeaking(false);
+        if (objectUrlRef.current) {
+          URL.revokeObjectURL(objectUrlRef.current);
+          objectUrlRef.current = null;
+        }
+      };
+
+      audio.onplay = () => {
+        stopHighlightLoop();
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      audio.onended = finish;
+      audio.onerror = finish;
+
       await audio.play();
     } catch {
       setHasElevenLabs(false);
       speakWithBrowser(text);
     }
-  }, [lang, stopElevenLabs, speakWithBrowser]);
+  }, [lang, stopElevenLabs, stopHighlightLoop, speakWithBrowser]);
 
   const speak = useCallback((rawText: string) => {
     const text = cleanText(rawText);
@@ -184,5 +233,8 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     return () => window.speechSynthesis.removeEventListener("voiceschanged", handler);
   }, []);
 
-  return { speak, stop, isSpeaking, getCleanedText };
+  // Tear down on unmount
+  useEffect(() => () => { stopHighlightLoop(); }, [stopHighlightLoop]);
+
+  return { speak, stop, isSpeaking, getCleanedText, hasElevenLabs };
 }

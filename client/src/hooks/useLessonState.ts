@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useSounds } from "@/hooks/useSounds";
-import { useTTS } from "@/hooks/useTTS";
+import { useTTS, cleanText, buildWordOffsets } from "@/hooks/useTTS";
 import { toast } from "sonner";
 
 export function useLessonState(lessonId: number) {
@@ -15,10 +15,29 @@ export function useLessonState(lessonId: number) {
   const { profile, locale } = useProfile();
   const sounds = useSounds();
 
+  const [highlightOffsets, setHighlightOffsets] = useState<number[]>([]);
+  const highlightOffsetsRef = useRef<number[]>([]);
+  useEffect(() => { highlightOffsetsRef.current = highlightOffsets; }, [highlightOffsets]);
+  // Called by useTTS on every word boundary (browser) or animation frame
+  // (ElevenLabs). charIndex is an index into the cleaned string, so we walk
+  // the precomputed word offsets to find which word is being spoken.
+  const handleBoundary = useCallback((charIndex: number) => {
+    const offsets = highlightOffsetsRef.current;
+    if (!offsets.length) return;
+    let lo = 0;
+    let hi = offsets.length - 1;
+    let found = 0;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (offsets[mid] <= charIndex) { found = mid; lo = mid + 1; } else { hi = mid - 1; }
+    }
+    setHighlightIndex(found);
+  }, []);
   const tts = useTTS({
     rate: profile.speechRate,
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     voiceHint: profile.voice,
+    onBoundary: handleBoundary,
   });
   const isNarrating = tts.isSpeaking;
   const speakingTextRef = useRef<string>("");
@@ -74,18 +93,24 @@ export function useLessonState(lessonId: number) {
   const stopWordHighlight = useCallback(() => {
     setHighlightIndex(-1);
     setHighlightedWords([]);
+    setHighlightOffsets([]);
     speakingTextRef.current = "";
   }, []);
-
   const startWordHighlight = useCallback((text: string) => {
-    const clean = text.replace(/[#*`_~[\]()]/g, " ").replace(/\s+/g, " ").trim();
-    const words = clean.split(/\s+/).filter(Boolean);
+    // MUST match what useTTS speaks — it strips #*_`~[] and collapses
+    // whitespace, and does NOT touch parentheses.
+    const clean = cleanText(text);
+    const { words, offsets } = buildWordOffsets(clean);
     speakingTextRef.current = clean;
     setHighlightedWords(words);
+    setHighlightOffsets(offsets);
     setHighlightIndex(0);
   }, []);
-
-  const readAloud = useCallback(() => {
+  // Clear the highlight when speech finishes on its own.
+  useEffect(() => {
+    if (!tts.isSpeaking) setHighlightIndex(-1);
+  }, [tts.isSpeaking]);
+    const readAloud = useCallback(() => {
     if (!currentSection) return;
     if (isNarrating) {
       tts.stop();
