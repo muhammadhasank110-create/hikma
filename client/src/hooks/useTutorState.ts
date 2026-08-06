@@ -110,13 +110,14 @@ export function useTutorState() {
     } catch { /* silent */ } finally { setIsSocraticLoading(false); }
   }, [locale, profile]);
 
-  const sendMessage = useCallback(() => {
-    if (!input.trim() || isStreaming) return;
+  const sendMessage = useCallback((overrideText?: string) => {
+    const text = overrideText ?? input;
+    if (!text.trim() || isStreaming) return;
     if (!isAuthenticated) { window.location.href = '/signin'; return; }
-    const userMsg: Message = { role: "user", content: input.trim(), timestamp: Date.now() };
+    const userMsg: Message = { role: "user", content: text.trim(), timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
-    const currentInput = input.trim();
-    setInput("");
+    const currentInput = text.trim();
+    if (!overrideText) setInput("");
     setIsStreaming(true);
     setStreamingContent("");
     setSocraticQuestion(null);
@@ -132,7 +133,7 @@ export function useTutorState() {
             message: currentInput,
             sessionId,
             profile: { mode: profile.mode, chunkSize: profile.chunkSize, readingLevel: profile.readingLevel, locale, curriculum: profile.curriculum, tier: profile.tier, tashkeel: profile.tashkeel, numerals: profile.numerals },
-            conversationHistory: currentMessages.map(m => ({ role: m.role, content: m.content })),
+            conversationHistory: currentMessages.slice(-10).map(m => ({ role: m.role, content: m.content })),
           }),
           signal: controller.signal,
         });

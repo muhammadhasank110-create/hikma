@@ -1,5 +1,5 @@
 {
-  "name": "Hikma — حكمة | Adaptive Learning",
+  "name": "Hikma \u2014 \u062d\u0643\u0645\u0629 | Adaptive Learning",
   "short_name": "Hikma",
   "description": "The adaptive AI learning companion for blind, dyslexic, and ADHD learners. Accessibility is the architecture, not an add-on.",
   "start_url": "/",
@@ -26,7 +26,7 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/manus-storage/hikma-app-icon-clean_9f3e1a2b.png",
+      "src": "/manus-storage/hikma-app-icon_2d2d3fef.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

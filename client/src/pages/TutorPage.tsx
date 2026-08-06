@@ -90,6 +90,38 @@ export default function TutorPage() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4" role="log" aria-label={locale === "ar" ? "محادثة حكمة AI" : "Hikma AI conversation"} aria-live="polite">
+        {/* Starter questions — visible only when conversation is empty */}
+        {s.messages.length === 0 && !s.isStreaming && (
+          <div className="flex flex-col items-center justify-center h-full gap-6 py-8">
+            <div className="text-center space-y-1">
+              <p className="text-lg font-semibold text-foreground">{locale === "ar" ? "مرحباً! كيف يمكنني مساعدتك اليوم؟" : "Hi! What would you like to explore today?"}</p>
+              <p className="text-sm text-muted-foreground">{locale === "ar" ? "اختر سؤالاً أو اكتب سؤالك الخاص" : "Pick a question or type your own"}</p>
+            </div>
+            <div className="grid gap-2 w-full max-w-md" role="list" aria-label={locale === "ar" ? "أسئلة مقترحة" : "Suggested questions"}>
+              {([
+                { en: "Explain photosynthesis in simple terms", ar: "اشرح عملية التمثيل الضوئي بكلمات بسيطة" },
+                { en: "Help me understand fractions", ar: "ساعدني على فهم الكسور" },
+                { en: "What are Newton's three laws?", ar: "ما هي قوانين نيوتن الثلاثة؟" },
+                { en: "Give me a practice question on angles", ar: "أعطني سؤالاً تدريبياً عن الزوايا" },
+                { en: "How do I structure an essay introduction?", ar: "كيف أكتب مقدمة مقال؟" },
+              ] as { en: string; ar: string }[]).map((q, i) => (
+                <button
+                  key={i}
+                  role="listitem"
+                  className="text-start w-full px-4 py-3 rounded-xl border border-border bg-card hover:bg-accent hover:border-primary/40 transition-colors text-sm text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                  onClick={() => {
+                    const text = locale === "ar" ? q.ar : q.en;
+                    s.setInput(text);
+                    s.sendMessage(text);
+                  }}
+                  aria-label={locale === "ar" ? q.ar : q.en}
+                >
+                  {locale === "ar" ? q.ar : q.en}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {s.messages.map((msg, i) => (
           <div key={i} className={`flex gap-3 animate-arrive ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
             <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${msg.role === "assistant" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
@@ -177,7 +209,7 @@ export default function TutorPage() {
             className={s.isRecording ? "text-destructive animate-pulse" : "text-muted-foreground"}>
             {s.isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
           </Button>
-          <Button onClick={s.sendMessage} disabled={!s.input.trim() || s.isStreaming} aria-label={t.send} size="icon">
+          <Button onClick={() => s.sendMessage()} disabled={!s.input.trim() || s.isStreaming} aria-label={t.send} size="icon">
             {s.isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </div>

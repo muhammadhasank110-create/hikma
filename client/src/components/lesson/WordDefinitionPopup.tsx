@@ -2,16 +2,21 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function WordDefinitionPopup({ word, locale, onClose }: { word: string; locale: string; onClose: () => void }) {
+export default function WordDefinitionPopup({ word, locale, onClose, sectionText = "" }: { word: string; locale: string; onClose: () => void; sectionText?: string }) {
   const [definition, setDefinition] = useState("");
   const [loading, setLoading] = useState(true);
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   useEffect(() => {
     if (!word) return;
     setLoading(true); setDefinition("");
+    const contextHint = sectionText.trim().slice(0, 300);
     const prompt = locale === "ar"
-      ? `عرّف الكلمة "${word}" بجملة واحدة بسيطة مناسبة لطالب في المرحلة الثانوية.`
-      : `Define the word "${word}" in one simple sentence suitable for a secondary school student. Be concise.`;
+      ? `في سياق النص التالي: "${contextHint}"
+
+عرّف الكلمة "${word}" بجملة واحدة بسيطة مناسبة لطالب في المرحلة الثانوية.`
+      : `In the context of: "${contextHint}"
+
+Define the word "${word}" in one simple sentence suitable for a secondary school student. Be concise.`;
     fetch("/api/tutor/stream", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: prompt, sessionId: `def-${word}`, profile: { mode: "reading", locale }, conversationHistory: [] }),

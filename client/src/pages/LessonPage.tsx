@@ -108,7 +108,7 @@ export default function LessonPage() {
 
   return (
     <div className={`min-h-screen ${s.isFocused ? "bg-black/95" : "bg-background"} transition-colors duration-300`}>
-      {s.selectedWord && <WordDefinitionPopup word={s.selectedWord} locale={locale} onClose={() => s.setSelectedWord(null)} />}
+      {s.selectedWord && <WordDefinitionPopup word={s.selectedWord} locale={locale} onClose={() => s.setSelectedWord(null)} sectionText={locale === "ar" ? (s.currentSection?.bodyAr ?? s.currentSection?.bodyEn ?? "") : (s.currentSection?.bodyEn ?? "")} />}
       {s.showBodyDouble && <BodyDoublePanel locale={locale} lessonTitle={s.lessonTitle} />}
 
       <div className="container py-6 max-w-3xl relative">

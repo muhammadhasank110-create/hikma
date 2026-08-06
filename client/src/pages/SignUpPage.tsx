@@ -42,7 +42,7 @@ export default function SignUpPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img src="/manus-storage/hikma-app-icon-clean_e261c2b4.png" alt="Hikma" className="w-16 h-16 rounded-2xl mx-auto mb-4 object-cover" />
+          <img src="/manus-storage/hikma-app-icon_2d2d3fef.png" alt="Hikma" onError={(e) => { (e.target as HTMLImageElement).style.display="none"; }} className="w-16 h-16 rounded-2xl mx-auto mb-4 object-cover" />
           <h1 className="text-2xl font-bold text-white font-display">Create your account</h1>
           <p className="text-white/60 text-sm mt-1">Free. Accessible. Built for every learner.</p>
         </div>

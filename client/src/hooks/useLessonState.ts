@@ -62,6 +62,8 @@ export function useLessonState(lessonId: number) {
   const [pomodoroPhase, setPomodoroPhase] = useState<"work" | "break">("work");
   const pomodoroRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [highlightedWords, setHighlightedWords] = useState<string[]>([]);
+  // Tutor conversation history for the simplify/explain feature — reset when lesson changes
+  const [tutorHistory, setTutorHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -84,6 +86,8 @@ export function useLessonState(lessonId: number) {
     onError: () => { advanceSection(); },
   });
 
+  // Reset tutor history when lesson changes
+  useEffect(() => { setTutorHistory([]); }, [lessonId]);
   const sections = (lesson?.sections as any[]) ?? [];
   const currentSection = sections[sectionIndex];
   const totalSections = sections.length;
@@ -190,7 +194,7 @@ export function useLessonState(lessonId: number) {
           message: prompt,
           sessionId: `simplify-${lessonId}-${sectionIndex}`,
           profile: { mode: "reading", chunkSize: "micro", readingLevel: 1, locale, curriculum: profile.curriculum, tier: profile.tier },
-          conversationHistory: [],
+          conversationHistory: tutorHistory.slice(-10),
         }),
       });
       if (!res.ok) throw new Error("Stream failed");
@@ -212,11 +216,17 @@ export function useLessonState(lessonId: number) {
           }
         }
       }
+      // Append to history so follow-ups like "explain that more simply" have context
+      setTutorHistory(prev => [
+        ...prev,
+        { role: "user" as const, content: prompt },
+        { role: "assistant" as const, content: full },
+      ].slice(-10));
     } catch {
       toast.error(locale === "ar" ? "فشل التبسيط" : "Simplification failed");
       setSimplifiedView(false);
     } finally { setIsSimplifying(false); }
-  }, [lesson, sectionIndex, locale, profile, lessonId, simplifiedContent]);
+  }, [lesson, sectionIndex, locale, profile, lessonId, simplifiedContent, tutorHistory]);
 
   const announcePosition = useCallback(() => {
     if (!lesson) return;

@@ -15,7 +15,7 @@ import {
   ChevronDown, Mic, GraduationCap
 } from "lucide-react";
 
-const WORDMARK_URL = "/manus-storage/hikma-wordmark-clean_292f98b9.png";
+const WORDMARK_URL = "/manus-storage/hikma-wordmark_ad0589af.png";
 
 const HOW_IT_WORKS = [
   {
@@ -400,7 +400,7 @@ export default function Home() {
         <div className="container max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 text-white/70 text-xs">
           <div className="flex items-center gap-2">
             <img
-              src="/manus-storage/hikma-app-icon-clean_e261c2b4.png"
+              src="/manus-storage/hikma-app-icon_2d2d3fef.png"
               alt=""
               className="w-6 h-6 rounded-lg"
               aria-hidden="true"
