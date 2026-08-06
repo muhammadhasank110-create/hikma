@@ -58,9 +58,18 @@ function pickVoice(lang: string, hint?: string): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
   const langBase = lang.split("-")[0].toLowerCase();
+  // Prefer high-quality voices by name (Chrome/Edge/Safari premium voices)
+  const premiumNames = ["Daniel", "Samantha", "Karen", "Moira", "Fiona", "Alex",
+    "Google UK English Male", "Google UK English Female", "Microsoft David",
+    "Microsoft Zira", "Microsoft Mark", "Microsoft George", "Microsoft Hazel"];
   if (hint) {
     const hinted = voices.find(v => v.name.toLowerCase().includes(hint.toLowerCase()));
     if (hinted) return hinted;
+  }
+  // Try premium voices for the right language first
+  for (const name of premiumNames) {
+    const v = voices.find(vv => vv.name.includes(name) && vv.lang.toLowerCase().startsWith(langBase));
+    if (v) return v;
   }
   const exact = voices.find(v => v.lang.toLowerCase() === lang.toLowerCase());
   if (exact) return exact;
@@ -165,8 +174,11 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, locale: lang.startsWith("ar") ? "ar" : "en" }),
       });
-      if (!res.ok || res.headers.get("content-type")?.includes("json")) {
-        // ElevenLabs failed — fall back to browser
+      // Check for failure: non-OK status, HTML response (403 proxy block), or JSON error
+      const contentType = res.headers.get("content-type") ?? "";
+      if (!res.ok || contentType.includes("json") || contentType.includes("html") || contentType.includes("text")) {
+        // ElevenLabs failed (403 proxy block, 402 quota, or other error) — fall back to browser
+        console.warn("[useTTS] ElevenLabs unavailable (status:", res.status, ") — using browser speech");
         setHasElevenLabs(false);
         speakWithBrowser(text);
         return;

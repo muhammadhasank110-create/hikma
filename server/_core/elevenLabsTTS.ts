@@ -115,11 +115,46 @@ export function registerElevenLabsTTSRoute(app: Express) {
     }
   });
 
-  // Config endpoint — tells the client if ElevenLabs is available
-  app.get("/api/tts/config", (_req: Request, res: Response) => {
-    res.json({
-      hasElevenLabs: !!ENV.elevenLabsApiKey,
-      voices: VOICE_IDS,
-    });
+  // Config endpoint — probes ElevenLabs to check if it actually works
+  // Caches the result for 5 minutes to avoid hammering the API
+  let cachedConfig: { hasElevenLabs: boolean; ts: number } | null = null;
+  app.get("/api/tts/config", async (_req: Request, res: Response) => {
+    // Return cached result if fresh
+    if (cachedConfig && Date.now() - cachedConfig.ts < 5 * 60 * 1000) {
+      res.json({ hasElevenLabs: cachedConfig.hasElevenLabs, voices: VOICE_IDS });
+      return;
+    }
+    if (!ENV.elevenLabsApiKey) {
+      cachedConfig = { hasElevenLabs: false, ts: Date.now() };
+      res.json({ hasElevenLabs: false, voices: VOICE_IDS });
+      return;
+    }
+    // Probe with a minimal request (1 char) to check if the API actually works
+    try {
+      const probe = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_IDS.en}`,
+        {
+          method: "POST",
+          headers: {
+            "xi-api-key": ENV.elevenLabsApiKey,
+            "Content-Type": "application/json",
+            Accept: "audio/mpeg",
+          },
+          body: JSON.stringify({
+            text: "Hi",
+            model_id: "eleven_multilingual_v2",
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+          }),
+          signal: AbortSignal.timeout(8000),
+        }
+      );
+      const ct = probe.headers.get("content-type") ?? "";
+      const works = probe.ok && ct.includes("audio");
+      cachedConfig = { hasElevenLabs: works, ts: Date.now() };
+      res.json({ hasElevenLabs: works, voices: VOICE_IDS });
+    } catch {
+      cachedConfig = { hasElevenLabs: false, ts: Date.now() };
+      res.json({ hasElevenLabs: false, voices: VOICE_IDS });
+    }
   });
 }
