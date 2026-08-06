@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Heart, TrendingUp, BookOpen, Clock, Award, Bell, FileText, Shield, ChevronRight } from "lucide-react";
-import { startLogin } from "@/const";
+// startLogin removed
 
 export default function GuardianDashboard() {
   const { locale } = useProfile();
@@ -23,7 +23,7 @@ export default function GuardianDashboard() {
         <Heart className="w-12 h-12 text-clay mx-auto" />
         <h1 className="text-2xl font-bold font-display">{t("Guardian Dashboard", "لوحة ولي الأمر")}</h1>
         <p className="text-muted-foreground">{t("Sign in to monitor your child's learning progress.", "سجّل دخولك لمتابعة تقدم طفلك في التعلم.")}</p>
-        <Button onClick={() => startLogin()}>{t("Sign In", "تسجيل الدخول")}</Button>
+        <Button onClick={() => { window.location.href = '/signin'; }}>{t("Sign In", "تسجيل الدخول")}</Button>
       </div>
     );
   }

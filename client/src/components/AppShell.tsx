@@ -14,7 +14,7 @@ import {
   Users, Shield, Menu, X, Globe, Sun, Moon, Contrast, Volume2, VolumeX,
   ChevronRight, LogOut, LogIn, Layers, Star, FileText
 } from "lucide-react";
-import { startLogin } from "@/const";
+// startLogin removed
 import { playTestSound, playSound } from "@/lib/sound";
 
 interface NavItem {
@@ -262,7 +262,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => startLogin()}
+              onClick={() => { window.location.href = '/signin'; }}
               className="text-white hover:bg-white/10 text-xs"
               aria-label={t("Sign in", "تسجيل الدخول")}
             >

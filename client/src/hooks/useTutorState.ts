@@ -19,7 +19,7 @@ export interface Message {
 export type TutorModality = "read" | "listen" | "map";
 
 export function useTutorState() {
-  const { isAuthenticated, startLogin } = useAuth() as any;
+  const { isAuthenticated } = useAuth() as any;
   const { profile, locale } = useProfile();
   const [, params] = useRoute("/tutor/:lessonId");
   const sounds = useSounds();
@@ -112,7 +112,7 @@ export function useTutorState() {
 
   const sendMessage = useCallback(() => {
     if (!input.trim() || isStreaming) return;
-    if (!isAuthenticated) { startLogin?.(); return; }
+    if (!isAuthenticated) { window.location.href = '/signin'; return; }
     const userMsg: Message = { role: "user", content: input.trim(), timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     const currentInput = input.trim();
@@ -176,7 +176,7 @@ export function useTutorState() {
         abortControllerRef.current = null;
       }
     })();
-  }, [input, isStreaming, isAuthenticated, messages, sessionId, profile, locale, ttsEnabled, modality, triggerSocraticCheck, speakText, sounds, startLogin]);
+  }, [input, isStreaming, isAuthenticated, messages, sessionId, profile, locale, ttsEnabled, modality, triggerSocraticCheck, speakText, sounds]);
 
   const startRecording = async () => {
     try {
@@ -212,7 +212,7 @@ export function useTutorState() {
   };
 
   return {
-    isAuthenticated, startLogin, profile, locale, params,
+    isAuthenticated, profile, locale, params,
     sessionId, messages, setMessages, input, setInput,
     isRecording, ttsEnabled, setTtsEnabled,
     isStreaming, streamingContent,

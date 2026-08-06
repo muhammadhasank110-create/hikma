@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Users, KeyRound, CheckCircle } from "lucide-react";
-import { startLogin } from "@/const";
+// startLogin removed
 
 export default function ClassJoinPage() {
   const { locale } = useProfile();
@@ -36,7 +36,7 @@ export default function ClassJoinPage() {
         <Users className="w-12 h-12 text-primary mx-auto" />
         <h1 className="text-2xl font-bold font-display">{t("Join a Class", "انضم إلى فصل")}</h1>
         <p className="text-muted-foreground">{t("Sign in to join a class with your school code.", "سجّل دخولك للانضمام إلى فصل برمز مدرستك.")}</p>
-        <Button onClick={() => startLogin()}>{t("Sign In", "تسجيل الدخول")}</Button>
+        <Button onClick={() => { window.location.href = '/signin'; }}>{t("Sign In", "تسجيل الدخول")}</Button>
       </div>
     );
   }

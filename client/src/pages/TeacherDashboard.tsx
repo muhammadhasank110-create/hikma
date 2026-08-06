@@ -16,7 +16,7 @@ import {
   Search, ChevronRight, Award, BarChart3,
   FileText, Bell, GraduationCap
 } from "lucide-react";
-import { startLogin } from "@/const";
+// startLogin removed
 
 export default function TeacherDashboard() {
   const { locale } = useProfile();
@@ -37,7 +37,7 @@ export default function TeacherDashboard() {
         <GraduationCap className="w-12 h-12 text-primary mx-auto" />
         <h1 className="text-2xl font-bold font-display">{t("Teacher Dashboard", "لوحة المعلم")}</h1>
         <p className="text-muted-foreground">{t("Sign in to access your class management tools.", "سجّل دخولك للوصول إلى أدوات إدارة الفصل.")}</p>
-        <Button onClick={() => startLogin()}>{t("Sign In", "تسجيل الدخول")}</Button>
+        <Button onClick={() => { window.location.href = '/signin'; }}>{t("Sign In", "تسجيل الدخول")}</Button>
       </div>
     );
   }

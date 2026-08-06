@@ -15,7 +15,7 @@ import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { startLogin } from "@/const";
+// startLogin removed
 import {
   Bot, TrendingUp, Layers, ChevronRight,
   GraduationCap, Star, BookOpen, Zap
@@ -96,7 +96,7 @@ export default function Dashboard() {
         )}
         {!isAuthenticated && (
           <Button
-            onClick={() => startLogin()}
+            onClick={() => { window.location.href = '/signin'; }}
             className="mt-4"
             aria-label={t("Sign in to save your progress and personalise Hikma", "سجّل الدخول لحفظ تقدمك وتخصيص حكمة")}
           >

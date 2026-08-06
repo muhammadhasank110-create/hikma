@@ -5,7 +5,7 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { startLogin } from "./const";
+// startLogin removed — redirect to /signin instead
 import { playSound } from "./lib/sound";
 import "./index.css";
 
@@ -19,7 +19,7 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  startLogin();
+  window.location.href = '/signin';
 };
 
 queryClient.getQueryCache().subscribe(event => {
