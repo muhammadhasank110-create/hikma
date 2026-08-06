@@ -44,7 +44,7 @@ function AccessibilityBar() {
   return (
     <div
       id="accessibility-bar"
-      className="w-full bg-[rgb(var(--nav-bg))] text-white text-xs flex items-center justify-between px-4 py-1.5 gap-4 flex-wrap"
+      className="w-full bg-[rgb(var(--nav-bg))] text-white text-xs flex items-center justify-between px-4 py-0 gap-4 flex-wrap min-h-[44px]"
       role="toolbar"
       aria-label={t("Accessibility controls", "أدوات إمكانية الوصول")}
     >
@@ -52,7 +52,7 @@ function AccessibilityBar() {
         {/* High contrast toggle */}
         <button
           onClick={() => updateProfile({ theme: profile.theme === "high_contrast" ? "light" : "high_contrast" })}
-          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1"
+          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
           aria-label={t("Toggle high contrast", "تبديل التباين العالي")}
           aria-pressed={profile.theme === "high_contrast"}
         >
@@ -62,14 +62,14 @@ function AccessibilityBar() {
         {/* Text size */}
         <button
           onClick={() => updateProfile({ fontScale: Math.min(2.5, profile.fontScale + 0.1) })}
-          className="hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1"
+          className="hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px] flex items-center"
           aria-label={t("Increase text size", "تكبير النص")}
         >
           A+
         </button>
         <button
           onClick={() => updateProfile({ fontScale: Math.max(1.0, profile.fontScale - 0.1) })}
-          className="hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1"
+          className="hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px] flex items-center"
           aria-label={t("Decrease text size", "تصغير النص")}
         >
           A−
@@ -77,7 +77,7 @@ function AccessibilityBar() {
         {/* Audio toggle */}
         <button
           onClick={() => updateProfile({ autoNarrate: !profile.autoNarrate })}
-          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1"
+          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
           aria-label={t("Toggle audio narration", "تبديل السرد الصوتي")}
           aria-pressed={profile.autoNarrate}
         >
@@ -87,7 +87,7 @@ function AccessibilityBar() {
         {/* Focus mode */}
         <button
           onClick={() => updateProfile({ mode: profile.mode === "focus" ? "reading" : "focus" })}
-          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1"
+          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
           aria-label={t("Toggle focus mode", "تبديل وضع التركيز")}
           aria-pressed={profile.mode === "focus"}
         >
@@ -99,14 +99,14 @@ function AccessibilityBar() {
         {/* Language toggle */}
         <button
           onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1"
+          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
           aria-label={t("Switch to Arabic", "التبديل إلى الإنجليزية")}
         >
           <Globe className="w-3 h-3" />
           <span>{locale === "ar" ? "EN" : "عربي"}</span>
         </button>
         {/* Shortcuts hint */}
-        <Link href="/shortcuts" className="hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1">
+        <Link href="/shortcuts" className="hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px] flex items-center">
           <Keyboard className="w-3 h-3 inline mr-1" />
           {t("Shortcuts", "الاختصارات")}
         </Link>

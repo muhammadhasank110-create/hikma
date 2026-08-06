@@ -42,7 +42,7 @@ export default function ProgressPage() {
               <Icon className={`w-5 h-5 ${color}`} />
               <div>
                 <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="text-xl font-bold tabular-nums [font-variant-numeric:normal]">{value}</p>
+                <p className="text-xl font-bold" style={{ fontVariantNumeric: "normal", fontFeatureSettings: '"zero" 0', fontFamily: "system-ui, sans-serif" }}>{value}</p>
               </div>
             </CardContent>
           </Card>

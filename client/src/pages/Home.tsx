@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { useProfile } from "@/contexts/ProfileContext";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight, Globe, BookOpen, Brain,
   Keyboard, Layers, Sparkles, Star,
@@ -71,6 +71,9 @@ const stagger = {
 };
 
 export default function Home() {
+  const prefersReducedMotion = useReducedMotion();
+  // When reduced motion is preferred, disable all animations
+  const motionProps = (variants: any) => prefersReducedMotion ? {} : { initial: "hidden", animate: "visible", variants };
   const { isAuthenticated } = useAuth();
   const { locale, setLocale } = useProfile();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
@@ -123,7 +126,7 @@ export default function Home() {
               <motion.div variants={fadeUp}>
                 <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-primary/80 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
                   <Sparkles className="w-3 h-3" aria-hidden="true" />
-                  {t("AI-powered · IGCSE Edexcel + Qatar MoEHE", "مدعوم بالذكاء الاصطناعي · إيدكسيل + وزارة التعليم القطرية")}
+                  <span className="text-white/90 font-medium">{t("AI-powered · IGCSE Edexcel + Qatar MoEHE", "مدعوم بالذكاء الاصطناعي · إيدكسيل + وزارة التعليم القطرية")}</span>
                 </span>
               </motion.div>
 
@@ -182,7 +185,7 @@ export default function Home() {
                 </a>
               </motion.div>
 
-              <motion.p variants={fadeUp} className="text-white/40 text-xs flex items-center gap-2">
+              <motion.p variants={fadeUp} className="text-white/70 text-xs flex items-center gap-2">
                 <Keyboard className="w-3.5 h-3.5" aria-hidden="true" />
                 {t("Built to MADA Qatar & WCAG 2.2 AA · Free to use", "مبني وفق معايير مادا قطر و WCAG 2.2 AA · مجاني")}
               </motion.p>
@@ -339,7 +342,7 @@ export default function Home() {
             <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
               {t("Ready to learn your way?", "هل أنت مستعد للتعلم بطريقتك؟")}
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-white/60 text-lg">
+            <motion.p variants={fadeUp} className="text-white/80 text-lg">
               {t("Free. Accessible. Built for Qatar.", "مجاني. متاح للجميع. مبني لقطر.")}
             </motion.p>
             <motion.div variants={fadeUp} className="flex justify-center">
@@ -372,7 +375,7 @@ export default function Home() {
 
       {/* ── Footer ────────────────────────────────────────────────────── */}
       <footer className="bg-[rgb(var(--nav-bg))] border-t border-white/10 py-8">
-        <div className="container max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 text-white/40 text-xs">
+        <div className="container max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 text-white/70 text-xs">
           <div className="flex items-center gap-2">
             <img
               src="/manus-storage/hikma-app-icon-clean_e261c2b4.png"
@@ -380,7 +383,7 @@ export default function Home() {
               className="w-6 h-6 rounded-lg"
               aria-hidden="true"
             />
-            <span className="font-semibold text-white/60">Hikma — حكمة</span>
+            <span className="font-semibold text-white/90">Hikma — حكمة</span>
           </div>
           <p>{t("Built to MADA Qatar & WCAG 2.2 AA standards", "مبني وفق معايير مادا قطر و WCAG 2.2 AA")}</p>
         </div>

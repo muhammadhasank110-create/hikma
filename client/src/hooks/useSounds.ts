@@ -1,7 +1,21 @@
 /**
  * useSounds — Duolingo-inspired sound effects using Web Audio API.
  * Musical, warm, and rewarding. No external files needed.
+ * Issue #18: Every sound has a visual equivalent for deaf/HoH users.
  */
+
+/** Visual flash — brief colour pulse on the body for deaf/HoH users */
+function visualFlash(colour: string, label: string) {
+  // Announce to screen reader
+  const live = document.getElementById("sound-announcer");
+  if (live) { live.textContent = label; setTimeout(() => { live.textContent = ""; }, 1000); }
+  // Brief body border flash
+  const el = document.createElement("div");
+  el.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:9998;border:3px solid ${colour};border-radius:0;opacity:0.6;transition:opacity 0.3s`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity = "0"; });
+  setTimeout(() => el.remove(), 400);
+}
 
 let ctx: AudioContext | null = null;
 
@@ -36,7 +50,7 @@ export const sounds = {
   },
 
   /** Two-note chime — section/page navigation */
-  navigate: () => {
+  navigate: () => { visualFlash("#22c55e", "Navigated");
     tone(587, 0.08, "sine", 0.12);
     tone(784, 0.1, "sine", 0.1, 0.06);
   },

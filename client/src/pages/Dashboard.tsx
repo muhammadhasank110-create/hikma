@@ -60,6 +60,17 @@ export default function Dashboard() {
   const currLabel = CURRICULUM_LABEL[profile.curriculum ?? ""] || "";
   const modeLabel = MODE_LABEL[profile.mode ?? "reading"] || "Reading";
 
+  // Filter curricula to only show the user's selected curriculum (Issue #16)
+  const displayCurricula = curricula?.filter(curr => {
+    if (!profile.curriculum || profile.curriculum === "none") return true;
+    const profKey = profile.curriculum.toLowerCase();
+    const titleLower = curr.titleEn.toLowerCase();
+    const boardLower = (curr.board ?? "").toLowerCase();
+    return titleLower.includes(profKey.split("_")[0]) ||
+           boardLower.includes(profKey.split("_")[0]) ||
+           profKey.includes(titleLower.split(" ")[0]);
+  }) ?? curricula;
+
   return (
     <main id="main-content" className="container py-8 space-y-10 max-w-4xl page-enter" aria-label={t("Dashboard", "لوحة التحكم")}>
 
@@ -214,7 +225,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {curricula?.map(curr => (
+            {displayCurricula?.map(curr => (
               <Link key={curr.id} href={`/subjects/${curr.id}`}>
                 <div
                   role="link"
@@ -237,7 +248,7 @@ export default function Dashboard() {
                 </div>
               </Link>
             ))}
-            {curricula?.length === 0 && (
+            {displayCurricula?.length === 0 && (
               <p className="text-muted-foreground text-sm col-span-full py-4">
                 {t("No subjects loaded yet. Complete onboarding to see your subjects.", "لم يتم تحميل أي مواد بعد. أكمل الإعداد لرؤية موادك.")}
               </p>

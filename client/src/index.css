@@ -622,8 +622,18 @@ button:not([disabled]):active,
   transition: background-color 80ms ease, color 80ms ease;
 }
 
-/* Respect reduced motion */
+/* Respect reduced motion — WCAG 2.3.3 */
 @media (prefers-reduced-motion: reduce) {
+  /* Global: collapse all animations and transitions to instant */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Specific overrides for named classes */
   .page-enter,
   .stagger-children > *,
   .card-hover,

@@ -277,7 +277,7 @@ export default function TutorPage() {
   };
 
   return (
-    <div id="ai-tutor" className="flex flex-col h-[calc(100vh-4rem)] max-w-3xl mx-auto">
+    <div id="ai-tutor" tabIndex={-1} className="flex flex-col h-[calc(100vh-4rem)] max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
         <div className="flex items-center gap-2">
@@ -285,7 +285,7 @@ export default function TutorPage() {
             <Bot className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <h1 className="font-semibold text-sm">{t.title}</h1>
+            <p className="font-semibold text-sm">{t.title}</p>
             <p className="text-xs text-muted-foreground">
               {profile.curriculum !== "none" ? profile.curriculum.replace("_", " ").toUpperCase() : locale === "ar" ? "عام" : "General"}
             </p>

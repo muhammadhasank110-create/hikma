@@ -42,6 +42,7 @@ export function AriaLiveProvider({ children }: { children: React.ReactNode }) {
         className="sr-only"
         id="hikma-live-assertive"
       />
+      <div id="sound-announcer" aria-live="polite" aria-atomic="true" className="sr-only" />
     </AriaLiveContext.Provider>
   );
 }

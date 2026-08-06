@@ -18,7 +18,7 @@ export default function SubjectPage() {
   );
 
   if (isLoading) return (
-    <div className="container py-8 space-y-4">
+    <div className="container py-8 space-y-4" aria-busy="true" aria-label="Loading subjects, please wait">
       {[1,2,3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
     </div>
   );

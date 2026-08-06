@@ -495,7 +495,7 @@ export default function LessonPage() {
         <BookOpen className="w-8 h-8 text-primary" />
       </div>
       <div className="space-y-2 max-w-sm">
-        <h1 className="text-2xl font-bold font-display">{t("Take a breath.", "خذ نفساً.")}</h1>
+        <h2 className="text-2xl font-bold font-display">{t("Take a breath.", "خذ نفساً.")}</h2>
         <p className="text-muted-foreground">
           {t("You've saved your progress. Come back when you're ready — Hikma will be here.",
              "لقد حُفظ تقدمك. عد عندما تكون مستعداً — حكمة ستكون هنا.")}

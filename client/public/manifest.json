@@ -9,12 +9,27 @@
   "orientation": "any",
   "lang": "en",
   "dir": "ltr",
-  "categories": ["education", "accessibility"],
+  "categories": [
+    "education",
+    "accessibility"
+  ],
   "icons": [
     {
-      "src": "/favicon.ico",
+      "src": "/manus-storage/hikma-favicon_82e80eba.png",
       "sizes": "48x48",
-      "type": "image/x-icon"
+      "type": "image/png"
+    },
+    {
+      "src": "/manus-storage/hikma-pwa-192_96aecabc.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/manus-storage/hikma-app-icon-clean_9f3e1a2b.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [

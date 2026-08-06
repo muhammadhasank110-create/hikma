@@ -75,7 +75,7 @@ export default function SettingsPage() {
             <SelectContent>
               <SelectItem value="light">{t("Light", "فاتح")}</SelectItem>
               <SelectItem value="dark">{t("Dark", "داكن")}</SelectItem>
-              <SelectItem value="cream">{t("Cream (dyslexia-friendly)", "كريمي (مناسب لعسر القراءة)")}</SelectItem>
+              <SelectItem value="cream">{t("Cream — Dyslexia", "كريمي — عسر القراءة")}</SelectItem>
               <SelectItem value="calm">{t("Calm (focus mode)", "هادئ (وضع التركيز)")}</SelectItem>
               <SelectItem value="high_contrast">{t("High Contrast", "تباين عالٍ")}</SelectItem>
             </SelectContent>
