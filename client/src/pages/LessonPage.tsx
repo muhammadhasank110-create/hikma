@@ -50,7 +50,7 @@ export default function LessonPage() {
       if (e.key === "t" || e.key === "T") s.setPomodoroActive(v => !v);
       if (e.key === "b" || e.key === "B") s.setShowBodyDouble(v => !v);
       if (e.key === "p" && e.ctrlKey) { e.preventDefault(); s.announcePosition(); }
-      if (e.key === "Escape") { s.setIsFocused(false); s.setShowOverwhelmEscape(false); s.setSelectedWord(null); }
+      if (e.key === "Escape") { s.setIsFocused(false); s.setShowOverwhelmEscape(false); s.setSelectedWord(null); s.setShowConceptMap(false); s.setShowBodyDouble(false); if (s.showTopicQuestion) { s.setShowTopicQuestion(false); } }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);

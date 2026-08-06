@@ -293,7 +293,7 @@ export function useLessonState(lessonId: number) {
     showBodyDouble, setShowBodyDouble,
     showOverwhelmEscape, setShowOverwhelmEscape,
     // Topic question
-    topicQuestion, topicAnswer, setTopicAnswer, showTopicQuestion,
+    topicQuestion, topicAnswer, setTopicAnswer, showTopicQuestion, setShowTopicQuestion,
     generateQuestion,
     // Word highlight & definition
     highlightedWords, highlightIndex, selectedWord, setSelectedWord,

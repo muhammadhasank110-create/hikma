@@ -1,3 +1,4 @@
+import { PageTransition } from "@/components/PageTransition";
 import { useProfile } from "@/contexts/ProfileContext";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -2,6 +2,7 @@
  * TutorPage — slim orchestrator.
  * All state logic lives in useTutorState (client/src/hooks/useTutorState.ts).
  */
+import { PageTransition } from "@/components/PageTransition";
 import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

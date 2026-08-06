@@ -37,6 +37,18 @@ export function VoiceCommandOverlay() {
   const [, navigate] = useLocation();
   const tts = useTTS({ lang: locale === "ar" ? "ar-SA" : "en-GB", rate: profile.speechRate });
   const [voiceAllowed, setVoiceAllowed] = useState(readVoicePreference);
+  // Hide the mic button while the mobile menu Sheet is open
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useEffect(() => {
+    const onOpen = () => setMobileMenuOpen(true);
+    const onClose = () => setMobileMenuOpen(false);
+    window.addEventListener("hikma:mobile-menu-open", onOpen);
+    window.addEventListener("hikma:mobile-menu-close", onClose);
+    return () => {
+      window.removeEventListener("hikma:mobile-menu-open", onOpen);
+      window.removeEventListener("hikma:mobile-menu-close", onClose);
+    };
+  }, []);
 
   // Pick up the choice when onboarding finishes without a full page reload.
   useEffect(() => {
@@ -124,16 +136,25 @@ export function VoiceCommandOverlay() {
   };
 
   // Hooks above always run; the early return below is safe.
-  if (!voiceAllowed) return null;
+  if (!voiceAllowed || mobileMenuOpen) return null;
 
   return (
     <div
-      className="fixed bottom-6 left-6 z-[300]"
+      className={[
+        // z-40 sits below dialogs (z-50), sheets (z-50), and toasts (z-[100])
+        "fixed z-40",
+        // Desktop: bottom-left; Mobile: bottom-right with safe-area padding
+        "bottom-[calc(1.5rem+env(safe-area-inset-bottom))]",
+        // RTL-aware: on mobile use logical end (right in LTR, left in RTL)
+        "ltr:left-6 rtl:right-6",
+        "max-md:ltr:left-auto max-md:ltr:right-4",
+        "max-md:rtl:right-auto max-md:rtl:left-4",
+      ].join(" ")}
       role="region"
       aria-label={locale === "ar" ? "الأوامر الصوتية" : "Voice commands"}
     >
       {/* Wrapper: relative so pulse ring can surround the button without clipping */}
-      <div className="relative flex items-center justify-center w-14 h-14">
+      <div className="relative flex items-center justify-center w-14 h-14 max-md:w-12 max-md:h-12">
         {/* Pulse ring — positioned as sibling, outside button overflow */}
         {isListening && (
           <span
@@ -149,7 +170,7 @@ export function VoiceCommandOverlay() {
           aria-pressed={isListening}
           title={label}
           className={[
-            "w-14 h-14 rounded-full shadow-xl overflow-hidden",
+            "w-14 h-14 max-md:w-12 max-md:h-12 rounded-full shadow-xl overflow-hidden",
             "flex items-center justify-center",
             "transition-colors duration-200",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",

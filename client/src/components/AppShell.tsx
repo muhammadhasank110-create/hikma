@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 // startLogin removed
 import { playTestSound, playSound } from "@/lib/sound";
+import { useSpokenLabels } from "@/hooks/useSpokenLabels";
 
 interface NavItem {
   href: string;
@@ -41,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
 function AccessibilityBar() {
   const { profile, updateProfile, locale, setLocale } = useProfile();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  const { enabled: spokenLabels, toggle: toggleSpokenLabels } = useSpokenLabels();
   const [soundOn, setSoundOn] = React.useState(() => {
     try { return localStorage.getItem("hikma:sound") === "on"; } catch { return false; }
   });
@@ -160,6 +162,18 @@ function AccessibilityBar() {
             </div>
           )}
         </div>
+        {/* Spoken labels toggle */}
+        <button
+          type="button"
+          onClick={toggleSpokenLabels}
+          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
+          aria-pressed={spokenLabels}
+          aria-label={spokenLabels ? t("Spoken labels on — click to turn off", "التسميات الصوتية مفعّلة — انقر للإيقاف") : t("Spoken labels off — click to turn on", "التسميات الصوتية معطّلة — انقر للتفعيل")}
+          title={spokenLabels ? t("Spoken labels on", "التسميات الصوتية مفعّلة") : t("Spoken labels off", "التسميات الصوتية معطّلة")}
+        >
+          <span className="text-xs">{spokenLabels ? "🗣️" : "🔕"}</span>
+          <span className="hidden sm:inline text-xs">{t("Labels", "تسميات")}</span>
+        </button>
       </div>
       <div className="flex items-center gap-3">
         {/* Language toggle */}
@@ -337,6 +351,10 @@ function CommandPalette() {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { profile } = useProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Notify VoiceCommandOverlay to hide itself when mobile menu opens/closes
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(mobileMenuOpen ? "hikma:mobile-menu-open" : "hikma:mobile-menu-close"));
+  }, [mobileMenuOpen]);
   const { locale } = useProfile();
   const [location] = useLocation();
 

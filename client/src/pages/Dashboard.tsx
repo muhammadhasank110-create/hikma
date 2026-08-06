@@ -9,6 +9,7 @@
  * - Screen reader: all cards have aria-label with full context
  * - No decorative icons without aria-hidden
  */
+import { PageTransition } from "@/components/PageTransition";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useProfile } from "@/contexts/ProfileContext";
 import { trpc } from "@/lib/trpc";
@@ -73,6 +74,7 @@ export default function Dashboard() {
   }) ?? curricula;
 
   return (
+    <PageTransition>
     <main className="container py-8 space-y-10 max-w-4xl" aria-label={t("Dashboard", "لوحة التحكم")}>
 
       {/* ── Greeting ──────────────────────────────────────────────────── */}
@@ -250,15 +252,23 @@ export default function Dashboard() {
               </Link>
             ))}
             {displayCurricula?.length === 0 && (
-              <p className="text-muted-foreground text-sm col-span-full py-4">
-                {t("No subjects loaded yet. Complete onboarding to see your subjects.", "لم يتم تحميل أي مواد بعد. أكمل الإعداد لرؤية موادك.")}
-              </p>
+              <div className="col-span-full flex flex-col items-center justify-center py-12 gap-3 text-center">
+                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <p className="font-medium text-foreground">{t("No subjects yet", "لا توجد مواد بعد")}</p>
+                <p className="text-sm text-muted-foreground max-w-xs">{t("Complete your personalisation to load your curriculum subjects.", "أكمل التخصيص لتحميل مواد منهجك الدراسي.")}</p>
+                <Link href="/onboarding" className="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+                  {t("Set up my subjects", "إعداد موادي")}
+                </Link>
+              </div>
             )}
           </div>
         )}
       </section>
 
     </main>
+    </PageTransition>
   );
 }
 import { useScrollReveal } from "@/hooks/useScrollReveal";

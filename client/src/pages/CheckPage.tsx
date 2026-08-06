@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { AnimatedProgress } from "@/components/PageTransition";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, Volume2, Mic, MicOff, Trophy, RotateCcw, ArrowRight, CheckCircle2, XCircle } from "lucide-react";
@@ -86,7 +87,7 @@ export default function CheckPage() {
           <Badge variant="outline">{t(`Question ${s.currentIndex + 1} of ${s.questions.length}`, `سؤال ${s.currentIndex + 1} من ${s.questions.length}`)}</Badge>
           <Badge variant="secondary">{t(`${s.score}/${s.totalMarks} marks`, `${s.score}/${s.totalMarks} درجة`)}</Badge>
         </div>
-        <Progress value={s.progressPct} className="h-2" aria-label={t("Quiz progress", "تقدم الاختبار")} />
+        <AnimatedProgress value={s.progressPct} className="h-2" aria-label={t("Quiz progress", "تقدم الاختبار")} />
       </div>
 
       {/* Question card */}

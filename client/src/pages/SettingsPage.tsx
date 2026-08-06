@@ -1,4 +1,6 @@
+import { PageTransition } from "@/components/PageTransition";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useSpokenLabels } from "@/hooks/useSpokenLabels";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -11,6 +13,7 @@ import { Volume2, Eye, Type, Keyboard, Globe, Accessibility , Zap} from "lucide-
 
 export default function SettingsPage() {
   const { profile, updateProfile, locale, setLocale } = useProfile();
+  const { enabled: spokenLabels, toggle: toggleSpokenLabels } = useSpokenLabels();
 
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
@@ -34,6 +37,7 @@ export default function SettingsPage() {
   );
 
   return (
+    <PageTransition>
     <div className="container py-8 max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{t("Settings", "الإعدادات")}</h1>
@@ -191,6 +195,23 @@ export default function SettingsPage() {
       </Section>
 
       {/* Daily Goal */}
+      {/* Spoken labels */}
+      <Section icon={Volume2} title={t("Spoken labels", "التسميات الصوتية")}>
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground flex-1">{t("Announce button and link names on hover/focus. Keep OFF if using a screen reader.", "نطق أسماء الأزرار والروابط عند التمرير أو التركيز. أبقِه معطّلاً إذا كنت تستخدم قارئ شاشة.")}</p>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={spokenLabels}
+            onClick={toggleSpokenLabels}
+            className={["relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary", spokenLabels ? "bg-primary" : "bg-muted"].join(" ")}
+            aria-label={t("Toggle spoken labels", "تبديل التسميات الصوتية")}
+          >
+            <span className={["inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform", spokenLabels ? "translate-x-6" : "translate-x-1"].join(" ")} />
+          </button>
+        </div>
+      </Section>
+
       <Section icon={Zap} title={t("Daily Study Goal", "الهدف اليومي للدراسة")}>
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">{t("How many minutes do you want to study each day?", "كم دقيقة تريد أن تدرس كل يوم؟")}</p>
@@ -299,5 +320,6 @@ export default function SettingsPage() {
         {t("Save Settings", "حفظ الإعدادات")}
       </Button>
     </div>
+    </PageTransition>
   );
 }
