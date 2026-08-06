@@ -27,6 +27,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ExamSkillsPage from "./pages/ExamSkillsPage";
 import TopicsPage from "./pages/TopicsPage";
 import CheckPage from "./pages/CheckPage";
+import SignUpPage from "./pages/SignUpPage";
+import SignInPage from "./pages/SignInPage";
 
 import { VoiceCommandOverlay } from "./components/VoiceCommandOverlay";
 import { useAccessibilityProfile } from "./hooks/useAccessibilityProfile";
@@ -41,6 +43,8 @@ function Router() {
     <AppShell>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/signup" component={SignUpPage} />
+        <Route path="/signin" component={SignInPage} />
         <Route path="/onboarding" component={Onboarding} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/subjects/:curriculumId" component={SubjectPage} />

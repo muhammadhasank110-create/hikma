@@ -3,7 +3,7 @@
  * Professional, animated, educational design.
  * Built for blind, dyslexic, and ADHD learners.
  */
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin, startSignUp } from "@/const";
@@ -74,6 +74,7 @@ export default function Home() {
   const prefersReducedMotion = useReducedMotion();
   // When reduced motion is preferred, disable all animations
   const motionProps = (variants: any) => prefersReducedMotion ? {} : { initial: "hidden", animate: "visible", variants };
+  const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
   const { locale, setLocale } = useProfile();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
@@ -168,7 +169,7 @@ export default function Home() {
                   <>
                   <Button
                     size="lg"
-                    onClick={() => startSignUp()}
+                    onClick={() => navigate("/signup")}
                     className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl"
                     aria-label={t("Create a free account and start learning", "أنشئ حساباً مجانياً وابدأ التعلم")}
                   >
@@ -178,7 +179,7 @@ export default function Home() {
                   <Button
                     size="lg"
                     variant="outline"
-                    onClick={() => startLogin()}
+                    onClick={() => navigate("/signin")}
                     className="border-white/40 text-white hover:bg-white/10 font-medium text-base px-8 h-14 rounded-2xl"
                     aria-label={t("Sign in to your existing account", "سجّل الدخول إلى حسابك")}
                   >
@@ -372,7 +373,7 @@ export default function Home() {
                 <div className="flex flex-wrap gap-3 justify-center">
                   <Button
                     size="lg"
-                    onClick={() => startSignUp()}
+                    onClick={() => navigate("/signup")}
                     className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl"
                     aria-label={t("Create a free account and start learning", "أنشئ حساباً مجانياً وابدأ التعلم")}
                   >
@@ -382,7 +383,7 @@ export default function Home() {
                   <Button
                     size="lg"
                     variant="outline"
-                    onClick={() => startLogin()}
+                    onClick={() => navigate("/signin")}
                     className="border-white/40 text-white hover:bg-white/10 font-medium text-base px-8 h-14 rounded-2xl"
                     aria-label={t("Sign in to your existing account", "سجّل الدخول إلى حسابك")}
                   >

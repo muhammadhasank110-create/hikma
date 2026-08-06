@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerTutorStreamRoute } from "../tutorStream";
 import { registerElevenLabsTTSRoute } from "./elevenLabsTTS";
+import { registerAuthRoutes } from "../authRoutes";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +41,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerTutorStreamRoute(app);
   registerElevenLabsTTSRoute(app);
+  registerAuthRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",
