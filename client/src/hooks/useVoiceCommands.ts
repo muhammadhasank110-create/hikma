@@ -6,6 +6,13 @@
  * - No wake word required
  * - Fast pattern matching first, LLM fallback for anything unrecognised
  * - Context-aware: knows which page the user is on
+ *
+ * Fixes (Aug 2026):
+ * - Mic is muted for a short window after every recognised command, so spoken
+ *   confirmations ("Going back") are not re-heard as new commands.
+ * - The hook no longer speaks its own confirmation when the caller supplies
+ *   `onAction` — the caller already speaks, and both firing caused overlap.
+ * - "stop" is matched before "read", so "stop reading" stops instead of starting.
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
@@ -35,10 +42,15 @@ interface UseVoiceCommandsOptions {
   context?: string;
 }
 
-// Fast pattern matching for common commands (no LLM needed)
+/** How long the mic stays muted after a command, while we speak the reply. */
+const SPEAK_MUTE_MS = 2500;
+
+// Fast pattern matching for common commands (no LLM needed).
+// ORDER MATTERS — the first match wins. "stop" must precede "read".
 const COMMANDS: Array<{ patterns: RegExp[]; action: VoiceCommandAction; label: string }> = [
+  { patterns: [/\b(stop|silence|quiet|pause|أوقف|صمت|توقف)\b/i], action: { type: "stop_speech" }, label: "Stopped" },
   { patterns: [/\b(home|dashboard|go home|main|رئيسي|الرئيسية)\b/i], action: { type: "go_home" }, label: "Going home" },
-  { patterns: [/\b(back|go back|رجوع|السابق)\b/i], action: { type: "go_back" }, label: "Going back" },
+  { patterns: [/\b(back|go back|رجوع)\b/i], action: { type: "go_back" }, label: "Going back" },
   { patterns: [/\b(tutor|ai tutor|open tutor|hikma ai|ask hikma|المعلم|المساعد|افتح المعلم)\b/i], action: { type: "open_tutor" }, label: "Opening Hikma AI" },
   { patterns: [/\b(subjects?|lessons?|المواد|الدروس)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening Subjects" },
   { patterns: [/\b(math|maths|mathematics|رياضيات)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening Maths" },
@@ -47,10 +59,9 @@ const COMMANDS: Array<{ patterns: RegExp[]; action: VoiceCommandAction; label: s
   { patterns: [/\b(progress|my progress|تقدم|تقدمي)\b/i], action: { type: "navigate", path: "/progress" }, label: "Opening Progress" },
   { patterns: [/\b(settings?|إعدادات)\b/i], action: { type: "navigate", path: "/settings" }, label: "Opening Settings" },
   { patterns: [/\b(ecc|expanded core|المهارات الأساسية)\b/i], action: { type: "navigate", path: "/ecc" }, label: "Opening ECC" },
+  { patterns: [/\b(previous|prev|back section|القسم السابق|السابق)\b/i], action: { type: "prev_section" }, label: "Previous section" },
   { patterns: [/\b(next|next section|التالي|القسم التالي|continue|استمر)\b/i], action: { type: "next_section" }, label: "Next section" },
-  { patterns: [/\b(previous|prev|back section|السابق|القسم السابق)\b/i], action: { type: "prev_section" }, label: "Previous section" },
   { patterns: [/\b(read|read (this|aloud|it)|start reading|narrate|اقرأ|اقرأ بصوت|ابدأ القراءة)\b/i], action: { type: "read_aloud" }, label: "Reading now" },
-  { patterns: [/\b(stop|silence|quiet|pause|أوقف|صمت|توقف)\b/i], action: { type: "stop_speech" }, label: "Stopped" },
   { patterns: [/\b(bigger|larger|increase|font up|أكبر|تكبير)\b/i], action: { type: "increase_font" }, label: "Text bigger" },
   { patterns: [/\b(smaller|decrease|font down|أصغر|تصغير)\b/i], action: { type: "decrease_font" }, label: "Text smaller" },
   { patterns: [/\b(focus|focus mode|وضع التركيز|ركّز)\b/i], action: { type: "focus_mode" }, label: "Focus mode" },
@@ -92,11 +103,38 @@ export function useVoiceCommands({
   const contextRef = useRef(context);
   useEffect(() => { contextRef.current = context; }, [context]);
 
+  // True while we are speaking a reply — the mic is stopped during this window.
+  const speakingRef = useRef(false);
+  const muteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Lets handleAction restart recognition without depending on startRecognition
+  // (which is defined further down).
+  const startRecognitionRef = useRef<(() => void) | null>(null);
+
   // LLM fallback mutation
   const parseIntent = trpc.tutor.parseVoiceIntent.useMutation();
 
+  /**
+   * Stop listening while a confirmation is spoken, then resume.
+   * Without this the reply is picked up by the mic and matched as a new
+   * command — "Going back" contains "back", which loops history.back().
+   */
+  const muteMicWhileSpeaking = useCallback((ms: number = SPEAK_MUTE_MS) => {
+    speakingRef.current = true;
+    if (restartTimerRef.current) { clearTimeout(restartTimerRef.current); restartTimerRef.current = null; }
+    try { recRef.current?.stop(); } catch { /* already stopped */ }
+    if (muteTimerRef.current) clearTimeout(muteTimerRef.current);
+    muteTimerRef.current = setTimeout(() => {
+      speakingRef.current = false;
+      if (isOnRef.current) startRecognitionRef.current?.();
+    }, ms);
+  }, []);
+
   const handleAction = useCallback((action: VoiceCommandAction, replyText?: string) => {
-    // Speak the confirmation
+    muteMicWhileSpeaking();
+
+    // The caller handles the action AND speaks its own reply — don't double up.
+    if (onAction) { onAction(action); return; }
+
     if (replyText && "speechSynthesis" in window) {
       const utt = new SpeechSynthesisUtterance(replyText);
       utt.lang = lang;
@@ -105,7 +143,6 @@ export function useVoiceCommands({
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utt);
     }
-    if (onAction) { onAction(action); return; }
     switch (action.type) {
       case "navigate": navigate(action.path); break;
       case "go_back": window.history.back(); break;
@@ -113,18 +150,24 @@ export function useVoiceCommands({
       case "open_tutor": navigate("/tutor"); break;
       default: break;
     }
-  }, [onAction, navigate, lang]);
+  }, [onAction, navigate, lang, muteMicWhileSpeaking]);
 
   const stopRecognition = useCallback(() => {
     if (restartTimerRef.current) { clearTimeout(restartTimerRef.current); restartTimerRef.current = null; }
-    try { recRef.current?.stop(); recRef.current?.abort(); } catch {}
+    if (muteTimerRef.current) { clearTimeout(muteTimerRef.current); muteTimerRef.current = null; }
+    speakingRef.current = false;
+    try { recRef.current?.stop(); recRef.current?.abort(); } catch { /* already stopped */ }
     recRef.current = null;
   }, []);
 
   const startRecognition = useCallback(() => {
     const SpeechRecognition = getSpeechRecognition();
     if (!SpeechRecognition || !isOnRef.current) return;
-    stopRecognition();
+
+    // Tear down the previous instance without wiping the mute state.
+    if (restartTimerRef.current) { clearTimeout(restartTimerRef.current); restartTimerRef.current = null; }
+    try { recRef.current?.stop(); recRef.current?.abort(); } catch { /* already stopped */ }
+    recRef.current = null;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rec = new (SpeechRecognition as any)();
@@ -134,6 +177,8 @@ export function useVoiceCommands({
     rec.maxAlternatives = 3;
 
     rec.onresult = (event: any) => {
+      // Ignore anything captured while we were talking.
+      if (speakingRef.current) return;
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (!event.results[i].isFinal) continue;
         const transcripts = Array.from({ length: event.results[i].length }, (_, j) =>
@@ -157,6 +202,11 @@ export function useVoiceCommands({
           {
             onSuccess: (result) => {
               if (result.action !== "unknown" && result.confidence > 0.5) {
+                // `navigate` without a path would send the router to undefined.
+                if (result.action === "navigate" && !result.path) {
+                  toast.info(`Heard: "${transcript}"`, { duration: 3000 });
+                  return;
+                }
                 toast.success(`✓ ${result.reply || result.action}`, { id: "voice-cmd", duration: 2000 });
                 handleAction({ type: result.action as any, path: result.path } as VoiceCommandAction, result.reply);
               } else {
@@ -182,16 +232,20 @@ export function useVoiceCommands({
     };
 
     rec.onend = () => {
-      if (isOnRef.current) {
+      // Don't fight the mute window — it restarts us when the reply finishes.
+      if (isOnRef.current && !speakingRef.current) {
         restartTimerRef.current = setTimeout(() => {
-          if (isOnRef.current) startRecognition();
+          if (isOnRef.current && !speakingRef.current) startRecognition();
         }, 300);
       }
     };
 
     recRef.current = rec;
-    try { rec.start(); } catch {}
-  }, [lang, locale, handleAction, stopRecognition, parseIntent]);
+    try { rec.start(); } catch { /* start() throws if already running */ }
+  }, [lang, locale, handleAction, parseIntent]);
+
+  // Keep the ref pointing at the current startRecognition.
+  useEffect(() => { startRecognitionRef.current = startRecognition; }, [startRecognition]);
 
   const toggleVoice = useCallback(async () => {
     if (isOnRef.current) {

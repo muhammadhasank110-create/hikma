@@ -7,7 +7,13 @@
  *
  * The pulse ring is a SIBLING element (not a child of the button)
  * so it never visually escapes the button boundary.
+ *
+ * Fixes (Aug 2026):
+ * - "open tutor" had no case in the switch, so the most-advertised command
+ *   silently did nothing. Added, along with answer_question.
+ * - The overlay now honours the voice-commands choice made during onboarding.
  */
+import { useEffect, useState } from "react";
 import { Mic, MicOff } from "lucide-react";
 import { useVoiceCommands, type VoiceCommandAction } from "@/hooks/useVoiceCommands";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -15,15 +21,39 @@ import { useLocation } from "wouter";
 import { useTTS } from "@/hooks/useTTS";
 import { playTestSound } from "@/lib/sound";
 
+/** Written by Onboarding step 5. Absent = show the button (previous behaviour). */
+export const VOICE_COMMANDS_KEY = "hikma:voice-commands";
+
+function readVoicePreference(): boolean {
+  try {
+    return localStorage.getItem(VOICE_COMMANDS_KEY) !== "off";
+  } catch {
+    return true;
+  }
+}
+
 export function VoiceCommandOverlay() {
   const { profile, locale, updateProfile } = useProfile();
   const [, navigate] = useLocation();
   const tts = useTTS({ lang: locale === "ar" ? "ar-SA" : "en-GB", rate: profile.speechRate });
+  const [voiceAllowed, setVoiceAllowed] = useState(readVoicePreference);
+
+  // Pick up the choice when onboarding finishes without a full page reload.
+  useEffect(() => {
+    const sync = () => setVoiceAllowed(readVoicePreference());
+    window.addEventListener("hikma:voice-pref-changed", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("hikma:voice-pref-changed", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   const handleAction = (action: VoiceCommandAction) => {
     const say = (msg: string) => tts.speak(msg);
     switch (action.type) {
       case "navigate":
+        if (!action.path) break;
         navigate(action.path);
         say(locale === "ar" ? "جارٍ الانتقال" : "Navigating");
         break;
@@ -34,6 +64,10 @@ export function VoiceCommandOverlay() {
       case "go_home":
         navigate("/dashboard");
         say(locale === "ar" ? "الصفحة الرئيسية" : "Going home");
+        break;
+      case "open_tutor":
+        navigate("/tutor");
+        say(locale === "ar" ? "جارٍ فتح المعلم" : "Opening the tutor");
         break;
       case "stop_speech":
         tts.stop();
@@ -60,6 +94,9 @@ export function VoiceCommandOverlay() {
       case "prev_section":
         window.dispatchEvent(new CustomEvent("hikma:prev_section"));
         break;
+      case "answer_question":
+        window.dispatchEvent(new CustomEvent("hikma:answer_question"));
+        break;
       default:
         break;
     }
@@ -67,6 +104,7 @@ export function VoiceCommandOverlay() {
 
   const { isListening, toggleVoice } = useVoiceCommands({
     lang: locale === "ar" ? "ar-SA" : "en-GB",
+    locale,
     onAction: handleAction,
     enabled: true,
   });
@@ -84,6 +122,9 @@ export function VoiceCommandOverlay() {
     playTestSound();
     toggleVoice();
   };
+
+  // Hooks above always run; the early return below is safe.
+  if (!voiceAllowed) return null;
 
   return (
     <div

@@ -68,9 +68,10 @@ export default function Onboarding() {
     const handler = (e: KeyboardEvent) => {
       if (e.key !== "Enter") return;
       const target = e.target as HTMLElement;
-      const isInput = target.tagName === "INPUT" && (target as HTMLInputElement).type === "text";
-      const isTextarea = target.tagName === "TEXTAREA";
-      if (isInput || isTextarea) return;
+      // Let the focused control handle its own Enter. Without this the window
+      // listener calls preventDefault() and swallows the activation, so the
+      // step-5 toggles flip AND jump to step 6, and Back/Skip go forwards.
+      if (target.closest("button, a, input, select, textarea, [role='switch'], [role='radio']")) return;
       if (!canProceed()) return;
       e.preventDefault();
       handleNext();
@@ -96,6 +97,12 @@ export default function Onboarding() {
 
   const handleFinish = async () => {
     setSaving(true);
+    // Persist the step-5 voice-commands choice. There is no DB column for it,
+    // so it lives in localStorage; VoiceCommandOverlay reads the same key.
+    try {
+      localStorage.setItem("hikma:voice-commands", data.voiceEnabled ? "on" : "off");
+      window.dispatchEvent(new CustomEvent("hikma:voice-pref-changed"));
+    } catch { /* private mode */ }
     const profilePayload = {
       mode: data.mode,
       curriculum: data.curriculum,
