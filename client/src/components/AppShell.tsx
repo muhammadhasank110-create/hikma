@@ -45,6 +45,11 @@ function AccessibilityBar() {
   const { profile, updateProfile, locale, setLocale } = useProfile();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   const { enabled: spokenLabels, toggle: toggleSpokenLabels } = useSpokenLabels();
+  // Each inner group is its own independent lane — Right never crosses to another row
+  const accLeftRef = React.useRef<HTMLDivElement>(null);
+  const accRightRef = React.useRef<HTMLDivElement>(null);
+  useGridNavigation(accLeftRef, { disableWASD: false });
+  useGridNavigation(accRightRef, { disableWASD: false });
   const [soundOn, setSoundOn] = React.useState(() => {
     try { return localStorage.getItem("hikma:sound") === "on"; } catch { return false; }
   });
@@ -79,7 +84,7 @@ function AccessibilityBar() {
       role="toolbar"
       aria-label={t("Accessibility controls", "أدوات إمكانية الوصول")}
     >
-      <div className="flex items-center gap-3 flex-wrap">
+      <div ref={accLeftRef} className="flex items-center gap-3 flex-wrap" role="group" aria-label={t("Accessibility tools", "أدوات إمكانية الوصول")}>
         {/* High contrast toggle */}
         <button
           onClick={() => updateProfile({ theme: profile.theme === "high_contrast" ? "light" : "high_contrast" })}
@@ -177,7 +182,7 @@ function AccessibilityBar() {
           <span className="hidden sm:inline text-xs">{t("Labels", "تسميات")}</span>
         </button>
       </div>
-      <div className="flex items-center gap-3">
+      <div ref={accRightRef} className="flex items-center gap-3" role="group" aria-label={t("Navigation tools", "أدوات التنقل")}>
         {/* Language toggle */}
         <button
           onClick={() => setLocale(locale === "ar" ? "en" : "ar")}

@@ -9,7 +9,7 @@ import type { Express, Request, Response } from "express";
 import { ENV } from "./env";
 
 const VOICE_IDS: Record<string, string> = {
-  en: "onwK4e9ZLuTAKqWW03F9", // Daniel — warm, clear British male
+  en: "ZQe5CZNOzWyzPSCn5a3c", // James — warm, authoritative British male (ElevenLabs)
   ar: "EXAVITQu4vr4xnSDxMaL", // Bella — warm female, multilingual
 };
 

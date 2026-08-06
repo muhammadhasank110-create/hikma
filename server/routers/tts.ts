@@ -12,7 +12,7 @@ import { ENV } from "../_core/env";
 
 // Default voice IDs for ElevenLabs
 const VOICES = {
-  en: "EXAVITQu4vr4xnSDxMaL", // "Sarah" — warm, clear English
+  en: "ZQe5CZNOzWyzPSCn5a3c", // James — warm, authoritative British male
   ar: "pFZP5JQG7iQjIQuC4Bku", // "Lily" — closest to Arabic-friendly
 };
 
