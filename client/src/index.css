@@ -189,8 +189,9 @@
     --font-display: "IBM Plex Sans", system-ui, sans-serif;
   }
   [data-font="opendyslexic"] {
-    --font-body: "OpenDyslexic", system-ui, sans-serif;
-    --font-display: "OpenDyslexic", system-ui, sans-serif;
+    /* CDN provides font-family: OpenDyslexicRegular */
+    --font-body: "OpenDyslexicRegular", "OpenDyslexic", system-ui, sans-serif;
+    --font-display: "OpenDyslexicRegular", "OpenDyslexic", system-ui, sans-serif;
   }
   [data-font="naskh"] {
     --font-body: "Noto Naskh Arabic", "Amiri", serif;
@@ -511,9 +512,42 @@
     display: none !important;
   }
 
-  /* Simplify backgrounds */
-  body {
-    background-color: oklch(from var(--color-background) calc(l + 0.02) c h) !important;
+  /* ── Per-theme focus surface (bg + fg together, never one without the other)
+   * Contrast ratios verified ≥ 7:1 (WCAG AAA):
+   *   light:         #F5F7F5 / #111411  ~14:1
+   *   dark:          #0D110D / #E8EDE8  ~15:1
+   *   cream:         #FAF7F0 / #1E1912  ~14:1
+   *   calm:          #EFF1EF / #232823  ~13:1
+   *   high_contrast: #000000 / #FFFFFF   21:1
+   */
+  body,
+  .lesson-card,
+  [data-lesson-card],
+  [role="main"] {
+    background-color: #F5F7F5 !important;
+    color: #111411 !important;
+  }
+
+  /* Dark theme override */
+  [data-theme="dark"] body,
+  [data-theme="dark"] [role="main"] {
+    background-color: #0D110D !important;
+    color: #E8EDE8 !important;
+  }
+  [data-theme="cream"] body,
+  [data-theme="cream"] [role="main"] {
+    background-color: #FAF7F0 !important;
+    color: #1E1912 !important;
+  }
+  [data-theme="calm"] body,
+  [data-theme="calm"] [role="main"] {
+    background-color: #EFF1EF !important;
+    color: #232823 !important;
+  }
+  [data-theme="high_contrast"] body,
+  [data-theme="high_contrast"] [role="main"] {
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
   }
 
   /* Larger, more readable text */
@@ -538,14 +572,14 @@
 
 /* ── Dyslexia Mode — font and spacing ──────────────────────────────────────── */
 [data-dyslexia="true"] {
-  font-family: 'Lexend', 'Atkinson Hyperlegible', sans-serif !important;
-  letter-spacing: 0.05em !important;
-  word-spacing: 0.1em !important;
-  line-height: 1.85 !important;
+  /* Font comes from profile fontFamily (data-font attr) — do NOT override here */
+  letter-spacing: 0.05em;
+  word-spacing: 0.1em;
+  line-height: 1.85;
 
   p, li, .lesson-body {
     text-align: left !important; /* never justify */
-    max-width: 70ch;
+    max-width: 66ch; /* ~66 chars per line for dyslexia readability */
   }
 
   /* Cream tint overlay */

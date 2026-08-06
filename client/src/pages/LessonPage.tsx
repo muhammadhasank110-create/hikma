@@ -26,8 +26,9 @@ import BodyDoublePanel from "@/components/lesson/BodyDoublePanel";
 export default function LessonPage() {
   const [, params] = useRoute("/lesson/:lessonId");
   const [, navigate] = useLocation();
-  const { locale } = useProfile();
+  const { locale, profile } = useProfile();
   const lessonId = parseInt(params?.lessonId ?? "0");
+  const [showInlineTutor, setShowInlineTutor] = useState(false);
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   const s = useLessonState(lessonId);
@@ -131,11 +132,11 @@ export default function LessonPage() {
           <h1 className={`text-xl font-bold ${s.isFocused ? "text-white" : "text-foreground"}`}>{s.lessonTitle}</h1>
           <div className="flex items-center gap-3">
             <Progress value={s.progressPct} className="h-1.5 flex-1" />
-            <span className={`text-xs tabular-nums ${s.isFocused ? "text-white/60" : "text-muted-foreground"}`}>{s.sectionIndex + 1}/{s.totalSections}</span>
+            <span className={`text-xs tabular-nums font-medium ${s.isFocused ? "text-white/80 bg-white/10 px-2 py-0.5 rounded-full" : "text-muted-foreground bg-muted px-2 py-0.5 rounded-full"}`} aria-live="polite" aria-label={t(`Section ${s.sectionIndex + 1} of ${s.totalSections}`, `قسم ${s.sectionIndex + 1} من ${s.totalSections}`)}>{s.sectionIndex + 1}/{s.totalSections}</span>
           </div>
         </div>
 
-        {/* Toolbar */}
+        {/* Toolbar — in focus mode on mobile: only Read Aloud + Pomodoro visible */}
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           {s.isFocused && (
             <div className="flex items-center gap-1.5">
@@ -152,7 +153,7 @@ export default function LessonPage() {
             {s.isNarrating ? <VolumeX className="w-3.5 h-3.5 mr-1.5" /> : <Volume2 className="w-3.5 h-3.5 mr-1.5" />}
             {s.isNarrating ? t("Stop", "إيقاف") : t("Read Aloud", "استمع")}
           </Button>
-          <Button variant={s.simplifiedView ? "default" : "outline"} size="sm" onClick={s.simplifySection} disabled={s.isSimplifying} aria-label={t("Simplify text", "تبسيط النص")} aria-pressed={s.simplifiedView}>
+          <Button variant={s.simplifiedView ? "default" : "outline"} size="sm" onClick={s.simplifySection} disabled={s.isSimplifying} aria-label={t("Simplify text", "تبسيط النص")} aria-pressed={s.simplifiedView} className={s.isFocused ? "hidden sm:inline-flex" : ""}>
             <AlignLeft className="w-3.5 h-3.5 mr-1.5" />
             {s.isSimplifying ? "..." : t("Simplify", "تبسيط")}
           </Button>
@@ -160,13 +161,13 @@ export default function LessonPage() {
             {s.isFocused ? <Minimize2 className="w-3.5 h-3.5 mr-1.5" /> : <Maximize2 className="w-3.5 h-3.5 mr-1.5" />}
             {t("Focus", "تركيز")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => s.setShowConceptMap(v => !v)} aria-label={t("Concept map", "خريطة المفاهيم")} aria-pressed={s.showConceptMap}>
+          <Button variant="outline" size="sm" onClick={() => s.setShowConceptMap(v => !v)} aria-label={t("Concept map", "خريطة المفاهيم")} aria-pressed={s.showConceptMap} className={s.isFocused ? "hidden sm:inline-flex" : ""}>
             <Map className="w-3.5 h-3.5 mr-1.5" />{t("Map", "خريطة")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => s.setShowBodyDouble(v => !v)} aria-label={t("Body double companion", "رفيق")} aria-pressed={s.showBodyDouble}>
+          <Button variant="outline" size="sm" onClick={() => s.setShowBodyDouble(v => !v)} aria-label={t("Body double companion", "رفيق")} aria-pressed={s.showBodyDouble} className={s.isFocused ? "hidden sm:inline-flex" : ""}>
             <UserCheck className="w-3.5 h-3.5 mr-1.5" />{t("Companion", "رفيق")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate("/tutor")} aria-label={t("Ask Hikma AI", "اسأل حكمة AI")}>
+          <Button variant="outline" size="sm" onClick={() => setShowInlineTutor(v => !v)} aria-label={t("Ask Hikma AI", "اسأل حكمة AI")} className={s.isFocused ? "hidden sm:inline-flex" : ""}>
             <Bot className="w-3.5 h-3.5 mr-1.5" />{t("Ask AI", "اسأل AI")}
           </Button>
         </div>
@@ -179,7 +180,7 @@ export default function LessonPage() {
                 <p className="text-sm font-semibold">{t("Concept Map", "خريطة المفاهيم")}</p>
                 <Button variant="ghost" size="icon" onClick={() => s.setShowConceptMap(false)} aria-label={t("Close map", "إغلاق الخريطة")}><X className="w-4 h-4" /></Button>
               </div>
-              <ConceptMapSVG lessonTitle={s.lessonTitle} sections={s.sections} locale={locale} />
+              <ConceptMapSVG lessonTitle={s.lessonTitle} sections={s.sections} locale={locale} defaultList={profile.fontFamily === "opendyslexic"} />
             </CardContent>
           </Card>
         )}
@@ -229,28 +230,8 @@ export default function LessonPage() {
           </CardContent>
         </Card>
 
-        {/* Park a thought */}
-        <div className="mt-4">
-          <div className="flex gap-2">
-            <input type="text" value={s.parkInput} onChange={e => s.setParkInput(e.target.value)}
-              placeholder={t("Park a thought… (P key)", "احفظ فكرة…")}
-              className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
-              onKeyDown={e => { if (e.key === "Enter" && s.parkInput.trim()) { s.setParkedThoughts(prev => [...prev, s.parkInput.trim()]); s.setParkInput(""); toast.success(t("Thought parked!", "تم حفظ الفكرة!")); }}}
-              aria-label={t("Park a thought", "احفظ فكرة")} />
-            <Button size="sm" variant="outline" onClick={() => { if (s.parkInput.trim()) { s.setParkedThoughts(prev => [...prev, s.parkInput.trim()]); s.setParkInput(""); toast.success(t("Thought parked!", "تم حفظ الفكرة!")); }}} aria-label={t("Save thought", "حفظ الفكرة")}>
-              <ParkingSquare className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-          {s.parkedThoughts.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {s.parkedThoughts.map((thought, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <ParkingSquare className="w-3 h-3" /><span>{thought}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Park a thought — icon-only on mobile, expands on tap */}
+        <ParkAThought s={s} t={t} />
 
         {/* Topic question */}
         {s.showTopicQuestion && s.topicQuestion && (
@@ -270,7 +251,7 @@ export default function LessonPage() {
                 <Send className="w-3.5 h-3.5 mr-1" />{t("Continue", "تابع")}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">{t("Share your thinking — there's no wrong answer here.", "شارك تفكيرك — لا توجد إجابة خاطئة هنا.")}</p>
+            <p className="text-xs text-muted-foreground">{t("Have a go — a wrong answer here tells us what to explain next.", "جرّب — الإجابة الخاطئة تخبرنا ماذا نشرح بعد ذلك.")}</p>
           </div>
         )}
         {s.generateQuestion.isPending && (
@@ -280,6 +261,28 @@ export default function LessonPage() {
           </div>
         )}
 
+        {/* Inline tutor panel */}
+        {showInlineTutor && (
+          <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-primary/10">
+              <span className="text-sm font-semibold text-primary flex items-center gap-1.5">
+                <Bot className="w-4 h-4" />{t("Hikma AI", "حكمة AI")}
+              </span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowInlineTutor(false)} aria-label={t("Close tutor", "إغلاق المساعد")}>
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            <div className="p-3">
+              <iframe
+                src="/tutor"
+                title={t("Hikma AI Tutor", "مساعد حكمة AI")}
+                className="w-full rounded-xl border-0"
+                style={{ height: "360px" }}
+                aria-label={t("Hikma AI Tutor panel", "لوحة مساعد حكمة AI")}
+              />
+            </div>
+          </div>
+        )}
         {/* Navigation */}
         <div className="flex items-center justify-between mt-6">
           <Button variant="outline" onClick={s.prevSection} disabled={s.sectionIndex === 0} aria-label={t("Previous section", "القسم السابق")}>
@@ -291,14 +294,14 @@ export default function LessonPage() {
               <AlertTriangle className="w-3.5 h-3.5 mr-1" />{t("Break", "استراحة")}
             </Button>
           </div>
-          <Button onClick={s.nextSection} aria-label={s.sectionIndex < s.totalSections - 1 ? t("Next section", "القسم التالي") : t("Complete lesson", "إكمال الدرس")}>
+          <Button onClick={() => { if (s.showTopicQuestion && s.topicAnswer.trim() === "") { toast.info(t("Please answer the question or press Continue to skip.", "الرجاء الإجابة على السؤال أو اضغط تابع للتخطي.")); return; } s.nextSection(); }} aria-label={s.sectionIndex < s.totalSections - 1 ? t("Next section", "القسم التالي") : t("Complete lesson", "إكمال الدرس")}>
             {s.sectionIndex < s.totalSections - 1 ? t("Next", "التالي") : t("Complete", "إكمال")}
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
 
-        {/* Keyboard hints */}
-        <div className="mt-4 text-xs text-muted-foreground text-center space-x-3">
+        {/* Keyboard hints — hidden on touch devices, only shown on pointer-fine */}
+        <div className="mt-4 text-xs text-muted-foreground text-center space-x-3 hidden [@media(pointer:fine)]:flex flex-wrap justify-center gap-x-3">
           <span>Space/{t("R", "R")}: {t("read aloud", "استمع")}</span>
           <span>S: {t("simplify", "تبسيط")}</span>
           <span>F: {t("focus", "تركيز")}</span>
@@ -308,6 +311,64 @@ export default function LessonPage() {
           <span>Ctrl+P: {t("position", "الموضع")}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── ParkAThought — collapses to icon on mobile, expands on tap ──────────────
+function ParkAThought({ s, t }: { s: any; t: (en: string, ar: string) => string }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="mt-4">
+      {/* Mobile: icon button that expands */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors min-h-[44px] px-2 rounded-lg border border-dashed border-border/60 hover:border-border"
+          aria-expanded={expanded}
+          aria-label={t("Park a thought", "احفظ فكرة")}
+        >
+          <ParkingSquare className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">{t("Park a thought", "احفظ فكرة")}</span>
+          {s.parkedThoughts.length > 0 && (
+            <span className="ml-1 text-xs bg-primary/10 text-primary rounded-full px-1.5 py-0.5">{s.parkedThoughts.length}</span>
+          )}
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-2 p-3 rounded-xl border border-dashed border-border bg-muted/30 animate-arrive">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={s.parkInput}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => s.setParkInput(e.target.value)}
+              placeholder={t("Type a thought…", "اكتب فكرة…")}
+              className="flex-1 px-3 py-2 text-sm rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring min-h-[44px]"
+              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" && s.parkInput.trim()) { s.setParkedThoughts((prev: string[]) => [...prev, s.parkInput.trim()]); s.setParkInput(""); } }}
+              aria-label={t("Park a thought", "احفظ فكرة")}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="min-h-[44px] min-w-[44px]"
+              onClick={() => { if (s.parkInput.trim()) { s.setParkedThoughts((prev: string[]) => [...prev, s.parkInput.trim()]); s.setParkInput(""); } }}
+              aria-label={t("Save thought", "حفظ الفكرة")}
+            >
+              <ParkingSquare className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+          {s.parkedThoughts.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {s.parkedThoughts.map((thought: string, i: number) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ParkingSquare className="w-3 h-3" /><span>{thought}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

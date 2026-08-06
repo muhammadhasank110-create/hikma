@@ -114,7 +114,7 @@ export default function Onboarding() {
       speechRate: data.speechRate,
       autoNarrate: data.autoNarrate || data.mode === "audio_first",
       reduceMotion: data.accessibilityProfile === "adhd",
-      fontFamily: (data.accessibilityProfile === "dyslexia" ? "atkinson" : "atkinson") as "atkinson" | "plex" | "opendyslexic" | "naskh",
+      fontFamily: (data.accessibilityProfile === "dyslexia" ? "opendyslexic" : "atkinson") as "atkinson" | "plex" | "opendyslexic" | "naskh",
       letterSpacing: data.accessibilityProfile === "dyslexia" ? 0.05 : 0,
       lineHeight: data.accessibilityProfile === "dyslexia" ? 1.8 : 1.5,
       overlayTint: (data.accessibilityProfile === "dyslexia" ? "yellow" : "none") as "none" | "blue" | "yellow" | "peach" | "green" | "grey",
