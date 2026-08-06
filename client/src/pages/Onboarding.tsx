@@ -618,28 +618,44 @@ export default function Onboarding() {
 
   const handleFinish = async () => {
     setSaving(true);
+    const profilePayload = {
+      mode: data.mode,
+      curriculum: data.curriculum,
+      theme: data.theme as any,
+      fontScale: data.fontScale,
+      speechRate: data.speechRate,
+      autoNarrate: data.autoNarrate || data.mode === "audio_first",
+      reduceMotion: data.accessibilityProfile === "adhd",
+      fontFamily: (data.accessibilityProfile === "dyslexia" ? "atkinson" : "atkinson") as "atkinson" | "plex" | "opendyslexic" | "naskh",
+      letterSpacing: data.accessibilityProfile === "dyslexia" ? 0.05 : 0,
+      lineHeight: data.accessibilityProfile === "dyslexia" ? 1.8 : 1.5,
+      overlayTint: (data.accessibilityProfile === "dyslexia" ? "yellow" : "none") as "none" | "blue" | "yellow" | "peach" | "green" | "grey",
+    };
     try {
       const effectiveLocale = (data.locale === "both" ? "en" : data.locale) as "en" | "ar";
       setLocale(effectiveLocale);
-      // curriculum is already the raw enum key (e.g. "igcse_edexcel")
-      await updateProfileAsync({
-        mode: data.mode,
-        curriculum: data.curriculum,
-        theme: data.theme as any,
-        fontScale: data.fontScale,
-        speechRate: data.speechRate,
-        autoNarrate: data.autoNarrate || data.mode === "audio_first",
-        reduceMotion: data.accessibilityProfile === "adhd",
-        fontFamily: data.accessibilityProfile === "dyslexia" ? "atkinson" : "atkinson",
-        letterSpacing: data.accessibilityProfile === "dyslexia" ? 0.05 : 0,
-        lineHeight: data.accessibilityProfile === "dyslexia" ? 1.8 : 1.5,
-        overlayTint: data.accessibilityProfile === "dyslexia" ? "yellow" : "none",
-      });
+      try {
+        await updateProfileAsync(profilePayload);
+      } catch (firstErr: any) {
+        // If the server returned HTML (e.g. restarting), retry once after 1.5s
+        const isTransient =
+          firstErr?.message?.includes("<!doctype") ||
+          firstErr?.message?.includes("is not valid JSON") ||
+          firstErr?.message?.includes("Failed to fetch") ||
+          firstErr?.message?.includes("NetworkError");
+        if (isTransient) {
+          toast.info(data.locale === "ar" ? "جارٍ إعادة المحاولة…" : "Retrying save…", { duration: 2000 });
+          await new Promise(r => setTimeout(r, 1500));
+          await updateProfileAsync(profilePayload);
+        } else {
+          throw firstErr;
+        }
+      }
       toast.success(data.locale === "ar" ? "مرحباً! تم إعداد حكمة لك." : "Welcome! Hikma is set up for you.");
       navigate("/dashboard");
     } catch (err) {
       console.error(err);
-      toast.error("Could not save profile. Please try again.");
+      toast.error(data.locale === "ar" ? "تعذّر حفظ الإعدادات. حاول مرة أخرى." : "Could not save profile. Please try again.");
     } finally {
       setSaving(false);
     }

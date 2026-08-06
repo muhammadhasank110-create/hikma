@@ -48,6 +48,16 @@ async function startServer() {
       createContext,
     })
   );
+
+  // Catch-all JSON error handler for /api/* routes
+  // Prevents the SPA fallback from returning HTML for API errors
+  app.use("/api", (err: any, _req: any, res: any, next: any) => {
+    if (res.headersSent) return next(err);
+    res.status(err.status ?? 500).json({
+      error: err.message ?? "Internal server error",
+      code: err.code ?? "INTERNAL_SERVER_ERROR",
+    });
+  });
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
