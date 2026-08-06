@@ -31,6 +31,18 @@ const FOCUSABLE_SELECTOR = [
   "[role='switch']",
 ].join(",");
 
+/** Two elements share a row if their vertical spans overlap by at least half
+ *  the height of the shorter one. Tolerant of differing element heights. */
+function sameRow(a: Rect, b: Rect): boolean {
+  const overlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+  if (overlap <= 0) return false;
+  const shorter = Math.min(a.bottom - a.top, b.bottom - b.top);
+  return overlap >= shorter * 0.5;
+}
+
+/** Module-level sticky column memory — set on Left/Right, used by Up/Down, cleared on mouse/route */
+let desiredCx: number | null = null;
+
 interface Rect { top: number; left: number; bottom: number; right: number; cx: number; cy: number; }
 
 function getRect(el: HTMLElement): Rect {
@@ -63,7 +75,8 @@ function shouldPassThrough(el: Element | null): boolean {
 function findNearest(
   current: Rect,
   candidates: { el: HTMLElement; rect: Rect }[],
-  direction: "up" | "down" | "left" | "right"
+  direction: "up" | "down" | "left" | "right",
+  desiredColumn?: number | null
 ): HTMLElement | null {
   let best: { el: HTMLElement; dist: number } | null = null;
 
@@ -73,36 +86,39 @@ function findNearest(
 
     switch (direction) {
       case "down":
-        // Element must be below (its top > current center Y)
-        valid = c.rect.cy > current.cy + 5;
+        // Must be in a DIFFERENT row below current
+        valid = !sameRow(current, c.rect) && c.rect.cy > current.cy;
         if (valid) {
           const dy = c.rect.cy - current.cy;
-          const dx = Math.abs(c.rect.cx - current.cx);
-          dist = dy + dx * 0.3; // Prefer elements directly below
+          // Use desiredCx (sticky column) if available, else current cx
+          const refCx = desiredColumn ?? current.cx;
+          const dx = Math.abs(c.rect.cx - refCx);
+          dist = dy + dx * 1.5; // Nearest row first, then nearest column
         }
         break;
       case "up":
-        valid = c.rect.cy < current.cy - 5;
+        // Must be in a DIFFERENT row above current
+        valid = !sameRow(current, c.rect) && c.rect.cy < current.cy;
         if (valid) {
           const dy = current.cy - c.rect.cy;
-          const dx = Math.abs(c.rect.cx - current.cx);
-          dist = dy + dx * 0.3;
+          const refCx = desiredColumn ?? current.cx;
+          const dx = Math.abs(c.rect.cx - refCx);
+          dist = dy + dx * 1.5;
         }
         break;
       case "right":
-        valid = c.rect.cx > current.cx + 5;
+        // Must be in the SAME row, and start at or after current element's right edge
+        valid = sameRow(current, c.rect) && c.rect.left >= current.right - 2;
         if (valid) {
-          const dx = c.rect.cx - current.cx;
-          const dy = Math.abs(c.rect.cy - current.cy);
-          dist = dx + dy * 0.3;
+          // Score by horizontal gap only — within a row dy is noise
+          dist = Math.abs(c.rect.cx - current.cx);
         }
         break;
       case "left":
-        valid = c.rect.cx < current.cx - 5;
+        // Must be in the SAME row, and end at or before current element's left edge
+        valid = sameRow(current, c.rect) && c.rect.right <= current.left + 2;
         if (valid) {
-          const dx = current.cx - c.rect.cx;
-          const dy = Math.abs(c.rect.cy - current.cy);
-          dist = dx + dy * 0.3;
+          dist = Math.abs(c.rect.cx - current.cx);
         }
         break;
     }
@@ -177,7 +193,15 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
           .filter(el => el !== active)
           .map(el => ({ el, rect: getRect(el) }));
 
-        const target = findNearest(currentRect, candidates, direction);
+        const target = findNearest(currentRect, candidates, direction, desiredCx);
+
+        // Update sticky column on horizontal moves; leave unchanged on vertical
+        if (target) {
+          if (direction === "left" || direction === "right") {
+            desiredCx = getRect(target).cx;
+          }
+          // On up/down, desiredCx stays so Down-then-Up returns to original column
+        }
 
         if (target) {
           target.focus({ preventScroll: false });
@@ -204,6 +228,8 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
         isKeyboardActiveRef.current = false;
         body.removeAttribute("data-keyboard-nav");
       }
+      // Clear sticky column on mouse interaction
+      desiredCx = null;
     };
 
     window.addEventListener("keydown", onKeyDown, true);
