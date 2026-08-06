@@ -6,7 +6,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { startLogin } from "@/const";
+import { startLogin, startSignUp } from "@/const";
 import { useProfile } from "@/contexts/ProfileContext";
 import { motion, useReducedMotion } from "framer-motion";
 import {
@@ -165,15 +165,26 @@ export default function Home() {
                     </Button>
                   </Link>
                 ) : (
+                  <>
                   <Button
                     size="lg"
-                    onClick={() => startLogin()}
+                    onClick={() => startSignUp()}
                     className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-8 h-14 rounded-2xl shadow-xl"
-                    aria-label={t("Sign in and start personalising Hikma", "سجّل الدخول وابدأ تخصيص حكمة")}
+                    aria-label={t("Create a free account and start learning", "أنشئ حساباً مجانياً وابدأ التعلم")}
                   >
-                    {t("Sign in & Personalise", "سجّل الدخول وتخصيص")}
+                    {t("Create Free Account", "إنشاء حساب مجاني")}
                     <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
                   </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => startLogin()}
+                    className="border-white/40 text-white hover:bg-white/10 font-medium text-base px-8 h-14 rounded-2xl"
+                    aria-label={t("Sign in to your existing account", "سجّل الدخول إلى حسابك")}
+                  >
+                    {t("Sign In", "تسجيل الدخول")}
+                  </Button>
+                  </>
                 )}
                 <a
                   href="#how-it-works"
@@ -358,15 +369,26 @@ export default function Home() {
                   </Button>
                 </Link>
               ) : (
-                <Button
-                  size="lg"
-                  onClick={() => startLogin()}
-                  className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl"
-                  aria-label={t("Sign in and start personalising Hikma", "سجّل الدخول وابدأ تخصيص حكمة")}
-                >
-                  {t("Sign in & Personalise", "سجّل الدخول وتخصيص")}
-                  <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
-                </Button>
+                <div className="flex flex-wrap gap-3 justify-center">
+                  <Button
+                    size="lg"
+                    onClick={() => startSignUp()}
+                    className="bg-white text-[rgb(var(--nav-bg))] hover:bg-white/90 font-bold text-base px-10 h-14 rounded-2xl shadow-xl"
+                    aria-label={t("Create a free account and start learning", "أنشئ حساباً مجانياً وابدأ التعلم")}
+                  >
+                    {t("Create Free Account", "إنشاء حساب مجاني")}
+                    <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => startLogin()}
+                    className="border-white/40 text-white hover:bg-white/10 font-medium text-base px-8 h-14 rounded-2xl"
+                    aria-label={t("Sign in to your existing account", "سجّل الدخول إلى حسابك")}
+                  >
+                    {t("Sign In", "تسجيل الدخول")}
+                  </Button>
+                </div>
               )}
             </motion.div>
           </motion.div>
