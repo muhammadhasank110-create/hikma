@@ -3,14 +3,37 @@
  * POST /api/tts/speak  { text, voiceId?, locale? }
  * Streams MP3 audio back to the client.
  * Falls back gracefully if ELEVENLABS_API_KEY is not configured.
+ * Concurrency limited to 1 to stay under the free plan limit.
  */
 import type { Express, Request, Response } from "express";
 import { ENV } from "./env";
 
 const VOICE_IDS: Record<string, string> = {
-  en: "EXAVITQu4vr4xnSDxMaL", // Sarah — warm, clear English
-  ar: "pFZP5JQG7iQjIQuC4Bku", // Lily — Arabic-friendly
+  en: "onwK4e9ZLuTAKqWW03F9", // Daniel — warm, clear British male
+  ar: "EXAVITQu4vr4xnSDxMaL", // Bella — warm female, multilingual
 };
+
+// Concurrency limiter — ElevenLabs free plan: max 2 concurrent requests
+let activeRequests = 0;
+const MAX_CONCURRENT = 1;
+const requestQueue: Array<() => void> = [];
+
+function acquireSlot(): Promise<void> {
+  return new Promise(resolve => {
+    if (activeRequests < MAX_CONCURRENT) {
+      activeRequests++;
+      resolve();
+      return;
+    }
+    requestQueue.push(() => { activeRequests++; resolve(); });
+  });
+}
+
+function releaseSlot() {
+  activeRequests = Math.max(0, activeRequests - 1);
+  const next = requestQueue.shift();
+  if (next) next();
+}
 
 export function registerElevenLabsTTSRoute(app: Express) {
   app.post("/api/tts/speak", async (req: Request, res: Response) => {
@@ -33,6 +56,7 @@ export function registerElevenLabsTTSRoute(app: Express) {
     const selectedVoiceId = voiceId || VOICE_IDS[locale] || VOICE_IDS.en;
     const cleanText = text.replace(/[#*_`~\[\]]/g, "").slice(0, 2500);
 
+    await acquireSlot();
     try {
       const elevenRes = await fetch(
         `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}/stream`,
@@ -59,6 +83,7 @@ export function registerElevenLabsTTSRoute(app: Express) {
       if (!elevenRes.ok) {
         const errText = await elevenRes.text();
         console.error(`ElevenLabs TTS error ${elevenRes.status}:`, errText);
+        releaseSlot();
         res.status(502).json({ error: "ElevenLabs error", fallback: true });
         return;
       }
@@ -69,6 +94,7 @@ export function registerElevenLabsTTSRoute(app: Express) {
 
       const reader = elevenRes.body?.getReader();
       if (!reader) {
+        releaseSlot();
         res.status(502).json({ error: "No stream body", fallback: true });
         return;
       }
@@ -84,6 +110,8 @@ export function registerElevenLabsTTSRoute(app: Express) {
       if (!res.headersSent) {
         res.status(502).json({ error: err?.message ?? "Unknown error", fallback: true });
       }
+    } finally {
+      releaseSlot();
     }
   });
 

@@ -521,7 +521,6 @@ export default function LessonPage() {
 
   return (
     <div className={`min-h-screen ${isFocused ? "bg-black/95" : "bg-background"} transition-colors duration-300`}>
-      {isFocused && <div className="focus-dim" aria-hidden="true" />}
 
       {/* Word definition popup */}
       {selectedWord && (
@@ -535,7 +534,7 @@ export default function LessonPage() {
       {/* Body double companion */}
       {showBodyDouble && <BodyDoublePanel locale={locale} lessonTitle={lessonTitle} />}
 
-      <div className="container py-6 max-w-3xl relative z-[51]">
+      <div className="container py-6 max-w-3xl relative">
         {/* Lesson header */}
         <div className={`space-y-2 mb-6 ${isFocused ? "opacity-100" : ""}`}>
           <div className="flex items-center gap-2 flex-wrap">
