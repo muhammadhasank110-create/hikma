@@ -1,4 +1,5 @@
 import { useProfile } from "@/contexts/ProfileContext";
+import { useSounds } from "@/hooks/useSounds";
 import { trpc } from "@/lib/trpc";
 import { useRoute, useLocation } from "wouter";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -190,22 +191,17 @@ export default function LessonPage() {
     rate: profile.speechRate,
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     voiceHint: profile.voice,
-    onBoundary: (charIndex: number) => {
-      // Use the cleaned text that was actually spoken (same string the browser uses for charIndex)
-      const text = tts.getCleanedText();
-      if (!text) return;
-      const upToChar = text.slice(0, charIndex + 1);
+    onBoundary: (charIndex: number, cleanedText: string) => {
+      // cleanedText is the exact string passed to the utterance
+      if (!cleanedText) return;
+      const upToChar = cleanedText.slice(0, charIndex + 1);
       const wordIdx = upToChar.trim().split(/\s+/).length - 1;
       setHighlightIndex(wordIdx);
-    },
-    onEnd: () => {
-      setHighlightIndex(-1);
-      setHighlightedWords([]);
-      speakingTextRef.current = "";
     },
   });
   const isNarrating = tts.isSpeaking;
   const [isFocused, setIsFocused] = useState(profile.mode === "focus");
+  const sounds = useSounds();
   const [simplifiedView, setSimplifiedView] = useState(false);
   const [simplifiedContent, setSimplifiedContent] = useState<Record<number, string>>({});
   const [isSimplifying, setIsSimplifying] = useState(false);
@@ -293,6 +289,7 @@ export default function LessonPage() {
   }, [sectionIndex, totalSections, lessonId, locale]);
 
   const nextSection = useCallback(() => {
+    sounds.navigate();
     // Show a topic question before advancing (only once per section)
     if (currentSection && questionSectionIndex !== sectionIndex && !showTopicQuestion) {
       const body = locale === "ar"
@@ -420,7 +417,7 @@ export default function LessonPage() {
       }
       if (e.key === " ") { e.preventDefault(); readAloud(); }
       if (e.key === "r" || e.key === "R") readAloud();
-      if (e.key === "f" || e.key === "F") setIsFocused(v => !v);
+      if (e.key === "f" || e.key === "F") { setIsFocused(v => { if (!v) sounds.focus(); return !v; }); }
       if (e.key === "s" || e.key === "S") simplifySection();
       if (e.key === "m" || e.key === "M") setShowConceptMap(v => !v);
       if (e.key === "t" || e.key === "T") setPomodoroActive(v => !v);
@@ -532,7 +529,7 @@ export default function LessonPage() {
 
       <div className="container py-6 max-w-3xl relative z-[51]">
         {/* Lesson header */}
-        <div className={`space-y-2 mb-6 ${isFocused ? "opacity-60" : ""}`}>
+        <div className={`space-y-2 mb-6 ${isFocused ? "opacity-100" : ""}`}>
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary">Lesson</Badge>
             <Badge variant="outline" className="text-xs">{lesson.estimatedMinutes ? `${lesson.estimatedMinutes} min` : ""}</Badge>
@@ -549,7 +546,7 @@ export default function LessonPage() {
         </div>
 
         {/* Mode toolbar */}
-        <div className={`flex items-center gap-2 mb-4 flex-wrap ${isFocused ? "opacity-80" : ""}`}>
+        <div className={`flex items-center gap-2 mb-4 flex-wrap ${isFocused ? "opacity-100" : ""}`}>
           {/* Pomodoro — visible in focus mode */}
           {isFocused && (
             <div className="flex items-center gap-1.5">
@@ -663,7 +660,7 @@ export default function LessonPage() {
         )}
 
         {/* Section content */}
-        <Card className={isFocused ? "border-white/20 bg-[#0d1a0d] shadow-2xl" : ""} ref={contentRef as any}>
+        <Card className={isFocused ? "border-white/10 bg-[#0a1a0a] shadow-2xl ring-1 ring-white/10" : ""} ref={contentRef as any}>
           <CardContent className="p-6">
             {currentSection ? (
               <div className="space-y-4">
@@ -724,7 +721,7 @@ export default function LessonPage() {
         </Card>
 
         {/* Park a thought */}
-        <div className={`mt-4 ${isFocused ? "opacity-50" : ""}`}>
+        <div className={`mt-4 ${isFocused ? "opacity-100" : ""}`}>
           <div className="flex gap-2">
             <input
               type="text"

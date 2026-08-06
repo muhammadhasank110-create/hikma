@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useTTS } from "@/hooks/useTTS";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -94,18 +95,7 @@ export default function CheckPage() {
 
   const { data: lesson } = trpc.curriculum.lesson.useQuery({ lessonId }, { enabled: lessonId > 0 });
   const saveProgress = trpc.progress.updateProgress.useMutation();
-  const ttsMutation = trpc.tts.synthesize.useMutation({
-    onSuccess: (data) => {
-      const audio = new Audio(`data:${data.mimeType};base64,${data.audioBase64}`);
-      audio.play().catch(() => {
-        if ("speechSynthesis" in window) {
-          const utt = new SpeechSynthesisUtterance(questions[currentIndex]?.question ?? "");
-          utt.lang = locale === "ar" ? "ar-QA" : "en-GB";
-          window.speechSynthesis.speak(utt);
-        }
-      });
-    },
-  });
+  const tts = useTTS({ lang: locale === "ar" ? "ar-SA" : "en-GB" });
 
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
@@ -167,7 +157,7 @@ export default function CheckPage() {
   const readQuestion = useCallback(() => {
     if (!currentQ) return;
     const text = locale === "ar" ? (currentQ.questionAr ?? currentQ.question) : currentQ.question;
-    ttsMutation.mutate({ text, voice: profile.voice as any, speed: profile.speechRate, locale: locale as "ar" | "en" });
+    tts.speak(text);
   }, [currentQ, locale, profile]);
 
   const startRecording = async () => {

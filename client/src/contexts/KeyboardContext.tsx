@@ -1,212 +1,178 @@
-import React, { createContext, useCallback, useContext, useEffect, useRef } from "react";
-import { useProfile } from "./ProfileContext";
-
-export type ShortcutScope = "global" | "lesson" | "focus" | "tutor" | "map";
-
-export interface Shortcut {
-  id: string;
-  scope: ShortcutScope;
-  key: string;
-  modifiers?: ("ctrl" | "alt" | "shift" | "meta")[];
-  descriptionEn: string;
-  descriptionAr: string;
-  action: () => void;
-  disabled?: boolean;
-}
+/**
+ * KeyboardContext — Professional keyboard navigation for Hikma.
+ *
+ * Design principles (based on WCAG 2.2, APG patterns, Duolingo/Khan Academy):
+ * 1. Tab / Shift+Tab — browser default, never override
+ * 2. WASD / Arrow keys — move focus between ALL visible interactive elements
+ * 3. Enter / Space — activate the focused element (click it)
+ * 4. Escape — close modals, overlays, exit focus mode
+ * 5. Skip text inputs — never steal keys from input fields
+ * 6. Visual focus ring — always visible when keyboard is active
+ *
+ * Implementation:
+ * - Uses getBoundingClientRect() to find visible elements (not offsetParent)
+ * - Sorts elements by visual position (top → bottom, left → right)
+ * - Plays a soft click sound on navigation
+ * - Sets data-keyboard-nav on body to show CSS focus rings
+ */
+import { createContext, useContext, useEffect, useRef, ReactNode } from "react";
+import { sounds } from "@/hooks/useSounds";
 
 interface KeyboardContextValue {
-  registerShortcut: (shortcut: Shortcut) => () => void;
-  unregisterShortcut: (id: string) => void;
-  getShortcuts: (scope?: ShortcutScope) => Shortcut[];
-  activeScope: ShortcutScope;
-  setActiveScope: (scope: ShortcutScope) => void;
-  commandPaletteOpen: boolean;
-  setCommandPaletteOpen: (open: boolean) => void;
-  shortcutSheetOpen: boolean;
-  setShortcutSheetOpen: (open: boolean) => void;
+  isKeyboardActive: boolean;
 }
 
-const KeyboardContext = createContext<KeyboardContextValue>({
-  registerShortcut: () => () => {},
-  unregisterShortcut: () => {},
-  getShortcuts: () => [],
-  activeScope: "global",
-  setActiveScope: () => {},
-  commandPaletteOpen: false,
-  setCommandPaletteOpen: () => {},
-  shortcutSheetOpen: false,
-  setShortcutSheetOpen: () => {},
-});
+const KeyboardContext = createContext<KeyboardContextValue>({ isKeyboardActive: false });
 
-export function KeyboardProvider({ children }: { children: React.ReactNode }) {
-  const { profile } = useProfile();
-  const shortcutsRef = useRef<Map<string, Shortcut>>(new Map());
-  const [activeScope, setActiveScope] = React.useState<ShortcutScope>("global");
-  const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
-  const [shortcutSheetOpen, setShortcutSheetOpen] = React.useState(false);
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled]):not([type='hidden'])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+  "[role='button']:not([disabled])",
+  "[role='link']",
+  "[role='tab']",
+  "[role='menuitem']",
+  "[role='option']",
+  "[role='checkbox']",
+  "[role='radio']",
+  "[role='switch']",
+].join(",");
 
-  // ── Keyboard-nav mode detection ───────────────────────────────────────────
-  // Add data-keyboard-nav to <body> when user presses any key so focus rings
-  // are always visible. Remove it on mouse click.
+/** Returns all visible, focusable elements sorted by visual position */
+function getVisibleFocusables(): HTMLElement[] {
+  const all = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+  return all.filter(el => {
+    const rect = el.getBoundingClientRect();
+    // Must have non-zero size and be within the viewport (or just below it)
+    return (
+      rect.width > 0 &&
+      rect.height > 0 &&
+      rect.top < window.innerHeight + 200 &&
+      rect.bottom > -200
+    );
+  }).sort((a, b) => {
+    const ra = a.getBoundingClientRect();
+    const rb = b.getBoundingClientRect();
+    // Sort top-to-bottom, then left-to-right
+    if (Math.abs(ra.top - rb.top) > 10) return ra.top - rb.top;
+    return ra.left - rb.left;
+  });
+}
+
+/** Check if the active element should receive arrow keys natively */
+function shouldPassThrough(el: Element | null): boolean {
+  if (!el) return false;
+  const tag = el.tagName.toLowerCase();
+  const type = (el as HTMLInputElement).type?.toLowerCase();
+  const role = el.getAttribute("role");
+  return (
+    tag === "input" ||
+    tag === "textarea" ||
+    tag === "select" ||
+    (tag === "input" && (type === "range" || type === "number")) ||
+    role === "slider" ||
+    role === "spinbutton" ||
+    role === "listbox" ||
+    role === "combobox" ||
+    // Inside a scrollable container that should scroll
+    (el.closest('[role="listbox"]') !== null) ||
+    (el.closest('[role="combobox"]') !== null)
+  );
+}
+
+export function KeyboardProvider({ children }: { children: ReactNode }) {
+  const isKeyboardActiveRef = useRef(false);
+
   useEffect(() => {
-    const onKey = () => document.body.setAttribute("data-keyboard-nav", "true");
-    const onMouse = () => document.body.removeAttribute("data-keyboard-nav");
-    window.addEventListener("keydown", onKey, true);
-    window.addEventListener("mousedown", onMouse, true);
-    return () => {
-      window.removeEventListener("keydown", onKey, true);
-      window.removeEventListener("mousedown", onMouse, true);
-    };
-  }, []);
+    const body = document.body;
 
-  // ── Arrow key + Enter navigation ─────────────────────────────────────────
-  useEffect(() => {
-    const FOCUSABLE = [
-      'a[href]', 'button:not([disabled])', 'input:not([disabled])',
-      'select:not([disabled])', 'textarea:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])', '[role="button"]',
-      '[role="link"]', '[role="menuitem"]', '[role="option"]',
-      '[role="tab"]', '[role="checkbox"]', '[role="radio"]',
-    ].join(',');
+    // Activate keyboard mode on any key press, deactivate on mouse click
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isKeyboardActiveRef.current) {
+        isKeyboardActiveRef.current = true;
+        body.setAttribute("data-keyboard-nav", "true");
+      }
 
-    const getFocusables = (): HTMLElement[] =>
-      Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(el => {
-        // offsetParent is null for position:fixed elements, so use getBoundingClientRect instead
-        const rect = el.getBoundingClientRect();
-        if (rect.width === 0 && rect.height === 0) return false;
-        const s = window.getComputedStyle(el);
-        if (s.display === 'none' || s.visibility === 'hidden') return false;
-        if ((el as HTMLButtonElement).disabled) return false;
-        return true;
-      });
+      const active = document.activeElement as HTMLElement | null;
 
-    const navHandler = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      const tag = target.tagName;
-      const isTextInput = (tag === 'INPUT' && !['checkbox','radio','button','submit','reset'].includes((target as HTMLInputElement).type))
-        || tag === 'TEXTAREA' || target.isContentEditable;
-      // Skip arrow handling for range inputs, radio buttons, sliders, and radiogroups
-      // so their native keyboard behaviour is preserved
-      const isRange = tag === 'INPUT' && (target as HTMLInputElement).type === 'range';
-      const isRadio = tag === 'INPUT' && (target as HTMLInputElement).type === 'radio';
-      const inRadioGroup = !!target.closest('[role="radiogroup"]');
-      const isSlider = target.getAttribute('role') === 'slider';
-      if (isRange || isRadio || isSlider || inRadioGroup) return;
+      // Never steal keys from text inputs
+      if (shouldPassThrough(active)) return;
 
-      // WASD + Arrow keys: move focus (skip inside text inputs)
-      const isWASD = ['w','a','s','d'].includes(e.key.toLowerCase()) && !e.ctrlKey && !e.altKey && !e.metaKey;
-      const isDown = e.key === 'ArrowDown' || e.key === 'ArrowRight' || (!isTextInput && isWASD && (e.key === 's' || e.key === 'd'));
-      const isUp = e.key === 'ArrowUp' || e.key === 'ArrowLeft' || (!isTextInput && isWASD && (e.key === 'w' || e.key === 'a'));
-      if (!isTextInput && isDown) {
-        // Don't override if inside a select, slider, or combobox
-        if (tag === 'SELECT' || target.getAttribute('role') === 'combobox' || target.getAttribute('role') === 'listbox') return;
+      const key = e.key;
+      const isNav = ["w", "a", "s", "d", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"].includes(key);
+      const isActivate = key === "Enter" || key === " ";
+
+      if (isNav) {
         e.preventDefault();
-        const all = getFocusables();
-        const idx = all.indexOf(document.activeElement as HTMLElement);
-        (all[idx + 1] ?? all[0])?.focus();
-        return;
-      }
-      if (!isTextInput && isUp) {
-        if (tag === 'SELECT' || target.getAttribute('role') === 'combobox' || target.getAttribute('role') === 'listbox') return;
-        e.preventDefault();
-        const all = getFocusables();
-        const idx = all.indexOf(document.activeElement as HTMLElement);
-        (all[idx - 1] ?? all[all.length - 1])?.focus();
-        return;
-      }
+        const focusables = getVisibleFocusables();
+        if (focusables.length === 0) return;
 
-      // Enter / Space: click any focused non-native element
-      if (e.key === 'Enter' && !isTextInput) {
-        const active = document.activeElement as HTMLElement;
-        if (!active) return;
-        // Native interactive elements already handle Enter — only intercept custom ones
-        if (['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(active.tagName)) return;
-        e.preventDefault();
-        active.click();
-      }
-    };
+        const currentIdx = active ? focusables.indexOf(active) : -1;
+        const isForward = key === "s" || key === "d" || key === "ArrowDown" || key === "ArrowRight";
+        const isBackward = key === "w" || key === "a" || key === "ArrowUp" || key === "ArrowLeft";
 
-    window.addEventListener('keydown', navHandler, true);
-    return () => window.removeEventListener('keydown', navHandler, true);
-  }, []);
-
-  const registerShortcut = useCallback((shortcut: Shortcut) => {
-    shortcutsRef.current.set(shortcut.id, shortcut);
-    return () => shortcutsRef.current.delete(shortcut.id);
-  }, []);
-
-  const unregisterShortcut = useCallback((id: string) => {
-    shortcutsRef.current.delete(id);
-  }, []);
-
-  const getShortcuts = useCallback((scope?: ShortcutScope) => {
-    const all = Array.from(shortcutsRef.current.values());
-    return scope ? all.filter(s => s.scope === scope || s.scope === "global") : all;
-  }, []);
-
-  // Global keyboard handler
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      // Never fire shortcuts on input elements unless it's a modifier combo
-      const target = e.target as HTMLElement;
-      const isInput = ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) ||
-        target.isContentEditable;
-
-      // Command palette: Ctrl/Cmd+K
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        setCommandPaletteOpen(true);
-        return;
-      }
-
-      // Shortcut sheet: ?
-      if (e.key === "?" && !isInput) {
-        e.preventDefault();
-        setShortcutSheetOpen(true);
-        return;
-      }
-
-      // Escape: close overlays
-      if (e.key === "Escape") {
-        if (commandPaletteOpen) { setCommandPaletteOpen(false); return; }
-        if (shortcutSheetOpen) { setShortcutSheetOpen(false); return; }
-      }
-
-      // Single-key shortcuts disabled on input elements or when profile says so
-      if (isInput && !e.ctrlKey && !e.altKey && !e.metaKey) return;
-      if (!profile.singleKeyShortcuts && !e.ctrlKey && !e.altKey && !e.metaKey) return;
-
-      // Match shortcuts
-      const shortcuts = Array.from(shortcutsRef.current.values());
-      for (const shortcut of shortcuts) {
-        if (shortcut.disabled) continue;
-        if (shortcut.scope !== "global" && shortcut.scope !== activeScope) continue;
-
-        const keyMatch = e.key.toLowerCase() === shortcut.key.toLowerCase() ||
-          e.code.toLowerCase() === shortcut.key.toLowerCase();
-        const ctrlMatch = shortcut.modifiers?.includes("ctrl") ? (e.ctrlKey || e.metaKey) : (!e.ctrlKey && !e.metaKey);
-        const altMatch = shortcut.modifiers?.includes("alt") ? e.altKey : !e.altKey;
-        const shiftMatch = shortcut.modifiers?.includes("shift") ? e.shiftKey : !e.shiftKey;
-
-        if (keyMatch && ctrlMatch && altMatch && shiftMatch) {
-          e.preventDefault();
-          shortcut.action();
+        let nextIdx: number;
+        if (currentIdx === -1) {
+          nextIdx = 0;
+        } else if (isForward) {
+          nextIdx = Math.min(focusables.length - 1, currentIdx + 1);
+        } else if (isBackward) {
+          nextIdx = Math.max(0, currentIdx - 1);
+        } else {
           return;
         }
+
+        const target = focusables[nextIdx];
+        if (target && target !== active) {
+          target.focus({ preventScroll: false });
+          target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          sounds.click();
+
+          // Announce element for screen readers / blind mode
+          const label =
+            target.getAttribute("aria-label") ||
+            target.getAttribute("title") ||
+            target.textContent?.trim().slice(0, 60) ||
+            target.tagName.toLowerCase();
+          // Dispatch a custom event that useAccessibilityProfile can listen to
+          window.dispatchEvent(new CustomEvent("hikma:focus-announce", { detail: { label } }));
+        }
+        return;
+      }
+
+      if (isActivate && active && active !== document.body) {
+        // Don't double-fire Enter on buttons/links (browser handles those)
+        const tag = active.tagName.toLowerCase();
+        const role = active.getAttribute("role");
+        if (tag === "button" || tag === "a" || role === "button" || role === "link") return;
+        e.preventDefault();
+        active.click();
+        sounds.click();
       }
     };
 
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [activeScope, commandPaletteOpen, shortcutSheetOpen, profile.singleKeyShortcuts]);
+    const onMouseDown = () => {
+      if (isKeyboardActiveRef.current) {
+        isKeyboardActiveRef.current = false;
+        body.removeAttribute("data-keyboard-nav");
+      }
+    };
+
+    // Use capture so we get the event before React handlers
+    window.addEventListener("keydown", onKeyDown, true);
+    window.addEventListener("mousedown", onMouseDown, true);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("mousedown", onMouseDown, true);
+    };
+  }, []);
 
   return (
-    <KeyboardContext.Provider value={{
-      registerShortcut, unregisterShortcut, getShortcuts,
-      activeScope, setActiveScope,
-      commandPaletteOpen, setCommandPaletteOpen,
-      shortcutSheetOpen, setShortcutSheetOpen,
-    }}>
+    <KeyboardContext.Provider value={{ isKeyboardActive: isKeyboardActiveRef.current }}>
       {children}
     </KeyboardContext.Provider>
   );

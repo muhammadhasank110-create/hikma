@@ -1,150 +1,153 @@
 /**
- * useTTS — Web Speech API TTS hook with word-boundary sync.
+ * useTTS — Text-to-speech hook.
  *
- * Uses the browser's native SpeechSynthesis API.
- * Exposes an `onBoundary` callback that fires at the exact character offset
- * when each word is spoken — enabling accurate word-by-word highlighting.
+ * Priority:
+ * 1. ElevenLabs (via /api/tts/speak proxy) — natural, warm voice
+ * 2. Browser Web Speech API — fallback when ElevenLabs is unavailable
  *
- * The `boundary` event is supported in Chrome, Edge, and Safari.
- * Firefox does not fire boundary events — we fall back to a timer there.
- *
- * Arabic voice: when lang="ar-SA", picks the first available Arabic voice.
- * Voice selection re-runs when the browser's voice list changes (async load).
+ * Exposes:
+ * - speak(text): start speaking
+ * - stop(): stop speaking
+ * - isSpeaking: boolean
+ * - getCleanedText(raw): returns the cleaned text used for charIndex math
+ * - onBoundary: callback for word-by-word highlight sync (browser only)
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
-export type TTSOptions = {
+interface UseTTSOptions {
   rate?: number;
   lang?: string;
   voiceHint?: string;
-  onBoundary?: (charIndex: number, charLength: number) => void;
-  onEnd?: () => void;
-};
-
-const VOICE_HINTS: Record<string, string[]> = {
-  alloy: ["Google UK English Female", "Microsoft Zira", "Karen", "Samantha"],
-  echo: ["Google UK English Male", "Microsoft David", "Daniel", "Alex"],
-  fable: ["Google US English", "Microsoft Mark", "Fred"],
-  onyx: ["Google US English Male", "Microsoft Guy"],
-  nova: ["Google UK English Female", "Microsoft Hazel", "Victoria"],
-  shimmer: ["Google US English Female", "Microsoft Zira", "Samantha"],
-};
-
-function pickVoice(lang: string, voiceHint: string): SpeechSynthesisVoice | null {
-  if (!("speechSynthesis" in window)) return null;
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices.length) return null;
-  const isAr = lang.startsWith("ar");
-  // Filter to matching language voices
-  const langVoices = voices.filter(v =>
-    isAr ? v.lang.startsWith("ar") : v.lang.startsWith("en")
-  );
-  // Try hint names for English voices
-  if (!isAr) {
-    const hints = VOICE_HINTS[voiceHint] ?? [];
-    for (const hint of hints) {
-      const match = langVoices.find(v => v.name.includes(hint));
-      if (match) return match;
-    }
-  }
-  // Return first language-matched voice
-  if (langVoices.length) return langVoices[0];
-  // Fallback: any voice (utterance.lang still sets pronunciation)
-  return voices[0] ?? null;
+  onBoundary?: (charIndex: number, text: string) => void;
 }
 
-export function useTTS(options: TTSOptions = {}) {
-  const { rate = 1.0, lang = "en-GB", voiceHint = "nova", onBoundary, onEnd } = options;
+function cleanText(raw: string): string {
+  return raw
+    .replace(/[#*_`~\[\]]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function pickVoice(lang: string, hint?: string): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  const langBase = lang.split("-")[0].toLowerCase();
+  if (hint) {
+    const hinted = voices.find(v => v.name.toLowerCase().includes(hint.toLowerCase()));
+    if (hinted) return hinted;
+  }
+  const exact = voices.find(v => v.lang.toLowerCase() === lang.toLowerCase());
+  if (exact) return exact;
+  const base = voices.find(v => v.lang.toLowerCase().startsWith(langBase));
+  return base ?? voices[0] ?? null;
+}
+
+export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseTTSOptions = {}) {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isSupported] = useState(() => "speechSynthesis" in window);
-  // Track when voices are loaded so speak() re-creates with correct voice
-  const [voicesReady, setVoicesReady] = useState(false);
+  const [hasElevenLabs, setHasElevenLabs] = useState<boolean | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const lastCleanRef = useRef<string>("");
+  const cleanedTextRef = useRef<string>("");
   const onBoundaryRef = useRef(onBoundary);
-  const onEndRef = useRef(onEnd);
-
-  // Keep callbacks in refs to avoid stale closures
   useEffect(() => { onBoundaryRef.current = onBoundary; }, [onBoundary]);
-  useEffect(() => { onEndRef.current = onEnd; }, [onEnd]);
 
-  // Voices load asynchronously in Chrome — track when they are ready
+  // Check if ElevenLabs is configured
   useEffect(() => {
-    if (!isSupported) return;
-    const initial = window.speechSynthesis.getVoices();
-    if (initial.length > 0) setVoicesReady(true);
-    const onVoicesChanged = () => {
-      window.speechSynthesis.getVoices(); // refresh browser's internal list
-      setVoicesReady(true);
-    };
-    window.speechSynthesis.addEventListener("voiceschanged", onVoicesChanged);
-    return () => window.speechSynthesis.removeEventListener("voiceschanged", onVoicesChanged);
-  }, [isSupported]);
+    fetch("/api/tts/config")
+      .then(r => r.json())
+      .then(d => setHasElevenLabs(!!d.hasElevenLabs))
+      .catch(() => setHasElevenLabs(false));
+  }, []);
+
+  const stopBrowser = useCallback(() => {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    utteranceRef.current = null;
+  }, []);
+
+  const stopElevenLabs = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+  }, []);
 
   const stop = useCallback(() => {
-    if (!isSupported) return;
-    window.speechSynthesis.cancel();
+    stopBrowser();
+    stopElevenLabs();
     setIsSpeaking(false);
-    utteranceRef.current = null;
-  }, [isSupported]);
+  }, [stopBrowser, stopElevenLabs]);
 
-  // voicesReady in deps so speak() is recreated when voices become available
-  const speak = useCallback((text: string) => {
-    if (!isSupported || !text.trim()) return;
-    window.speechSynthesis.cancel();
-
-    const clean = text
-      .replace(/[#*_`~\[\]()>]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 3000);
-
-    const utt = new SpeechSynthesisUtterance(clean);
+  const speakWithBrowser = useCallback((text: string) => {
+    if (!("speechSynthesis" in window)) return;
+    stopBrowser();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.rate = Math.max(0.5, Math.min(2, rate));
     utt.lang = lang;
-    utt.rate = Math.max(0.5, Math.min(rate, 2.0));
-    utt.pitch = 1.0;
-    utt.volume = 1.0;
-
-    // Always re-pick voice on each call so locale changes take effect immediately
     const voice = pickVoice(lang, voiceHint);
     if (voice) utt.voice = voice;
-
     utt.onstart = () => setIsSpeaking(true);
-
-    // Word boundary event — fires at exact character position
-    utt.onboundary = (event: SpeechSynthesisEvent) => {
+    utt.onend = () => setIsSpeaking(false);
+    utt.onerror = () => setIsSpeaking(false);
+    utt.onboundary = (event) => {
       if (event.name === "word" && onBoundaryRef.current) {
-        onBoundaryRef.current(event.charIndex, event.charLength ?? 0);
+        onBoundaryRef.current(event.charIndex, cleanedTextRef.current);
       }
     };
-
-    utt.onend = () => {
-      setIsSpeaking(false);
-      utteranceRef.current = null;
-      onEndRef.current?.();
-    };
-
-    utt.onerror = (e) => {
-      if (e.error !== "interrupted" && e.error !== "canceled") {
-        console.warn("[TTS] error:", e.error);
-      }
-      setIsSpeaking(false);
-      utteranceRef.current = null;
-    };
-
-    lastCleanRef.current = clean;
     utteranceRef.current = utt;
+    window.speechSynthesis.speak(utt);
+  }, [rate, lang, voiceHint, stopBrowser]);
+
+  const speakWithElevenLabs = useCallback(async (text: string) => {
+    stopElevenLabs();
     setIsSpeaking(true);
-
-    // Chrome bug: tiny delay after cancel() prevents silent failure
-    setTimeout(() => {
-      if (utteranceRef.current === utt) {
-        window.speechSynthesis.speak(utt);
+    try {
+      const res = await fetch("/api/tts/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, locale: lang.startsWith("ar") ? "ar" : "en" }),
+      });
+      if (!res.ok || res.headers.get("content-type")?.includes("json")) {
+        // ElevenLabs failed — fall back to browser
+        setHasElevenLabs(false);
+        speakWithBrowser(text);
+        return;
       }
-    }, 50);
-  }, [lang, rate, voiceHint, isSupported, voicesReady]);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+      await audio.play();
+    } catch {
+      setHasElevenLabs(false);
+      speakWithBrowser(text);
+    }
+  }, [lang, stopElevenLabs, speakWithBrowser]);
 
-  useEffect(() => () => { if (isSupported) window.speechSynthesis.cancel(); }, [isSupported]);
+  const speak = useCallback((rawText: string) => {
+    const text = cleanText(rawText);
+    if (!text) return;
+    cleanedTextRef.current = text;
+    stop();
+    if (hasElevenLabs) {
+      speakWithElevenLabs(text);
+    } else {
+      speakWithBrowser(text);
+    }
+  }, [hasElevenLabs, stop, speakWithElevenLabs, speakWithBrowser]);
 
-  return { speak, stop, isSpeaking, isSupported, getCleanedText: () => lastCleanRef.current };
+  // Expose getCleanedText for word-index math in LessonPage
+  const getCleanedText = useCallback((raw: string) => cleanText(raw), []);
+
+  // Reload voices when they become available
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+    const handler = () => {}; // just trigger re-render
+    window.speechSynthesis.addEventListener("voiceschanged", handler);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", handler);
+  }, []);
+
+  return { speak, stop, isSpeaking, getCleanedText };
 }

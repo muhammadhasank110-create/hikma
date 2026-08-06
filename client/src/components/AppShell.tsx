@@ -118,7 +118,7 @@ function AccessibilityBar() {
 function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { profile, locale } = useProfile();
-  const { setCommandPaletteOpen } = useKeyboard();
+  const [cmdOpen, setCmdOpen] = useState(false);
   const [location] = useLocation();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
@@ -170,7 +170,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Command palette */}
           <button
-            onClick={() => setCommandPaletteOpen(true)}
+            onClick={() => setCmdOpen(true)}
             className="hidden md:flex items-center gap-2 px-2 py-1 rounded-md bg-white/10 text-white/70 text-xs hover:bg-white/20 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
             aria-label={t("Open command palette (Ctrl+K)", "فتح لوحة الأوامر (Ctrl+K)")}
           >
@@ -229,7 +229,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
 }
 
 function CommandPalette() {
-  const { commandPaletteOpen, setCommandPaletteOpen } = useKeyboard();
+  const [cmdOpen, setCmdOpen] = useState(false);
   const { locale } = useProfile();
   const [, navigate] = useLocation();
 
@@ -245,7 +245,7 @@ function CommandPalette() {
   ];
 
   return (
-    <CommandDialog open={commandPaletteOpen} onOpenChange={setCommandPaletteOpen}>
+    <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen}>
       <CommandInput placeholder={locale === "ar" ? "ابحث عن أي شيء…" : "Search anything…"} />
       <CommandList>
         <CommandEmpty>{locale === "ar" ? "لا توجد نتائج." : "No results found."}</CommandEmpty>
@@ -255,7 +255,7 @@ function CommandPalette() {
             return (
               <CommandItem
                 key={cmd.href}
-                onSelect={() => { navigate(cmd.href); setCommandPaletteOpen(false); }}
+                onSelect={() => { navigate(cmd.href); setCmdOpen(false); }}
               >
                 <Icon className="w-4 h-4 mr-2" />
                 {cmd.label}

@@ -61,7 +61,7 @@ export default function Dashboard() {
   const modeLabel = MODE_LABEL[profile.mode ?? "reading"] || "Reading";
 
   return (
-    <main id="main-content" className="container py-8 space-y-10 max-w-4xl" aria-label={t("Dashboard", "لوحة التحكم")}>
+    <main id="main-content" className="container py-8 space-y-10 max-w-4xl page-enter" aria-label={t("Dashboard", "لوحة التحكم")}>
 
       {/* ── Greeting ──────────────────────────────────────────────────── */}
       <section aria-label={t("Welcome", "مرحباً")}>
@@ -138,7 +138,7 @@ export default function Dashboard() {
                     <Icon className="w-4 h-4" aria-hidden="true" />
                   </div>
                   <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
-                  <p className="text-2xl font-bold leading-none" style={{ fontVariantNumeric: "normal" }}>{stat.value}</p>
+                  <p className="text-2xl font-bold leading-none" style={{ fontVariantNumeric: "normal", fontFeatureSettings: '"zero" 0', fontFamily: "system-ui, sans-serif" }}>{stat.value}</p>
                 </div>
               );
             })}
