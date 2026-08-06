@@ -304,11 +304,31 @@ export function useVoiceCommands(options: VoiceCommandsOptions = {}) {
         const t = (event.results[i][0]?.transcript ?? "").trim();
         if (WAKE_WORD_EN.test(t) || WAKE_WORD_AR.test(t)) {
           try { rec.stop(); } catch {}
+          // Check if the wake word utterance also contains a command inline
+          // e.g. "Hikma, open tutor" or "Hikma next section"
+          const withoutWake = t
+            .replace(WAKE_WORD_EN, "")
+            .replace(WAKE_WORD_AR, "")
+            .replace(/^[,،\s]+/, "")
+            .trim();
+          if (withoutWake.length > 2) {
+            // Inline command — parse and execute immediately
+            const parsed = parseCommand(withoutWake, lang);
+            if (parsed.confidence !== "none") {
+              toast.success(
+                lang.startsWith("ar") ? `حكمة: ${parsed.label}` : `Hikma: ${parsed.label}`,
+                { duration: 2000, id: "wake" }
+              );
+              setTimeout(() => handleAction(parsed.action), 200);
+              return;
+            }
+          }
+          // No inline command — start command session
           toast.success(
-            lang.startsWith("ar") ? "حكمة تستمع…" : "Hikma is listening…",
-            { duration: 2000, id: "wake" }
+            lang.startsWith("ar") ? "حكمة تستمع… قل أمرك" : "Hikma is listening… say your command",
+            { duration: 3000, id: "wake" }
           );
-          setTimeout(() => startCommandSession(), 400);
+          setTimeout(() => startCommandSession(), 200);
           return;
         }
       }

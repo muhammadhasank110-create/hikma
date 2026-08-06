@@ -81,11 +81,18 @@ export function KeyboardProvider({ children }: { children: React.ReactNode }) {
       const tag = target.tagName;
       const isTextInput = (tag === 'INPUT' && !['checkbox','radio','button','submit','reset'].includes((target as HTMLInputElement).type))
         || tag === 'TEXTAREA' || target.isContentEditable;
+      // Skip arrow handling for range inputs, radio buttons, sliders, and radiogroups
+      // so their native keyboard behaviour is preserved
+      const isRange = tag === 'INPUT' && (target as HTMLInputElement).type === 'range';
+      const isRadio = tag === 'INPUT' && (target as HTMLInputElement).type === 'radio';
+      const inRadioGroup = !!target.closest('[role="radiogroup"]');
+      const isSlider = target.getAttribute('role') === 'slider';
+      if (isRange || isRadio || isSlider || inRadioGroup) return;
 
       // Arrow keys: move focus (skip inside text inputs)
       if (!isTextInput && (e.key === 'ArrowDown' || e.key === 'ArrowRight')) {
         // Don't override if inside a select, slider, or combobox
-        if (tag === 'SELECT' || target.getAttribute('role') === 'combobox') return;
+        if (tag === 'SELECT' || target.getAttribute('role') === 'combobox' || target.getAttribute('role') === 'listbox') return;
         e.preventDefault();
         const all = getFocusables();
         const idx = all.indexOf(document.activeElement as HTMLElement);
@@ -93,7 +100,7 @@ export function KeyboardProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (!isTextInput && (e.key === 'ArrowUp' || e.key === 'ArrowLeft')) {
-        if (tag === 'SELECT' || target.getAttribute('role') === 'combobox') return;
+        if (tag === 'SELECT' || target.getAttribute('role') === 'combobox' || target.getAttribute('role') === 'listbox') return;
         e.preventDefault();
         const all = getFocusables();
         const idx = all.indexOf(document.activeElement as HTMLElement);
