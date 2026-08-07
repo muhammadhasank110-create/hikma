@@ -226,12 +226,10 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
       className="sticky top-0 z-40 w-full bg-[rgb(var(--nav-bg))] text-white shadow-lg"
       aria-label={t("Main navigation", "التنقل الرئيسي")}
     >
-      <div className="container flex items-center justify-between h-14 gap-4">
+      <div className="container flex items-center justify-between h-16 gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
-          <HikmaLogo surface="dark" size={44} decorative className="transition-transform group-hover:scale-105 flex-shrink-0" />
-          <span className="hidden sm:block font-bold text-sm text-white/90 tracking-tight">Hikma</span>
-          <span className="hidden sm:block text-muted-foreground text-sm font-light">حكمة</span>
+          <img src="/img/hikma-nav-white.png" alt="Hikma" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" style={{ maxWidth: 260 }} />
         </Link>
 
         {/* Desktop nav links */}

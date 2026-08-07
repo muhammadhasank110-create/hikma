@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 import { playSound } from "@/lib/sound";
 
-const ICON_URL = "/img/hikma-icon-dark.png";
-const WORDMARK_URL = "/img/hikma-wordmark.png";
+const NAV_LOGO_WHITE = "/img/hikma-nav-white.png";
+const NAV_LOGO_DARK  = "/img/hikma-nav-dark.png";
 const FALCON_URL = "/img/hikma-icon-light.png";
 
 // ── Animated gradient background ─────────────────────────────────────────────
@@ -300,11 +300,7 @@ export default function Home() {
         style={{ background: "rgba(13,31,16,0.85)", backdropFilter: "blur(20px)" }}>
         <motion.a href="/" className="flex items-center gap-3 group"
           initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-          <img src={ICON_URL} alt="" className="w-8 h-8 object-contain transition-transform group-hover:scale-105" aria-hidden="true" />
-          <div className="hidden sm:flex flex-col leading-none">
-            <span className="font-black text-base text-white tracking-tight">Hikma</span>
-            <span className="text-[10px] text-white/40 font-light tracking-widest">حكمة</span>
-          </div>
+          <img src={NAV_LOGO_WHITE} alt="Hikma" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" style={{ maxWidth: 260 }} />
         </motion.a>
         <motion.div className="flex items-center gap-2 sm:gap-3"
           initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
@@ -569,7 +565,7 @@ export default function Home() {
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="py-8 border-t border-white/8 text-center">
         <div className="flex items-center justify-center gap-3 mb-3">
-          <img src={ICON_URL} alt="" className="w-6 h-6 rounded-lg object-contain" aria-hidden="true" />
+          <img src={NAV_LOGO_DARK} alt="" className="h-6 w-auto object-contain" aria-hidden="true" />
           <span className="font-bold text-white/60 text-sm">Hikma — حكمة</span>
         </div>
         <p className="text-white/25 text-xs">{t("Built to MADA Qatar & WCAG 2.2 AA accessibility standards", "مبني وفق معايير مادا قطر و WCAG 2.2 AA")}</p>

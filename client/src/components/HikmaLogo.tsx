@@ -28,7 +28,8 @@ interface HikmaLogoProps {
 
 const DARK_ICON = "/img/hikma-icon-dark.png";   // dark-green plate, white falcon — for dark surfaces
 const LIGHT_ICON = "/img/hikma-icon-light.png"; // cream plate, dark falcon — for light surfaces
-const WORDMARK = "/img/hikma-wordmark.png";      // transparent wordmark
+const WORDMARK_LIGHT = "/img/hikma-wordmark.png";       // dark text — for light surfaces
+const WORDMARK_DARK  = "/img/hikma-wordmark-white.png"; // white text — for dark surfaces
 
 /** Themes that use a dark nav surface */
 const DARK_SURFACE_THEMES = new Set(["dark", "high_contrast"]);
@@ -54,9 +55,10 @@ export function HikmaLogo({
   const ariaHidden = decorative ? true : undefined;
 
   if (variant === "wordmark") {
+    const wordmarkSrc = resolvedSurface === "dark" ? WORDMARK_DARK : WORDMARK_LIGHT;
     return (
       <img
-        src={WORDMARK}
+        src={wordmarkSrc}
         alt={imgAlt}
         aria-hidden={ariaHidden}
         width={width}
