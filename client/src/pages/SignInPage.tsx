@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { startLogin } from "@/const";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
@@ -100,7 +101,7 @@ export default function SignInPage() {
 
           {/* Google */}
           <button
-            onClick={() => { window.location.href = '/api/oauth/login'; }}
+            onClick={() => startLogin()}
             className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 hover:border-white/25 transition-all text-sm font-semibold text-white mb-6">
             <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
