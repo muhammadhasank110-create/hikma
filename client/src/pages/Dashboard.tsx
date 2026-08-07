@@ -60,8 +60,8 @@ export default function Dashboard() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-white/40 font-medium mb-1">{greeting}</p>
-            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">{user?.name?.split(" ")[0]}</h1>
+            <p className="text-sm text-muted-foreground font-medium mb-1">{greeting}</p>
+            <h1 className="text-4xl sm:text-5xl font-black text-foreground tracking-tight">{user?.name?.split(" ")[0]}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-3">
               {profile?.curriculum && (
                 <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-500/30 text-emerald-300 bg-emerald-500/10">
@@ -69,7 +69,7 @@ export default function Dashboard() {
                   {profile.curriculum === "igcse_edexcel" ? "IGCSE Edexcel" : "Qatar MoEHE"}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-white/15 text-white/50 bg-white/5">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-border text-foreground/50 bg-muted/30">
                 {modeLabel[profileMode]}
               </span>
             </div>
@@ -84,16 +84,16 @@ export default function Dashboard() {
           const Icon = s.icon;
           return (
             <motion.div key={s.label}
-              className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${s.color} border border-white/8`}
+              className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${s.color} border border-border`}
               initial={{ opacity: 0, y: 24, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.5, delay: i * 0.07 }}
               whileHover={{ y: -3, scale: 1.02 }}>
-              <div className={`w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-4 ${s.iconColor}`}>
+              <div className={`w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center mb-4 ${s.iconColor}`}>
                 <Icon className="w-5 h-5" aria-hidden="true" />
               </div>
-              <p className="text-xs text-white/40 font-medium mb-1">{s.label}</p>
-              <p className="text-3xl font-black text-white tabular-nums">
+              <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>
+              <p className="text-3xl font-black text-foreground tabular-nums">
                 <AnimCounter to={s.value} suffix={s.suffix} />
               </p>
             </motion.div>
@@ -103,7 +103,7 @@ export default function Dashboard() {
 
       {/* ── Quick access ───────────────────────────────────────────────── */}
       <div>
-        <motion.h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/30 mb-4"
+        <motion.h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           {t("Quick Access", "وصول سريع")}
         </motion.h2>
@@ -112,7 +112,7 @@ export default function Dashboard() {
             const Icon = a.icon;
             return (
               <motion.button key={a.href}
-                className={`text-left p-5 rounded-2xl bg-gradient-to-br ${a.color} border border-white/8 hover:border-white/20 transition-all group`}
+                className={`text-left p-5 rounded-2xl bg-gradient-to-br ${a.color} border border-border hover:border-border/60 transition-all group`}
                 onClick={() => navigate(a.href)}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -123,10 +123,10 @@ export default function Dashboard() {
                   <div className={`w-11 h-11 rounded-xl ${a.iconBg} flex items-center justify-center ${a.iconColor} group-hover:scale-110 transition-transform`}>
                     <Icon className="w-5 h-5" aria-hidden="true" />
                   </div>
-                  <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors mt-1" aria-hidden="true" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-foreground/60 transition-colors mt-1" aria-hidden="true" />
                 </div>
-                <p className="font-bold text-white text-base mb-1">{a.title}</p>
-                <p className="text-xs text-white/40 leading-relaxed">{a.desc}</p>
+                <p className="font-bold text-foreground text-base mb-1">{a.title}</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{a.desc}</p>
               </motion.button>
             );
           })}
@@ -135,24 +135,24 @@ export default function Dashboard() {
 
       {/* ── Subjects ───────────────────────────────────────────────────── */}
       <div>
-        <motion.h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/30 mb-4"
+        <motion.h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
           {t("Subjects", "المواد")}
         </motion.h2>
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2].map(i => (
-              <div key={i} className="h-20 rounded-2xl bg-white/5 animate-pulse" />
+              <div key={i} className="h-20 rounded-2xl bg-muted/30 animate-pulse" />
             ))}
           </div>
         ) : !curricula?.length ? (
-          <motion.div className="text-center py-16 rounded-2xl border border-dashed border-white/10"
+          <motion.div className="text-center py-16 rounded-2xl border border-dashed border-border"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-            <BookOpen className="w-10 h-10 text-white/20 mx-auto mb-3" aria-hidden="true" />
-            <p className="text-white/40 font-medium mb-2">{t("No subjects yet", "لا توجد مواد بعد")}</p>
-            <p className="text-white/25 text-sm mb-5">{t("Complete onboarding to set up your curriculum.", "أكمل الإعداد لتفعيل منهجك الدراسي.")}</p>
+            <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3" aria-hidden="true" />
+            <p className="text-muted-foreground font-medium mb-2">{t("No subjects yet", "لا توجد مواد بعد")}</p>
+            <p className="text-muted-foreground text-sm mb-5">{t("Complete onboarding to set up your curriculum.", "أكمل الإعداد لتفعيل منهجك الدراسي.")}</p>
             <button onClick={() => navigate("/onboarding")}
-              className="text-sm font-semibold px-5 py-2.5 rounded-xl text-white"
+              className="text-sm font-semibold px-5 py-2.5 rounded-xl text-foreground"
               style={{ background: "rgba(45,100,55,0.4)", border: "1px solid rgba(45,100,55,0.5)" }}>
               {t("Set up my subjects →", "إعداد موادي ←")}
             </button>
@@ -161,7 +161,7 @@ export default function Dashboard() {
           <div className="space-y-3">
             {curricula.map((c, i) => (
               <motion.button key={c.id}
-                className="w-full text-left flex items-center gap-4 p-5 rounded-2xl border border-white/8 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all group"
+                className="w-full text-left flex items-center gap-4 p-5 rounded-2xl border border-border bg-white/[0.03] hover:bg-white/[0.06] hover:border-border/60 transition-all group"
                 onClick={() => navigate(`/subjects/${c.id}`)}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -172,10 +172,10 @@ export default function Dashboard() {
                   <BookOpen className="w-6 h-6 text-emerald-400" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white text-base">{c.titleEn}</p>
-                  <p className="text-xs text-white/40 mt-0.5">{c.board} · {c.family}</p>
+                  <p className="font-bold text-foreground text-base">{c.titleEn}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{c.board} · {c.family}</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" aria-hidden="true" />
+                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground/60 transition-colors flex-shrink-0" aria-hidden="true" />
               </motion.button>
             ))}
           </div>

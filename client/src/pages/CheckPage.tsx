@@ -261,7 +261,7 @@ export default function CheckPage() {
                           className={cls}
                         >
                           <span className="flex items-center gap-3">
-                            <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${isSelected && !isSubmitted ? "border-primary bg-primary text-white" : "border-border"}`}>
+                            <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${isSelected && !isSubmitted ? "border-primary bg-primary text-foreground" : "border-border"}`}>
                               {idx + 1}
                             </span>
                             <span className="flex-1">{opt}</span>

@@ -280,8 +280,8 @@ export function VoiceCommandOverlay() {
               "transition-colors duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
               isListening
-                ? "bg-green-600 text-white"
-                : "bg-[rgb(var(--nav-bg))] text-white/80 border border-white/20 hover:bg-primary hover:text-white",
+                ? "bg-green-600 text-foreground"
+                : "bg-[rgb(var(--nav-bg))] text-foreground/80 border border-border/60 hover:bg-primary hover:text-foreground",
             ].join(" ")}
           >
             {isListening
@@ -302,7 +302,7 @@ export function VoiceCommandOverlay() {
         {isListening && lastTranscript && (
           <div
             aria-live="polite"
-            className="mt-1 max-w-[180px] text-center text-[10px] text-white/60 bg-black/40 backdrop-blur-sm border border-white/10 px-2 py-1 rounded-xl truncate select-none"
+            className="mt-1 max-w-[180px] text-center text-[10px] text-foreground/60 bg-black/40 backdrop-blur-sm border border-border px-2 py-1 rounded-xl truncate select-none"
             title={lastTranscript}
           >
             &ldquo;{lastTranscript}&rdquo;
@@ -312,7 +312,7 @@ export function VoiceCommandOverlay() {
         <button
           type="button"
           onClick={() => setShowHint(v => !v)}
-          className="mt-1 flex items-center gap-1 text-[9px] text-white/30 hover:text-white/60 transition-colors mx-auto"
+          className="mt-1 flex items-center gap-1 text-[9px] text-muted-foreground hover:text-foreground/60 transition-colors mx-auto"
           aria-label={t("Show voice command examples", "أمثلة الأوامر الصوتية")}
         >
           <HelpCircle className="w-3 h-3" />
@@ -320,10 +320,10 @@ export function VoiceCommandOverlay() {
         </button>
         {showHint && (
           <div
-            className="absolute bottom-full mb-2 ltr:left-0 rtl:right-0 w-52 bg-[rgb(var(--nav-bg))] border border-white/15 rounded-2xl p-3 shadow-2xl z-50"
+            className="absolute bottom-full mb-2 ltr:left-0 rtl:right-0 w-52 bg-[rgb(var(--nav-bg))] border border-border rounded-2xl p-3 shadow-2xl z-50"
             role="tooltip"
           >
-            <p className="text-[10px] font-bold text-white/60 mb-2 uppercase tracking-widest">{t("Try saying:", "جرّب قول:")}</p>
+            <p className="text-[10px] font-bold text-foreground/60 mb-2 uppercase tracking-widest">{t("Try saying:", "جرّب قول:")}</p>
             <ul className="space-y-1.5">
               {[
                 t('"next section"', '"القسم التالي"'),
@@ -333,7 +333,7 @@ export function VoiceCommandOverlay() {
                 t('"go home"', '"اذهب للرئيسية"'),
                 t('"open tutor"', '"افتح المعلم"'),
               ].map((cmd, i) => (
-                <li key={i} className="text-[10px] text-white/50 flex items-center gap-1.5">
+                <li key={i} className="text-[10px] text-foreground/50 flex items-center gap-1.5">
                   <span className="w-1 h-1 rounded-full bg-primary/50 flex-shrink-0" />
                   {cmd}
                 </li>

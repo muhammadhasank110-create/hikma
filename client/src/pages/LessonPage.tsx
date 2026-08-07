@@ -139,10 +139,10 @@ export default function LessonPage() {
             <Badge variant="secondary">Lesson</Badge>
             {s.lesson.estimatedMinutes && <Badge variant="outline" className="text-xs">{s.lesson.estimatedMinutes} min</Badge>}
           </div>
-          <h1 className={`text-xl font-bold ${s.isFocused ? "text-white" : "text-foreground"}`}>{s.lessonTitle}</h1>
+          <h1 className={`text-xl font-bold ${s.isFocused ? "text-foreground" : "text-foreground"}`}>{s.lessonTitle}</h1>
           <div className="flex items-center gap-3">
             <Progress value={s.progressPct} className="h-1.5 flex-1" />
-            <span className={`text-xs tabular-nums font-medium ${s.isFocused ? "text-white/80 bg-white/10 px-2 py-0.5 rounded-full" : "text-muted-foreground bg-muted px-2 py-0.5 rounded-full"}`} aria-live="polite" aria-label={t(`Section ${s.sectionIndex + 1} of ${s.totalSections}`, `قسم ${s.sectionIndex + 1} من ${s.totalSections}`)}>{s.sectionIndex + 1}/{s.totalSections}</span>
+            <span className={`text-xs tabular-nums font-medium ${s.isFocused ? "text-foreground/80 bg-muted/50 px-2 py-0.5 rounded-full" : "text-muted-foreground bg-muted px-2 py-0.5 rounded-full"}`} aria-live="polite" aria-label={t(`Section ${s.sectionIndex + 1} of ${s.totalSections}`, `قسم ${s.sectionIndex + 1} من ${s.totalSections}`)}>{s.sectionIndex + 1}/{s.totalSections}</span>
           </div>
         </div>
 
@@ -210,11 +210,11 @@ export default function LessonPage() {
           exit="exit"
           transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
         >
-        <Card className={s.isFocused ? "border-white/10 bg-[#0a1a0a] shadow-2xl ring-1 ring-white/10" : ""} ref={s.contentRef as any}>
+        <Card className={s.isFocused ? "border-border bg-[#0a1a0a] shadow-2xl ring-1 ring-white/10" : ""} ref={s.contentRef as any}>
           <CardContent className="p-6">
             {s.currentSection ? (
               <div className="space-y-4">
-                <h2 className={`text-lg font-bold font-display ${s.isFocused ? "text-white" : ""}`}>
+                <h2 className={`text-lg font-bold font-display ${s.isFocused ? "text-foreground" : ""}`}>
                   {locale === "ar" ? (s.currentSection.titleAr ?? s.currentSection.titleEn ?? "") : (s.currentSection.titleEn ?? "")}
                 </h2>
                 <div data-lesson-content className={`prose max-w-none ${s.isFocused ? "prose-invert text-base leading-[1.9] tracking-wide" : "prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`} onClick={s.handleWordClick}>
@@ -239,7 +239,7 @@ export default function LessonPage() {
                 </div>
                 {s.currentSection.keyTerms?.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-border">
-                    <p className={`text-xs font-semibold mb-2 ${s.isFocused ? "text-white/60" : "text-muted-foreground"}`}>{t("Key Terms", "المصطلحات الرئيسية")}</p>
+                    <p className={`text-xs font-semibold mb-2 ${s.isFocused ? "text-foreground/60" : "text-muted-foreground"}`}>{t("Key Terms", "المصطلحات الرئيسية")}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {s.currentSection.keyTerms.map((term: string) => (
                         <Badge key={term} variant="secondary" className="text-xs cursor-pointer hover:bg-primary/20" onClick={() => s.setSelectedWord(term)}>{term}</Badge>
@@ -282,7 +282,7 @@ export default function LessonPage() {
                   <Button size="sm" onClick={s.submitTopicAnswer} className="rounded-xl" disabled={!s.topicAnswer.trim() || s.isEvaluating}
                     aria-label={t("Submit answer for feedback", "أرسل الإجابة للتقييم")}>
                     {s.isEvaluating
-                      ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ? <span className="w-3.5 h-3.5 border-2 border-border-strong border-t-white rounded-full animate-spin" />
                       : <><Send className="w-3.5 h-3.5 mr-1" />{t("Submit", "أرسل")}</>}
                   </Button>
                 </div>

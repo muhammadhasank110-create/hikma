@@ -153,7 +153,7 @@ function AccessibilityBar() {
             </button>
           )}
           {soundOn && showVolume && (
-            <div className="absolute top-full left-0 mt-1 bg-[rgb(var(--nav-bg))] border border-white/20 rounded-lg p-3 z-50 min-w-[140px] shadow-xl">
+            <div className="absolute top-full left-0 mt-1 bg-[rgb(var(--nav-bg))] border border-border/60 rounded-lg p-3 z-50 min-w-[140px] shadow-xl">
               <p className="text-xs mb-2 text-white/70">{t("Volume", "الصوت")}</p>
               <input
                 type="range"
@@ -235,7 +235,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
             aria-hidden="true"
           />
           <span className="hidden sm:block font-bold text-sm text-white/90 tracking-tight">Hikma</span>
-          <span className="hidden sm:block text-white/40 text-sm font-light">حكمة</span>
+          <span className="hidden sm:block text-muted-foreground text-sm font-light">حكمة</span>
         </Link>
 
         {/* Desktop nav links */}
@@ -250,7 +250,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 ${
                   isActive
                     ? "bg-white/15 text-white font-semibold"
-                    : "text-white/80 hover:text-white hover:bg-white/10"
+                    : "text-white/80 hover:text-white hover:bg-muted/50"
                 }`}
                 aria-current={isActive ? "page" : undefined}
               >
@@ -266,7 +266,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
           {/* Command palette */}
           <button
             onClick={() => setCmdOpen(true)}
-            className="hidden md:flex items-center gap-2 px-2 py-1 rounded-md bg-white/10 text-white/70 text-xs hover:bg-white/20 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
+            className="hidden md:flex items-center gap-2 px-2 py-1 rounded-md bg-muted/50 text-white/70 text-xs hover:bg-white/20 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
             aria-label={t("Open command palette (Ctrl+K)", "فتح لوحة الأوامر (Ctrl+K)")}
           >
             <span>{t("Search…", "بحث…")}</span>
@@ -281,7 +281,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                className="text-white/80 hover:text-white hover:bg-white/10 text-xs"
+                className="text-white/80 hover:text-white hover:bg-muted/50 text-xs"
                 aria-label={t("Sign out", "تسجيل الخروج")}
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -292,7 +292,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
               size="sm"
               variant="ghost"
               onClick={() => { window.location.href = '/signin'; }}
-              className="text-white hover:bg-white/10 text-xs"
+              className="text-white hover:bg-muted/50 text-xs"
               aria-label={t("Sign in", "تسجيل الدخول")}
             >
               <LogIn className="w-3.5 h-3.5 mr-1" />
@@ -302,7 +302,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
 
           {/* Settings */}
           <Link href="/settings" aria-label={t("Settings", "الإعدادات")}>
-            <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10 w-8 h-8">
+            <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-muted/50 w-8 h-8">
               <Settings className="w-4 h-4" />
             </Button>
           </Link>
@@ -311,7 +311,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-white hover:bg-white/10 w-8 h-8"
+            className="md:hidden text-white hover:bg-muted/50 w-8 h-8"
             onClick={onMenuOpen}
             aria-label={t("Open menu", "فتح القائمة")}
           >
@@ -429,7 +429,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile drawer */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetContent side={locale === "ar" ? "right" : "left"} className="w-72 bg-[rgb(var(--nav-bg))] text-white border-0 p-0">
-          <div className="p-4 border-b border-white/10">
+          <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img
@@ -438,7 +438,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   className="h-8 w-8 object-contain rounded-xl"
                 />
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="text-white hover:bg-white/10 w-8 h-8">
+              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="text-white hover:bg-muted/50 w-8 h-8">
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -451,7 +451,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/80 hover:text-white hover:bg-muted/50 transition-colors"
                 >
                   <Icon className="w-4 h-4" />
                   {locale === "ar" ? item.labelAr : item.labelEn}

@@ -147,7 +147,7 @@ export default function TutorPage() {
         {s.socraticQuestion && !s.isStreaming && (
           <div className="flex gap-3 animate-arrive">
             <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
-              <HelpCircle className="w-3.5 h-3.5 text-white" />
+              <HelpCircle className="w-3.5 h-3.5 text-foreground" />
             </div>
             <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
               <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">{locale === "ar" ? "سؤال للتحقق من الفهم" : "Comprehension check"}</p>
@@ -163,7 +163,7 @@ export default function TutorPage() {
         {s.isSocraticLoading && (
           <div className="flex gap-3">
             <div className="w-7 h-7 rounded-full bg-amber-400 flex items-center justify-center">
-              <HelpCircle className="w-3.5 h-3.5 text-white" />
+              <HelpCircle className="w-3.5 h-3.5 text-foreground" />
             </div>
             <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 rounded-2xl rounded-tl-sm px-4 py-3">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />

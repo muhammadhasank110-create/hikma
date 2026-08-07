@@ -314,7 +314,7 @@ export function StepPersonalisation({ data, onChange, locale }: { data: Onboardi
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   const themes = [
     { value: "light",         label: "Light",         bg: "bg-white border-gray-200",       textClass: "text-gray-800" },
-    { value: "dark",          label: "Dark",          bg: "bg-gray-900 border-gray-700",    textClass: "text-white" },
+    { value: "dark",          label: "Dark",          bg: "bg-gray-900 border-gray-700",    textClass: "text-foreground" },
     { value: "cream",         label: "Cream",         bg: "bg-amber-50 border-amber-200",   textClass: "text-amber-900" },
     { value: "calm",          label: "Calm",          bg: "bg-teal-50 border-teal-200",     textClass: "text-teal-900" },
     { value: "high_contrast", label: "High Contrast", bg: "bg-black border-yellow-400",     textClass: "text-yellow-300" },

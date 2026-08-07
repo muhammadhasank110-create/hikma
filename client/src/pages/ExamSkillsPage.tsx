@@ -177,7 +177,7 @@ function CommandWordPractice({ locale }: { locale: string }) {
                 <Button type="button" variant="outline" onClick={() => { sounds.incorrect(); next(); }} className="gap-2 border-amber-300 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/20">
                   <RefreshCw className="w-4 h-4" />{t("Review again", "راجع مجدداً")}
                 </Button>
-                <Button type="button" onClick={() => { sounds.correct(); setScore(s => s + 1); next(); }} className="gap-2 bg-green-600 hover:bg-green-700 text-white">
+                <Button type="button" onClick={() => { sounds.correct(); setScore(s => s + 1); next(); }} className="gap-2 bg-green-600 hover:bg-green-700 text-foreground">
                   <CheckCircle2 className="w-4 h-4" />{t("Got it!", "فهمت!")}
                 </Button>
               </div>
