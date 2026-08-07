@@ -160,6 +160,17 @@ export function useCheckState(lessonId: number) {
     tts.speak(text);
   }, [currentQ, locale, tts]);
 
+  // Auto-narrate question when it changes (for blind/audio-first users with autoNarrate=true)
+  useEffect(() => {
+    if (!profile.autoNarrate || !currentQ) return;
+    const timer = setTimeout(() => {
+      const text = locale === "ar" ? (currentQ.questionAr ?? currentQ.question) : currentQ.question;
+      tts.speak(text);
+    }, 600);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, currentQ?.id, profile.autoNarrate]);
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });

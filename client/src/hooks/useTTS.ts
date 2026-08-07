@@ -181,10 +181,9 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       const contentType = res.headers.get("content-type") ?? "";
       if (!res.ok || !contentType.includes("audio")) {
         console.warn("[useTTS] ElevenLabs error:", res.status, contentType, "— falling back to browser");
-        if (res.status === 401 || res.status === 403) {
-          // Only permanently disable on auth errors — not on 402 (plan) or 429 (quota)
-          elevenLabsFailedThisSession = true;
-        }
+        // Only permanently disable on auth errors (401/403) — not on 402, 429, or 502
+        // 502 = server proxy error (transient), 429 = rate limit (retry later), 402 = plan issue
+        if (res.status === 401 || res.status === 403) elevenLabsFailedThisSession = true;
         speakWithBrowser(text);
         return;
       }

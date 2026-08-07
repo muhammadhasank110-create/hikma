@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useRef, useEffect } from "react";
 import { Bot, TrendingUp, Layers, BookOpen, ChevronRight, Zap, Star, Activity } from "lucide-react";
+import { useSpeech } from "@/contexts/SpeechContext";
 
 const ICON_URL = "/img/hikma-icon-dark.png";
 
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { profile, locale } = useProfile();
   const [, navigate] = useLocation();
+  const speech = useSpeech();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   const { data: curricula, isLoading } = trpc.curriculum.list.useQuery();
@@ -30,6 +32,18 @@ export default function Dashboard() {
   const greeting = hour < 12
     ? t("Good morning", "صباح الخير")
     : hour < 17 ? t("Good afternoon", "مساء الخير") : t("Good evening", "مساء النور");
+
+  // Welcome narration on load for blind/audio-first users (autoNarrate=true)
+  useEffect(() => {
+    if (!profile.autoNarrate) return;
+    const name = user?.name?.split(" ")[0] ?? "";
+    const msg = locale === "ar"
+      ? `${greeting}${name ? ` ${name}` : ""}. مرحباً بك في حكمة. اختر مادة للبدء.`
+      : `${greeting}${name ? `, ${name}` : ""}. Welcome to Hikma. Choose a subject to start learning.`;
+    const timer = setTimeout(() => speech.speak(msg, { priority: "polite" }), 900);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile.autoNarrate, locale]);
 
   const profileMode = (profile as any)?.accessibilityProfile ?? (profile as any)?.profile ?? "standard";
   const modeLabel: Record<string, string> = {

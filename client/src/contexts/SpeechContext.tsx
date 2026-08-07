@@ -8,15 +8,8 @@
  *   "assertive" — cancels whatever is playing immediately (focus announcements, errors).
  *   "polite"    — queues behind the current utterance (lesson narration, tutor replies).
  *
- * INTENTIONAL LATENCY TRADE-OFF:
- *   ElevenLabs requires a network round trip (~300-800ms). For assertive items
- *   under 60 characters (focus announcements, error messages), we deliberately
- *   use the browser voice so the user hears feedback instantly. ElevenLabs is
- *   reserved for lesson narration, tutor replies, and the onboarding preview
- *   where the warm voice matters and latency is acceptable.
- *
- * After this change, `grep -rn "SpeechSynthesisUtterance" client/src` should
- * return results ONLY in useTTS.ts.
+ * ALL speech routes through ElevenLabs (via useTTS → /api/tts/speak proxy).
+ * Browser speech is only used as a final fallback inside useTTS itself.
  */
 import React, { createContext, useContext, useRef, useCallback, useState, useEffect } from "react";
 import { useTTS } from "@/hooks/useTTS";
@@ -58,24 +51,11 @@ export function SpeechProvider({ children }: { children: React.ReactNode }) {
     tts.speak(next.text);
   }, [tts]);
 
-  const speakBrowserInstant = useCallback((text: string, lang?: string) => {
-    // Intentional: use browser voice for short assertive items (< 60 chars)
-    // so focus announcements are instant, not delayed by a network round trip.
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.rate = Math.max(0.5, Math.min(2, profile.speechRate ?? 1));
-    utt.lang = lang ?? (locale === "ar" ? "ar-SA" : "en-GB");
-    utt.onend = () => { setIsSpeaking(false); speakNext(); };
-    setIsSpeaking(true);
-    setTimeout(() => window.speechSynthesis.speak(utt), 30);
-  }, [profile.speechRate, locale, speakNext]);
-
   const speak = useCallback((text: string, opts: SpeakOptions = {}) => {
-    const { priority = "polite", lang } = opts;
+    const { priority = "polite" } = opts;
 
     if (priority === "assertive") {
-      // Cancel everything, speak immediately via ElevenLabs (or browser fallback)
+      // Cancel everything, speak immediately via ElevenLabs
       tts.stop();
       queueRef.current = [];
       setIsSpeaking(true);
@@ -86,7 +66,7 @@ export function SpeechProvider({ children }: { children: React.ReactNode }) {
         setIsSpeaking(true);
         tts.speak(text);
       } else {
-        queueRef.current.push({ text, lang });
+        queueRef.current.push({ text });
       }
     }
   }, [tts]);
