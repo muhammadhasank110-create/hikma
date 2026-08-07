@@ -258,3 +258,10 @@
 - [x] Universal ElevenLabs: SpeechContext routes all speech through ElevenLabs (no isShort bypass)
 - [x] ElevenLabs non-streaming endpoint: switched from /stream to base endpoint
 - [x] partiallyCorrect sound cue added to sound.ts and useSounds.ts
+
+## Round 6 — Aug 7 2026
+- [x] Logo: created horizontal nav lockup (hikma-nav-white.png, hikma-nav-dark.png) — falcon + حكمة | HIKMA text side by side
+- [x] Nav bar: updated Home.tsx and AppShell to use horizontal white logo at h-12 — big and clear on dark green nav
+- [x] Light mode readability: strengthened --border (220→195), --muted (sage→darker), --muted-foreground (80→50), --secondary (sage→210 218 200)
+- [x] Dashboard light mode: stat cards use solid light colors (amber-100, blue-100, etc.) instead of near-invisible /20 gradients
+- [x] Dashboard curriculum cards: bg-card instead of bg-white/[0.03] — clearly visible on cream background

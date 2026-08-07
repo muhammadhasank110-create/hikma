@@ -31,28 +31,28 @@
     --clay-light:      201 153 126;     /* #C9997E */
 
     /* Neutrals */
-    --sage:            237 240 229;     /* #EDF0E5 */
+    --sage:            210 218 200;     /* #D2DAC8 — darker sage for visible muted backgrounds */
     --cream:           250 248 243;     /* #FAF8F3 */
     --canvas:          255 255 255;     /* #FFFFFF */
     --ink:             22 22 22;        /* #161616 */
     --ink-muted:       80 80 80;        /* #505050 */
     --ink-faint:       140 140 140;     /* #8C8C8C */
-    --border:          220 220 215;     /* #DCDCD7 */
-    --border-strong:   180 180 175;     /* #B4B4AF */
+    --border:          195 195 188;     /* #C3C3BC — stronger border for light mode */
+    --border-strong:   150 150 143;     /* #96968F — clearly visible border */
 
     /* Semantic tokens */
     --background:      var(--cream);   /* warm off-white page bg — cards use bg-card (#FFF) */
     --foreground:      var(--ink);
-    --card:            255 255 255;
+    --card:            255 255 255;     /* pure white cards on cream bg — clear separation */
     --card-foreground: var(--ink);
     --popover:         255 255 255;
     --popover-foreground: var(--ink);
     --primary:         var(--forest);
     --primary-foreground: 255 255 255;
-    --secondary:       var(--sage);
-    --secondary-foreground: var(--ink);
-    --muted:           var(--sage);
-    --muted-foreground: var(--ink-muted);
+    --secondary:       210 218 200;     /* same as sage — visible badge bg on cream/white */
+    --secondary-foreground: 22 22 22;   /* ink — dark text on sage badge */
+    --muted:           215 220 208;     /* #D7DCD0 — clearly visible on cream background */
+    --muted-foreground: 50 55 50;       /* #323732 — dark enough for WCAG AA on light bg */
     --accent:          var(--maroon);
     --accent-foreground: 255 255 255;
     --destructive:     220 38 38;

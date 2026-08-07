@@ -41,16 +41,16 @@ export default function Dashboard() {
   };
 
   const stats = [
-    { icon: Star, label: t("Mastered", "تم إتقانه"), value: 0, suffix: "", color: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-400" },
-    { icon: Activity, label: t("In Progress", "قيد التقدم"), value: 0, suffix: "", color: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-400" },
-    { icon: BookOpen, label: t("Total Concepts", "إجمالي المفاهيم"), value: 0, suffix: "", color: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-400" },
-    { icon: Zap, label: t("Daily Goal", "الهدف اليومي"), value: profile?.dailyGoalMinutes ?? 20, suffix: "m", color: "from-purple-500/20 to-purple-500/5", iconColor: "text-purple-400" },
+    { icon: Star, label: t("Mastered", "تم إتقانه"), value: 0, suffix: "", color: "from-amber-100 to-amber-50 dark:from-amber-500/20 dark:to-amber-500/5", iconColor: "text-amber-600 dark:text-amber-400" },
+    { icon: Activity, label: t("In Progress", "قيد التقدم"), value: 0, suffix: "", color: "from-blue-100 to-blue-50 dark:from-blue-500/20 dark:to-blue-500/5", iconColor: "text-blue-600 dark:text-blue-400" },
+    { icon: BookOpen, label: t("Total Concepts", "إجمالي المفاهيم"), value: 0, suffix: "", color: "from-emerald-100 to-emerald-50 dark:from-emerald-500/20 dark:to-emerald-500/5", iconColor: "text-emerald-600 dark:text-emerald-400" },
+    { icon: Zap, label: t("Daily Goal", "الهدف اليومي"), value: profile?.dailyGoalMinutes ?? 20, suffix: "m", color: "from-purple-100 to-purple-50 dark:from-purple-500/20 dark:to-purple-500/5", iconColor: "text-purple-600 dark:text-purple-400" },
   ];
 
   const quickActions = [
-    { icon: Bot, title: t("Hikma AI", "حكمة AI"), desc: t("Ask anything. Get guided, not told.", "اسأل أي شيء. احصل على توجيه."), href: "/tutor", color: "from-emerald-500/15 to-emerald-500/5", iconBg: "bg-emerald-500/20", iconColor: "text-emerald-300" },
-    { icon: TrendingUp, title: t("My Progress", "تقدمي"), desc: t("Track your mastery journey.", "تتبع رحلة إتقانك."), href: "/progress", color: "from-blue-500/15 to-blue-500/5", iconBg: "bg-blue-500/20", iconColor: "text-blue-300" },
-    { icon: Layers, title: t("ECC", "المنهج الموسّع"), desc: t("9 foundational life skills.", "9 مهارات حياتية أساسية."), href: "/ecc", color: "from-purple-500/15 to-purple-500/5", iconBg: "bg-purple-500/20", iconColor: "text-purple-300" },
+    { icon: Bot, title: t("Hikma AI", "حكمة AI"), desc: t("Ask anything. Get guided, not told.", "اسأل أي شيء. احصل على توجيه."), href: "/tutor", color: "from-emerald-100 to-emerald-50 dark:from-emerald-500/15 dark:to-emerald-500/5", iconBg: "bg-emerald-500/20", iconColor: "text-emerald-700 dark:text-emerald-300" },
+    { icon: TrendingUp, title: t("My Progress", "تقدمي"), desc: t("Track your mastery journey.", "تتبع رحلة إتقانك."), href: "/progress", color: "from-blue-100 to-blue-50 dark:from-blue-500/15 dark:to-blue-500/5", iconBg: "bg-blue-500/20", iconColor: "text-blue-700 dark:text-blue-300" },
+    { icon: Layers, title: t("ECC", "المنهج الموسّع"), desc: t("9 foundational life skills.", "9 مهارات حياتية أساسية."), href: "/ecc", color: "from-purple-100 to-purple-50 dark:from-purple-500/15 dark:to-purple-500/5", iconBg: "bg-purple-500/20", iconColor: "text-purple-700 dark:text-purple-300" },
   ];
 
   return (
@@ -64,7 +64,7 @@ export default function Dashboard() {
             <h1 className="text-4xl sm:text-5xl font-black text-foreground tracking-tight">{user?.name?.split(" ")[0]}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-3">
               {profile?.curriculum && (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-500/30 text-emerald-300 bg-emerald-500/10">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-600/40 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10">
                   <BookOpen className="w-3 h-3" aria-hidden="true" />
                   {profile.curriculum === "igcse_edexcel" ? "IGCSE Edexcel" : "Qatar MoEHE"}
                 </span>
@@ -161,15 +161,15 @@ export default function Dashboard() {
           <div className="space-y-3">
             {curricula.map((c, i) => (
               <motion.button key={c.id}
-                className="w-full text-left flex items-center gap-4 p-5 rounded-2xl border border-border bg-white/[0.03] hover:bg-white/[0.06] hover:border-border/60 transition-all group"
+                className="w-full text-left flex items-center gap-4 p-5 rounded-2xl border border-border bg-card hover:bg-muted/50 hover:border-primary/30 transition-all group shadow-sm"
                 onClick={() => navigate(`/subjects/${c.id}`)}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4, delay: 0.5 + i * 0.07 }}
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.99 }}>
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-                  <BookOpen className="w-6 h-6 text-emerald-400" aria-hidden="true" />
+                <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="w-6 h-6 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-foreground text-base">{c.titleEn}</p>
