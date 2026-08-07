@@ -885,3 +885,50 @@ button[disabled], button[aria-disabled="true"],
   border-radius: 0;
   animation: sound-flash 400ms ease-out forwards;
 }
+
+/* ── Marquee (CSS-only, never drifts) ──────────────────────────────────────── */
+@keyframes hikma-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: hikma-scroll 32s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
+/* ── Floating accent cards ─────────────────────────────────────────────────── */
+@keyframes float-a {
+  0%, 100% { transform: translateY(0px) rotate(-1deg); }
+  50%       { transform: translateY(-14px) rotate(1deg); }
+}
+@keyframes float-b {
+  0%, 100% { transform: translateY(0px) rotate(1deg); }
+  50%       { transform: translateY(-10px) rotate(-1deg); }
+}
+@keyframes float-c {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-18px) rotate(2deg); }
+}
+.float-a { animation: float-a 6s ease-in-out infinite; }
+.float-b { animation: float-b 8s ease-in-out infinite 1s; }
+.float-c { animation: float-c 7s ease-in-out infinite 2s; }
+@media (prefers-reduced-motion: reduce) {
+  .float-a, .float-b, .float-c { animation: none; }
+}
+
+/* ── Waveform bars ─────────────────────────────────────────────────────────── */
+@keyframes wave-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%       { transform: scaleY(1); }
+}
+.wave-bar {
+  transform-origin: bottom;
+  animation: wave-bar 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wave-bar { animation: none; transform: scaleY(0.6); }
+}
