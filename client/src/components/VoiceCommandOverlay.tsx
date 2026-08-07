@@ -15,7 +15,7 @@
  * - UNAUTHORIZED from parseVoiceIntent shows "Please sign in" instead of generic toast.
  */
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { Mic, MicOff, HelpCircle } from "lucide-react";
 import { useVoiceCommands, type VoiceCommandAction } from "@/hooks/useVoiceCommands";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useLocation } from "wouter";
@@ -50,6 +50,7 @@ export function VoiceCommandOverlay() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isAskLoading, setIsAskLoading] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   useEffect(() => {
@@ -213,7 +214,7 @@ export function VoiceCommandOverlay() {
     }
   }, [navigate, speech, updateProfile, profile, t]);
 
-  const { isListening, toggleVoice } = useVoiceCommands({
+  const { isListening, toggleVoice, lastTranscript } = useVoiceCommands({
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     locale,
     onAction: handleAction,
@@ -296,6 +297,49 @@ export function VoiceCommandOverlay() {
           >
             {t("Listening", "يستمع")}
           </p>
+        )}
+        {/* Last heard transcript strip */}
+        {isListening && lastTranscript && (
+          <div
+            aria-live="polite"
+            className="mt-1 max-w-[180px] text-center text-[10px] text-white/60 bg-black/40 backdrop-blur-sm border border-white/10 px-2 py-1 rounded-xl truncate select-none"
+            title={lastTranscript}
+          >
+            &ldquo;{lastTranscript}&rdquo;
+          </div>
+        )}
+        {/* Hint tooltip */}
+        <button
+          type="button"
+          onClick={() => setShowHint(v => !v)}
+          className="mt-1 flex items-center gap-1 text-[9px] text-white/30 hover:text-white/60 transition-colors mx-auto"
+          aria-label={t("Show voice command examples", "أمثلة الأوامر الصوتية")}
+        >
+          <HelpCircle className="w-3 h-3" />
+          {t("Commands", "أوامر")}
+        </button>
+        {showHint && (
+          <div
+            className="absolute bottom-full mb-2 ltr:left-0 rtl:right-0 w-52 bg-[rgb(var(--nav-bg))] border border-white/15 rounded-2xl p-3 shadow-2xl z-50"
+            role="tooltip"
+          >
+            <p className="text-[10px] font-bold text-white/60 mb-2 uppercase tracking-widest">{t("Try saying:", "جرّب قول:")}</p>
+            <ul className="space-y-1.5">
+              {[
+                t('"next section"', '"القسم التالي"'),
+                t('"read aloud"', '"اقرأ بصوت"'),
+                t('"focus mode"', '"وضع التركيز"'),
+                t('"what is photosynthesis?"', '"ما هو التمثيل الضوئي؟"'),
+                t('"go home"', '"اذهب للرئيسية"'),
+                t('"open tutor"', '"افتح المعلم"'),
+              ].map((cmd, i) => (
+                <li key={i} className="text-[10px] text-white/50 flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-primary/50 flex-shrink-0" />
+                  {cmd}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
     </>

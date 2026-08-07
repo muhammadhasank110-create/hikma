@@ -103,6 +103,7 @@ export function useVoiceCommands({
   const [, navigate] = useLocation();
   const speech = useSpeech();
     const [isOn, setIsOn] = useState(false);
+  const [lastTranscript, setLastTranscript] = useState<string>("");
   const isOnRef = useRef(false);
   const recRef = useRef<any>(null);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -188,6 +189,7 @@ export function useVoiceCommands({
         ).filter(Boolean);
         const transcript = transcripts[0] ?? "";
         if (!transcript) continue;
+        setLastTranscript(transcript);
 
         // INVERTED MATCHING ORDER (Task 4):
         // Only stop/next/prev/back use instant regex — they need to be instant
@@ -306,5 +308,6 @@ export function useVoiceCommands({
     isAwake: false,
     toggleVoice,
     isSupported: getSpeechRecognition() !== null,
+    lastTranscript,
   };
 }

@@ -195,7 +195,7 @@ export default function CheckPage() {
   const displayOptions = locale === "ar" ? (s.currentQ.optionsAr ?? s.currentQ.options) : s.currentQ.options;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-2xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4 sm:space-y-6">
       {/* Header */}
       <motion.div className="space-y-2" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
@@ -236,7 +236,7 @@ export default function CheckPage() {
                   {displayOptions.map((opt, idx) => {
                     const isSelected = selectedAnswer === idx;
                     const isThisCorrect = String(idx) === String(s.currentQ!.correct);
-                    let cls = "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 text-sm font-medium relative overflow-hidden ";
+                    let cls = "w-full text-left p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 text-sm font-medium relative overflow-hidden ";
                     if (!isSubmitted) {
                       cls += isSelected
                         ? "border-primary bg-primary/10 text-primary shadow-sm shadow-primary/20"

@@ -20,6 +20,7 @@ import {
   ChevronDown, Mic, GraduationCap, Headphones,
   Keyboard, Brain, CheckCircle2,
 } from "lucide-react";
+import { playSound } from "@/lib/sound";
 
 const ICON_URL = "/manus-storage/hikma-app-icon_2d2d3fef.png";
 
@@ -199,7 +200,8 @@ function MagneticButton({ children, className, onClick, "aria-label": ariaLabel 
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       whileTap={{ scale: 0.96 }}
-      onClick={onClick}
+      onClick={() => { playSound("tap"); onClick?.(); }}
+      onMouseEnter={() => { /* hover tone */ }}
       aria-label={ariaLabel}
     >
       {children}
@@ -557,6 +559,42 @@ function FeatureSection({ visual, title, subtitle, points, reverse = false }: {
   );
 }
 
+
+// ── Popup notification cards (scroll-triggered) ───────────────────────────────
+const POPUPS = [
+  { icon: "🎯", title: "Lesson complete!", sub: "Biology · Cell Division", colour: "from-emerald-500/20 to-emerald-500/5", border: "border-emerald-500/30", delay: 0 },
+  { icon: "🔊", title: "Reading aloud", sub: "Section 3 of 5 — James voice", colour: "from-blue-500/20 to-blue-500/5", border: "border-blue-500/30", delay: 0.15 },
+  { icon: "✓", title: "Correct answer!", sub: "+10 points · 84% this quiz", colour: "from-primary/20 to-primary/5", border: "border-primary/30", delay: 0.3 },
+  { icon: "⚡", title: "Focus mode ON", sub: "25 min Pomodoro started", colour: "from-amber-500/20 to-amber-500/5", border: "border-amber-500/30", delay: 0.45 },
+];
+
+function PopupCards() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref as any, { once: true, margin: "-80px" });
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <div ref={ref} className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto" aria-hidden="true">
+      {POPUPS.map((p, i) => (
+        <motion.div
+          key={i}
+          className={`bg-gradient-to-br ${p.colour} border ${p.border} rounded-2xl p-4 flex items-center gap-3 backdrop-blur-sm`}
+          initial={prefersReducedMotion ? {} : { opacity: 0, y: 24, scale: 0.92 }}
+          animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
+          transition={{ duration: 0.5, delay: p.delay, ease: [0.23, 1, 0.32, 1] as any }}
+          whileHover={prefersReducedMotion ? {} : { scale: 1.02, y: -2 }}
+        >
+          <span className="text-2xl flex-shrink-0" role="img" aria-hidden="true">{p.icon}</span>
+          <div>
+            <p className="text-sm font-bold text-white">{p.title}</p>
+            <p className="text-xs text-white/50 mt-0.5">{p.sub}</p>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Home() {
   const prefersReducedMotion = useReducedMotion();
@@ -579,7 +617,7 @@ export default function Home() {
       <ScrollProgressBar />
 
       {/* ── Sticky nav ────────────────────────────────────────────────── */}
-      <nav className="w-full border-b border-white/8 flex items-center justify-between px-6 py-3 sticky top-0 z-50 bg-[rgb(var(--nav-bg))]/90 backdrop-blur-md">
+      <nav className="w-full border-b border-white/8 flex items-center justify-between px-4 sm:px-6 py-3 sticky top-0 z-50 bg-[rgb(var(--nav-bg))]/90 backdrop-blur-md overflow-hidden">
         <motion.div
           className="flex items-center gap-2.5"
           initial={{ opacity: 0, x: -20 }}
@@ -654,7 +692,7 @@ export default function Home() {
           {/* Headline */}
           <div>
             <motion.h1
-              className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black leading-[1.05] tracking-tight"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-[1.05] tracking-tight"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1, ease: [0.23, 1, 0.32, 1] as any }}
@@ -682,7 +720,7 @@ export default function Home() {
 
           {/* CTA */}
           <motion.div
-            className="flex flex-wrap gap-3 justify-center"
+            className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center items-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
