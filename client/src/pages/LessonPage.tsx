@@ -128,7 +128,7 @@ export default function LessonPage() {
   );
 
   return (
-    <div className={`min-h-screen ${s.isFocused ? "bg-black/95" : "bg-background"} transition-colors duration-300`}>
+    <div className={`min-h-screen ${s.isFocused ? "bg-[#F5F7F5]" : "bg-background"} transition-colors duration-300`}>
       {s.selectedWord && <WordDefinitionPopup word={s.selectedWord} locale={locale} onClose={() => s.setSelectedWord(null)} sectionText={locale === "ar" ? (s.currentSection?.bodyAr ?? s.currentSection?.bodyEn ?? "") : (s.currentSection?.bodyEn ?? "")} />}
       {s.showBodyDouble && <BodyDoublePanel locale={locale} lessonTitle={s.lessonTitle} />}
 
@@ -139,10 +139,10 @@ export default function LessonPage() {
             <Badge variant="secondary">Lesson</Badge>
             {s.lesson.estimatedMinutes && <Badge variant="outline" className="text-xs">{s.lesson.estimatedMinutes} min</Badge>}
           </div>
-          <h1 className={`text-xl font-bold ${s.isFocused ? "text-foreground" : "text-foreground"}`}>{s.lessonTitle}</h1>
+          <h1 className={`font-bold ${s.isFocused ? "text-2xl text-[#111411]" : "text-xl text-foreground"}`}>{s.lessonTitle}</h1>
           <div className="flex items-center gap-3">
             <Progress value={s.progressPct} className="h-1.5 flex-1" />
-            <span className={`text-xs tabular-nums font-medium ${s.isFocused ? "text-foreground/80 bg-muted/50 px-2 py-0.5 rounded-full" : "text-muted-foreground bg-muted px-2 py-0.5 rounded-full"}`} aria-live="polite" aria-label={t(`Section ${s.sectionIndex + 1} of ${s.totalSections}`, `قسم ${s.sectionIndex + 1} من ${s.totalSections}`)}>{s.sectionIndex + 1}/{s.totalSections}</span>
+            <span className={`text-xs tabular-nums font-medium ${s.isFocused ? "text-[#111411]/70 bg-[#111411]/10 px-2 py-0.5 rounded-full" : "text-muted-foreground bg-muted px-2 py-0.5 rounded-full"}`} aria-live="polite" aria-label={t(`Section ${s.sectionIndex + 1} of ${s.totalSections}`, `قسم ${s.sectionIndex + 1} من ${s.totalSections}`)}>{s.sectionIndex + 1}/{s.totalSections}</span>
           </div>
         </div>
 
@@ -210,18 +210,18 @@ export default function LessonPage() {
           exit="exit"
           transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
         >
-        <Card className={s.isFocused ? "border-border bg-[#0a1a0a] shadow-2xl ring-1 ring-white/10" : ""} ref={s.contentRef as any}>
-          <CardContent className="p-6">
+        <Card className={s.isFocused ? "border-0 bg-white shadow-xl" : ""} ref={s.contentRef as any}>
+          <CardContent className={s.isFocused ? "p-8 sm:p-12" : "p-6"}>
             {s.currentSection ? (
               <div className="space-y-4">
-                <h2 className={`text-lg font-bold font-display ${s.isFocused ? "text-foreground" : ""}`}>
+                <h2 className={`font-bold font-display ${s.isFocused ? "text-2xl text-[#111411] mb-5" : "text-lg"}`}>
                   {locale === "ar" ? (s.currentSection.titleAr ?? s.currentSection.titleEn ?? "") : (s.currentSection.titleEn ?? "")}
                 </h2>
-                <div data-lesson-content className={`prose max-w-none ${s.isFocused ? "prose-invert text-base leading-[1.9] tracking-wide" : "prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`} onClick={s.handleWordClick}>
+                <div data-lesson-content className={`max-w-none ${s.isFocused ? "text-[1.125rem] leading-[1.95] tracking-[0.01em] text-[#111411] [&_p]:mb-4 [&_p]:text-[1.125rem] [&_p]:leading-[1.95] [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#111411] [&_strong]:font-bold [&_strong]:text-[#111411] [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:text-[1.125rem] [&_li]:leading-[1.9]" : "prose prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`} onClick={s.handleWordClick}>
                   {s.highlightedWords.length > 0 && s.highlightIndex >= 0 ? (
                     <p className="leading-relaxed">
                       {s.highlightedWords.map((word, i) => (
-                        <span key={i} data-word={word} className={`cursor-pointer transition-colors duration-100 hover:underline hover:text-primary ${i === s.highlightIndex ? (s.isFocused ? "bg-yellow-400/60 text-black rounded px-0.5 font-bold" : "bg-primary/30 rounded px-0.5 font-semibold") : ""}`}>
+                        <span key={i} data-word={word} className={`cursor-pointer transition-colors duration-100 hover:underline hover:text-primary ${i === s.highlightIndex ? (s.isFocused ? "bg-yellow-300 text-[#111411] rounded px-0.5 font-bold" : "bg-primary/30 rounded px-0.5 font-semibold") : s.isFocused ? "text-[#111411]" : ""}`}>
                           {word}{" "}
                         </span>
                       ))}
@@ -233,13 +233,13 @@ export default function LessonPage() {
                           ? s.simplifiedContent[s.sectionIndex]
                           : (locale === "ar" ? (s.currentSection.bodyAr ?? s.currentSection.bodyEn ?? "") : (s.currentSection.bodyEn ?? ""))}
                       </Streamdown>
-                      <p className="text-xs text-muted-foreground mt-3 italic">{t("Tip: click any word for its definition.", "نصيحة: انقر على أي كلمة لتعريفها.")}</p>
+                      <p className={`text-xs mt-3 italic ${s.isFocused ? "text-[#111411]/50" : "text-muted-foreground"}`}>{t("Tip: click any word for its definition.", "نصيحة: انقر على أي كلمة لتعريفها.")}</p>
                     </div>
                   )}
                 </div>
                 {s.currentSection.keyTerms?.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-border">
-                    <p className={`text-xs font-semibold mb-2 ${s.isFocused ? "text-foreground/60" : "text-muted-foreground"}`}>{t("Key Terms", "المصطلحات الرئيسية")}</p>
+                    <p className={`text-xs font-semibold mb-2 ${s.isFocused ? "text-[#111411]/60" : "text-muted-foreground"}`}>{t("Key Terms", "المصطلحات الرئيسية")}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {s.currentSection.keyTerms.map((term: string) => (
                         <Badge key={term} variant="secondary" className="text-xs cursor-pointer hover:bg-primary/20" onClick={() => s.setSelectedWord(term)}>{term}</Badge>

@@ -6,6 +6,7 @@
 
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 /* ── Google Fonts are loaded in index.html ── */
 
@@ -569,8 +570,8 @@
   /* Dark theme override */
   [data-theme="dark"] body,
   [data-theme="dark"] [role="main"] {
-    background-color: #0D110D !important;
-    color: #E8EDE8 !important;
+    background-color: #F5F7F5 !important;  /* keep light even in dark theme for focus mode */
+    color: #111411 !important;
   }
   [data-theme="cream"] body,
   [data-theme="cream"] [role="main"] {
@@ -590,9 +591,10 @@
 
   /* Larger, more readable text */
   p, li, .lesson-body {
-    font-size: 1.05em;
-    line-height: 1.9;
-    max-width: 65ch;
+    font-size: 1.125rem;
+    line-height: 1.95;
+    max-width: 68ch;
+    color: #111411;
   }
 
   /* No animations */

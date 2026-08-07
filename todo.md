@@ -265,3 +265,5 @@
 - [x] Light mode readability: strengthened --border (220→195), --muted (sage→darker), --muted-foreground (80→50), --secondary (sage→210 218 200)
 - [x] Dashboard light mode: stat cards use solid light colors (amber-100, blue-100, etc.) instead of near-invisible /20 gradients
 - [x] Dashboard curriculum cards: bg-card instead of bg-white/[0.03] — clearly visible on cream background
+- [x] Focus mode readability: light sage-white bg (#F5F7F5), white card, larger text (1.125rem), line-height 1.95, explicit dark colors (#111411), bigger headings (text-2xl), generous padding (p-8/p-12)
+- [x] Added @tailwindcss/typography plugin import so prose class works in normal lesson mode
