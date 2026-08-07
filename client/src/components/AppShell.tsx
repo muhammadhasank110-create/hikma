@@ -229,9 +229,10 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
           <img
-            src="/manus-storage/hikma-app-icon_2d2d3fef.png"
+            src="/manus-storage/hikma-app-icon-clean_809d4c7d.png"
             alt=""
-            className="h-8 w-8 object-contain rounded-xl transition-transform group-hover:scale-105"
+            className="h-8 w-8 object-contain transition-transform group-hover:scale-105"
+            style={{mixBlendMode:"screen"}}
             aria-hidden="true"
           />
           <span className="hidden sm:block font-bold text-sm text-white/90 tracking-tight">Hikma</span>
@@ -433,9 +434,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <img
-                  src="/manus-storage/hikma-app-icon_2d2d3fef.png"
+                  src="/manus-storage/hikma-app-icon-clean_809d4c7d.png"
                   alt="Hikma حكمة"
-                  className="h-8 w-8 object-contain rounded-xl"
+                  className="h-8 w-8 object-contain"
                 />
               </div>
               <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="text-white hover:bg-muted/50 w-8 h-8">

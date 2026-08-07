@@ -6,7 +6,7 @@ import { motion, useInView, useMotionValue, useSpring, useTransform } from "fram
 import { useRef, useEffect } from "react";
 import { Bot, TrendingUp, Layers, BookOpen, ChevronRight, Zap, Star, Activity } from "lucide-react";
 
-const ICON_URL = "/manus-storage/hikma-app-icon_2d2d3fef.png";
+const ICON_URL = "/manus-storage/hikma-app-icon-clean_809d4c7d.png";
 
 function AnimCounter({ to, suffix = "" }: { to: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -74,7 +74,7 @@ export default function Dashboard() {
               </span>
             </div>
           </div>
-          <img src={ICON_URL} alt="" className="w-12 h-12 rounded-2xl object-contain opacity-60" aria-hidden="true" />
+          <img src={ICON_URL} alt="" className="w-12 h-12 object-contain" aria-hidden="true" />
         </div>
       </motion.div>
 

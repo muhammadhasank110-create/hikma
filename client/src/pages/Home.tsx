@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { playSound } from "@/lib/sound";
 
-const ICON_URL = "/manus-storage/hikma-app-icon_2d2d3fef.png";
+const ICON_URL = "/manus-storage/hikma-app-icon-clean_809d4c7d.png";
 const FALCON_URL = "/manus-storage/hikma-falcon-transparent_9af556dd.png";
 
 // ── Animated gradient background ─────────────────────────────────────────────
@@ -299,7 +299,7 @@ export default function Home() {
         style={{ background: "rgba(13,31,16,0.85)", backdropFilter: "blur(20px)" }}>
         <motion.a href="/" className="flex items-center gap-3 group"
           initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-          <img src={ICON_URL} alt="" className="w-8 h-8 rounded-xl object-contain transition-transform group-hover:scale-105" aria-hidden="true" />
+          <img src={ICON_URL} alt="" className="w-8 h-8 object-contain transition-transform group-hover:scale-105" aria-hidden="true" />
           <div className="hidden sm:flex flex-col leading-none">
             <span className="font-black text-base text-white tracking-tight">Hikma</span>
             <span className="text-[10px] text-white/40 font-light tracking-widest">حكمة</span>

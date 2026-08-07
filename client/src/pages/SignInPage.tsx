@@ -6,7 +6,7 @@ import { Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 const FALCON_URL = "/manus-storage/hikma-falcon-transparent_9af556dd.png";
-const ICON_URL = "/manus-storage/hikma-app-icon_2d2d3fef.png";
+const ICON_URL = "/manus-storage/hikma-app-icon-clean_809d4c7d.png";
 
 export default function SignInPage() {
   const [, navigate] = useLocation();
@@ -50,7 +50,7 @@ export default function SignInPage() {
         {/* Logo */}
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
           <a href="/" className="flex items-center gap-3 group">
-            <img src={ICON_URL} alt="" className="w-10 h-10 rounded-xl object-contain" aria-hidden="true" />
+            <img src={ICON_URL} alt="" className="w-10 h-10 object-contain" style={{mixBlendMode:"screen"}} aria-hidden="true" />
             <div>
               <p className="font-black text-lg text-white leading-none">Hikma</p>
               <p className="text-[10px] text-white/40 tracking-widest">حكمة</p>
@@ -92,7 +92,7 @@ export default function SignInPage() {
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] as any }}>
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 mb-8">
-            <img src={ICON_URL} alt="" className="w-8 h-8 rounded-xl object-contain" aria-hidden="true" />
+            <img src={ICON_URL} alt="" className="w-8 h-8 object-contain" style={{mixBlendMode:"screen"}} aria-hidden="true" />
             <span className="font-black text-white">Hikma</span>
           </div>
 
