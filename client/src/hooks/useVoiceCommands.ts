@@ -17,7 +17,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
 import { useSpeech } from "@/contexts/SpeechContext";
 
 export type VoiceCommandAction =
@@ -117,9 +116,6 @@ export function useVoiceCommands({
   // (which is defined further down).
   const startRecognitionRef = useRef<(() => void) | null>(null);
 
-  // LLM fallback mutation
-  const parseIntent = trpc.tutor.parseVoiceIntent.useMutation();
-
   /**
    * Stop listening while a confirmation is spoken, then resume.
    * Without this the reply is picked up by the mic and matched as a new
@@ -153,7 +149,7 @@ export function useVoiceCommands({
       case "open_tutor": navigate("/tutor"); break;
       default: break;
     }
-  }, [onAction, navigate, lang, muteMicWhileSpeaking]);
+  }, [onAction, navigate, muteMicWhileSpeaking, speech]);
 
   const stopRecognition = useCallback(() => {
     if (restartTimerRef.current) { clearTimeout(restartTimerRef.current); restartTimerRef.current = null; }
@@ -191,57 +187,24 @@ export function useVoiceCommands({
         if (!transcript) continue;
         setLastTranscript(transcript);
 
-        // INVERTED MATCHING ORDER (Task 4):
-        // Only stop/next/prev/back use instant regex — they need to be instant
-        // and misfire harmlessly. Everything else goes to parseVoiceIntent to
-        // prevent false matches (e.g. "I don't understand this science bit" navigating away).
-        const INSTANT_COMMANDS = /\b(stop|silence|quiet|pause|أوقف|صمت|توقف|next|التالي|previous|prev|السابق|back|رجوع|go back)\b/i;
-        if (INSTANT_COMMANDS.test(transcript)) {
-          const action = parseCommand(transcript);
-          if (action) {
-            const label = getLabelForAction(action);
-            toast.success(`✓ ${label}`, { id: "voice-cmd", duration: 2000 });
-            handleAction(action, label);
-            return;
-          }
+        // Try instant pattern matching first — works offline, no auth needed
+        const action = parseCommand(transcript);
+        if (action) {
+          const label = getLabelForAction(action);
+          toast.success(`✓ ${label}`, { id: "voice-cmd", duration: 2000 });
+          handleAction(action, label);
+          return;
         }
 
-        // Unknown — use LLM fallback
-        parseIntent.mutate(
-          { transcript, context: contextRef.current, locale: locale === "ar" ? "ar" : "en" },
-          {
-            onSuccess: (result) => {
-              if (result.action === "ask_tutor") {
-                // Route to the voice chat panel — do not navigate anywhere
-                if (onAskTutor) {
-                  onAskTutor(transcript);
-                } else {
-                  toast.info(`Heard: "${transcript}"`, { duration: 3000 });
-                }
-                return;
-              }
-              if (result.action !== "unknown" && result.confidence > 0.5) {
-                if (result.action === "navigate" && !result.path) {
-                  toast.info(`Heard: "${transcript}"`, { duration: 3000 });
-                  return;
-                }
-                toast.success(`✓ ${result.reply || result.action}`, { id: "voice-cmd", duration: 2000 });
-                handleAction({ type: result.action as any, path: result.path } as VoiceCommandAction, result.reply);
-              } else {
-                toast.info(`Heard: "${transcript}"`, { duration: 3000 });
-              }
-            },
-            onError: (err: any) => {
-              if (err?.data?.code === "UNAUTHORIZED" || err?.message?.includes("UNAUTHORIZED")) {
-                toast.error(locale === "ar"
-                  ? "يرجى تسجيل الدخول لاستخدام الأوامر الصوتية"
-                  : "Please sign in to use voice commands");
-              } else {
-                toast.info(`Heard: "${transcript}"`, { duration: 3000 });
-              }
-            },
-          }
-        );
+        // No pattern matched — treat as a question for the AI tutor
+        // (e.g. "what is photosynthesis?", "explain this to me", etc.)
+        if (onAskTutor) {
+          onAskTutor(transcript);
+          return;
+        }
+
+        // Fallback: show what was heard
+        toast.info(`Heard: "${transcript}"`, { id: "voice-heard", duration: 3000 });
       }
     };
 
@@ -265,7 +228,7 @@ export function useVoiceCommands({
 
     recRef.current = rec;
     try { rec.start(); } catch { /* start() throws if already running */ }
-  }, [lang, locale, handleAction, parseIntent]);
+  }, [lang, locale, handleAction]);
 
   // Keep the ref pointing at the current startRecognition.
   useEffect(() => { startRecognitionRef.current = startRecognition; }, [startRecognition]);

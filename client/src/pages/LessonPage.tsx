@@ -149,8 +149,9 @@ export default function LessonPage() {
           </div>
         </div>
 
-        {/* Toolbar — touch: Read Aloud + More menu; pointer: all buttons visible */}
+        {/* Toolbar — simplified: Read Aloud + Focus + More (dropdown for secondary tools) */}
         <div className="flex items-center gap-2 mb-4 flex-wrap relative">
+          {/* Pomodoro timer — only shown when focus mode is active */}
           {s.isFocused && (
             <div className="flex items-center gap-1.5">
               <Button variant={s.pomodoroActive ? "default" : "outline"} size="sm" onClick={() => s.setPomodoroActive(v => !v)} aria-label={s.pomodoroActive ? t("Pause Pomodoro", "إيقاف مؤقت") : t("Start Pomodoro", "ابدأ البومودورو")} className="gap-1.5">
@@ -162,42 +163,27 @@ export default function LessonPage() {
               </span>
             </div>
           )}
+          {/* Primary: Read Aloud */}
           <Button variant={s.isNarrating ? "default" : "outline"} size="sm" onClick={s.readAloud} aria-label={s.isNarrating ? t("Stop narration", "إيقاف السرد") : t("Read aloud", "قراءة بصوت")} aria-pressed={s.isNarrating}>
             {s.isNarrating ? <VolumeX className="w-3.5 h-3.5 mr-1.5" /> : <Volume2 className="w-3.5 h-3.5 mr-1.5" />}
-            {s.isNarrating ? t("Stop", "إيقاف") : t("Read Aloud", "استمع")}
+            {s.isNarrating ? t("Stop", "إيقاف") : t("Listen", "استمع")}
           </Button>
-          {/* On touch devices: collapse secondary buttons into a More menu */}
-          <Button variant={s.simplifiedView ? "default" : "outline"} size="sm" onClick={s.simplifySection} disabled={s.isSimplifying} aria-label={t("Simplify text", "تبسيط النص")} aria-pressed={s.simplifiedView} className={`${s.isFocused ? "hidden sm:inline-flex" : ""} ${isTouchDevice ? "hidden" : ""}`}>
-            <AlignLeft className="w-3.5 h-3.5 mr-1.5" />
-            {s.isSimplifying ? "..." : t("Simplify", "تبسيط")}
-          </Button>
-          <Button variant={s.isFocused ? "default" : "outline"} size="sm" onClick={() => s.setIsFocused(v => !v)} aria-label={t("Toggle focus mode", "وضع التركيز")} aria-pressed={s.isFocused} className={isTouchDevice ? "hidden" : ""}>
+          {/* Primary: Focus mode toggle */}
+          <Button variant={s.isFocused ? "default" : "outline"} size="sm" onClick={() => s.setIsFocused(v => !v)} aria-label={t("Toggle focus mode", "وضع التركيز")} aria-pressed={s.isFocused}>
             {s.isFocused ? <Minimize2 className="w-3.5 h-3.5 mr-1.5" /> : <Maximize2 className="w-3.5 h-3.5 mr-1.5" />}
             {t("Focus", "تركيز")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => s.setShowConceptMap(v => !v)} aria-label={t("Concept map", "خريطة المفاهيم")} aria-pressed={s.showConceptMap} className={`${s.isFocused ? "hidden sm:inline-flex" : ""} ${isTouchDevice ? "hidden" : ""}`}>
-            <Map className="w-3.5 h-3.5 mr-1.5" />{t("Map", "خريطة")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => s.setShowBodyDouble(v => !v)} aria-label={t("Body double companion", "رفيق")} aria-pressed={s.showBodyDouble} className={`${s.isFocused ? "hidden sm:inline-flex" : ""} ${isTouchDevice ? "hidden" : ""}`}>
-            <UserCheck className="w-3.5 h-3.5 mr-1.5" />{t("Companion", "رفيق")}
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowInlineTutor(v => !v)} aria-label={t("Ask Hikma AI", "اسأل حكمة AI")} className={`${s.isFocused ? "hidden sm:inline-flex" : ""} ${isTouchDevice ? "hidden" : ""}`}>
-            <Bot className="w-3.5 h-3.5 mr-1.5" />{t("Ask AI", "اسأل AI")}
-          </Button>
-          {/* More menu — only on touch devices */}
-          {isTouchDevice && !s.isFocused && (
+          {/* More menu — secondary tools in a dropdown to reduce clutter */}
+          {!s.isFocused && (
             <div className="relative">
               <Button variant="outline" size="sm" onClick={() => setShowMoreMenu(v => !v)} aria-label={t("More options", "المزيد من الخيارات")} aria-expanded={showMoreMenu}>
                 <MoreVertical className="w-3.5 h-3.5" />
-                {t("More", "المزيد")}
+                <span className="hidden sm:inline ml-1">{t("More", "المزيد")}</span>
               </Button>
               {showMoreMenu && (
                 <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-50 p-2 flex flex-col gap-1 min-w-[160px]" role="menu">
                   <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors text-left" onClick={() => { s.simplifySection(); setShowMoreMenu(false); }} role="menuitem">
                     <AlignLeft className="w-4 h-4 flex-shrink-0" />{s.isSimplifying ? "..." : t("Simplify", "تبسيط")}
-                  </button>
-                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors text-left" onClick={() => { s.setIsFocused(v => !v); setShowMoreMenu(false); }} role="menuitem">
-                    <Maximize2 className="w-4 h-4 flex-shrink-0" />{t("Focus mode", "وضع التركيز")}
                   </button>
                   <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors text-left" onClick={() => { s.setShowConceptMap(v => !v); setShowMoreMenu(false); }} role="menuitem">
                     <Map className="w-4 h-4 flex-shrink-0" />{t("Concept map", "خريطة المفاهيم")}

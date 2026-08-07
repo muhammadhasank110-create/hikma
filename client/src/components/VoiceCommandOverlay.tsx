@@ -254,14 +254,12 @@ export function VoiceCommandOverlay() {
         className={[
           "fixed z-40",
           "bottom-[calc(1.5rem+env(safe-area-inset-bottom))]",
-          "ltr:left-6 rtl:right-6",
-          "max-md:ltr:left-auto max-md:ltr:right-4",
-          "max-md:rtl:right-auto max-md:rtl:left-4",
+          "ltr:right-6 rtl:left-6",
         ].join(" ")}
         role="region"
         aria-label={t("Voice commands", "الأوامر الصوتية")}
       >
-        <div className="relative flex items-center justify-center w-14 h-14 max-md:w-12 max-md:h-12">
+        <div className="relative flex items-center justify-center w-14 h-14 max-md:w-12 max-md:h-12" onMouseEnter={() => setShowHint(true)} onMouseLeave={() => setShowHint(false)}>
           {isListening && (
             <span
               aria-hidden="true"
@@ -308,19 +306,10 @@ export function VoiceCommandOverlay() {
             &ldquo;{lastTranscript}&rdquo;
           </div>
         )}
-        {/* Hint tooltip */}
-        <button
-          type="button"
-          onClick={() => setShowHint(v => !v)}
-          className="mt-1 flex items-center gap-1 text-[9px] text-muted-foreground hover:text-foreground/60 transition-colors mx-auto"
-          aria-label={t("Show voice command examples", "أمثلة الأوامر الصوتية")}
-        >
-          <HelpCircle className="w-3 h-3" />
-          {t("Commands", "أوامر")}
-        </button>
+        {/* Commands tooltip — shown on hover of the mic button, anchored above it */}
         {showHint && (
           <div
-            className="absolute bottom-full mb-2 ltr:left-0 rtl:right-0 w-52 bg-white dark:bg-[#1a2e1c] border border-[#d0d0c8] dark:border-white/20 rounded-2xl p-3 shadow-2xl z-50"
+            className="absolute bottom-full mb-3 ltr:right-0 rtl:left-0 w-56 bg-white dark:bg-[#1a2e1c] border border-[#d0d0c8] dark:border-white/20 rounded-2xl p-3 shadow-2xl z-50"
             role="tooltip"
           >
             <p className="text-[10px] font-bold text-[#111411] dark:text-white/90 mb-2 uppercase tracking-widest">{t("Try saying:", "جرّب قول:")}</p>

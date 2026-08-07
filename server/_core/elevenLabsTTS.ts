@@ -9,8 +9,9 @@ import type { Express, Request, Response } from "express";
 import { ENV } from "./env";
 
 const VOICE_IDS: Record<string, string> = {
-  en: "ZQe5CZNOzWyzPSCn5a3c", // James — warm, authoritative British male (ElevenLabs)
-  ar: "EXAVITQu4vr4xnSDxMaL", // Bella — warm female, multilingual
+  // FREE TIER ONLY — library/premium voices return 402 on the free plan
+  en: "EXAVITQu4vr4xnSDxMaL", // Bella — warm female, free tier default
+  ar: "EXAVITQu4vr4xnSDxMaL", // Bella — multilingual, handles Arabic
 };
 
 // Concurrency limiter — ElevenLabs free plan: max 2 concurrent requests

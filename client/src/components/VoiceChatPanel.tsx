@@ -94,10 +94,10 @@ export function VoiceChatPanel({
         aria-label={t("Voice assistant chat", "محادثة المساعد الصوتي")}
         className={[
           "fixed z-50 flex flex-col bg-background/95 backdrop-blur-sm border border-border shadow-2xl",
-          // Desktop: anchored bottom-left, max 380px wide
-          "md:bottom-20 md:left-4 md:w-[380px] md:max-h-[50vh] md:rounded-2xl",
+          // Desktop: anchored bottom-right (matches mic button position), max 380px wide
+          "md:bottom-24 md:right-6 md:w-[380px] md:max-h-[50vh] md:rounded-2xl",
           // Mobile: bottom sheet, full width, max 40vh
-          "bottom-0 left-0 right-0 max-h-[40vh] rounded-t-2xl md:right-auto",
+          "bottom-0 left-0 right-0 max-h-[40vh] rounded-t-2xl md:left-auto",
         ].join(" ")}
       >
         {/* Header */}

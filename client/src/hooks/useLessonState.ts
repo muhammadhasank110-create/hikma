@@ -43,7 +43,11 @@ export function useLessonState(lessonId: number) {
   const speakingTextRef = useRef<string>("");
 
   const [sectionIndex, setSectionIndex] = useState(0);
-  const [isFocused, setIsFocused] = useState(profile.mode === "focus");
+  // Auto-enable focus mode for ADHD users (mode=focus) and also for blind/low-vision (audio_first)
+  // This gives a clean, distraction-free reading experience immediately
+  const [isFocused, setIsFocused] = useState(
+    profile.mode === "focus" || profile.mode === "audio_first"
+  );
   const [simplifiedView, setSimplifiedView] = useState(false);
   const [simplifiedContent, setSimplifiedContent] = useState<Record<number, string>>({});
   const [isSimplifying, setIsSimplifying] = useState(false);

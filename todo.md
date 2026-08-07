@@ -274,3 +274,8 @@
 - [x] Task 5: Removed Share2 icon from ConceptMapSVG, replaced with Network icon
 - [x] Task 6: Fixed TRY SAYING panel contrast — white bg with dark text (#111411) instead of dark nav-bg with foreground/50
 - [x] Task 7: ELEVENLABS_API_KEY set as server secret; client-side useTTS uses VITE_ELEVENLABS_API_KEY directly from browser (bypasses geo-block); SpeechSynthesisUtterance only in useTTS.ts + intentional browser fallback in SpeechContext for short assertive announcements
+- [x] Fix ElevenLabs voice IDs: switched from premium library voices (402 error) to free-tier Bella voice (EXAVITQu4vr4xnSDxMaL) on both client and server
+- [x] Fix voice commands: removed LLM fallback dependency (required auth), all commands now use instant regex matching; unknown phrases routed to AI tutor
+- [x] Fix button overlaps: mic button moved to bottom-right, VoiceChatPanel anchored to bottom-right, Commands hint removed from below mic (now shows on hover)
+- [x] Simplify lesson toolbar: reduced to Listen + Focus + More (dropdown), secondary tools hidden in dropdown
+- [x] Auto-enter focus mode for ADHD (mode=focus) and blind/audio-first users when opening a lesson

@@ -2,24 +2,26 @@
  * useTTS — Text-to-speech hook.
  *
  * Priority:
- * 1. ElevenLabs — called DIRECTLY from the browser using VITE_ELEVENLABS_API_KEY
- *    This bypasses the server entirely and avoids the geo-restriction on the server IP.
- * 2. Browser Web Speech API — fallback when ElevenLabs is unavailable or key is missing.
+ * 1. ElevenLabs — via server proxy (/api/tts/speak) which handles auth and geo-routing.
+ *    Falls back to direct browser call if proxy fails.
+ * 2. Browser Web Speech API — final fallback.
  *
- * Why client-side?
- *   The sandbox server IP is in a geo-restricted region for ElevenLabs.
- *   Real users' browsers are not restricted, so calling directly from the browser works.
+ * Voice IDs: MUST use free-tier default voices only.
+ *   Premium/library voices return 402 on the free plan.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
 
-// ElevenLabs voice IDs — Rachel (en) and Bella (ar) are free-tier voices
-const ELEVEN_VOICE_EN = "21m00Tcm4TlvDq8ikWAM"; // Rachel — warm, clear
-const ELEVEN_VOICE_AR = "AZnzlk1XvdvUeBnXmlld"; // Domi — closest Arabic-capable
+// ElevenLabs voice IDs — FREE TIER ONLY (library/premium voices return 402)
+// These are the default voices available on all plans including free.
+const ELEVEN_VOICE_EN = "EXAVITQu4vr4xnSDxMaL"; // Bella — warm female, free tier
+const ELEVEN_VOICE_AR = "EXAVITQu4vr4xnSDxMaL"; // Bella — multilingual, handles Arabic
 const ELEVEN_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY as string | undefined;
 const ELEVEN_MODEL = "eleven_multilingual_v2";
-// Module-level flag: once ElevenLabs returns a non-audio response, stop retrying
-// for the rest of the session. Reset on page reload.
+// Module-level flag: only set permanently on auth errors (401/403), NOT on 402/429
+// which are quota/plan errors that may resolve. Reset on page reload.
 let elevenLabsFailedThisSession = false;
+// Server proxy URL for ElevenLabs (avoids CORS issues on some browsers)
+const TTS_PROXY_URL = "/api/tts/speak";
 
 interface UseTTSOptions {
   rate?: number;
@@ -147,26 +149,41 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       const isArabic = lang.startsWith("ar");
       const voiceId = isArabic ? ELEVEN_VOICE_AR : ELEVEN_VOICE_EN;
 
-      // Call ElevenLabs DIRECTLY from the browser — bypasses server geo-restriction
-      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method: "POST",
-        headers: {
-          "xi-api-key": ELEVEN_API_KEY,
-          "Content-Type": "application/json",
-          "Accept": "audio/mpeg",
-        },
-        body: JSON.stringify({
-          text,
-          model_id: ELEVEN_MODEL,
-          voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.2, use_speaker_boost: true },
-        }),
-      });
+      // Try server proxy first (handles auth, avoids CORS, works everywhere)
+      let res: Response;
+      try {
+        res = await fetch(TTS_PROXY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, locale: isArabic ? "ar" : "en", voiceId }),
+        });
+        // If proxy says ElevenLabs not configured, fall back to direct call
+        if (res.status === 503) {
+          throw new Error("proxy-not-configured");
+        }
+      } catch (proxyErr: any) {
+        // Proxy failed or not configured — try direct browser call
+        res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: "POST",
+          headers: {
+            "xi-api-key": ELEVEN_API_KEY,
+            "Content-Type": "application/json",
+            "Accept": "audio/mpeg",
+          },
+          body: JSON.stringify({
+            text,
+            model_id: ELEVEN_MODEL,
+            voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.2, use_speaker_boost: true },
+          }),
+        });
+      }
 
       const contentType = res.headers.get("content-type") ?? "";
       if (!res.ok || !contentType.includes("audio")) {
         console.warn("[useTTS] ElevenLabs error:", res.status, contentType, "— falling back to browser");
-        if (res.status === 400 || res.status === 401 || res.status === 403) {
-          elevenLabsFailedThisSession = true; // stop retrying for this session
+        if (res.status === 401 || res.status === 403) {
+          // Only permanently disable on auth errors — not on 402 (plan) or 429 (quota)
+          elevenLabsFailedThisSession = true;
         }
         speakWithBrowser(text);
         return;
