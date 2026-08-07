@@ -75,23 +75,23 @@ export default function Dashboard() {
 
   return (
     <PageTransition>
-    <main className="container py-8 space-y-10 max-w-4xl" aria-label={t("Dashboard", "لوحة التحكم")}>
+    <main className="container py-10 space-y-12 max-w-5xl" aria-label={t("Dashboard", "لوحة التحكم")}>
 
       {/* ── Greeting ──────────────────────────────────────────────────── */}
       <section aria-label={t("Welcome", "مرحباً")}>
-        <p className="text-sm text-muted-foreground font-medium" aria-hidden="true">{greeting()}</p>
-        <h1 className="text-3xl font-bold mt-1 tracking-tight" tabIndex={-1}>
+        <p className="text-base text-muted-foreground font-medium" aria-hidden="true">{greeting()}</p>
+        <h1 className="text-4xl font-bold mt-1.5 tracking-tight" tabIndex={-1}>
           {isAuthenticated ? user?.name : t("Welcome to Hikma", "أهلاً بك في حكمة")}
         </h1>
         {(currLabel || modeLabel) && (
           <div className="flex items-center gap-2 mt-3 flex-wrap" aria-label={t("Your profile", "ملفك الشخصي")}>
             {currLabel && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                <GraduationCap className="w-3 h-3" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
                 {currLabel}
               </span>
             )}
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-muted text-muted-foreground border border-border">
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-full bg-muted text-muted-foreground border border-border">
               {modeLabel} {t("Mode", "وضع")}
             </span>
           </div>
@@ -110,7 +110,7 @@ export default function Dashboard() {
       {/* ── Stats row (authenticated only) ────────────────────────────── */}
       {isAuthenticated && (
         <section aria-label={t("Your learning stats", "إحصائيات تعلمك")}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               {
                 label: t("Mastered", "أتقنت"),
@@ -145,14 +145,14 @@ export default function Dashboard() {
               return (
                 <div
                   key={stat.label}
-                  className="bg-card border border-border rounded-2xl p-4 space-y-2 reveal"
+                  className="bg-card border border-border rounded-2xl p-5 space-y-3 reveal"
                   aria-label={stat.desc}
                 >
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${stat.colour}`}>
-                    <Icon className="w-4 h-4" aria-hidden="true" />
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.colour}`}>
+                    <Icon className="w-5 h-5" aria-hidden="true" />
                   </div>
-                  <p className="text-xs text-muted-foreground font-medium">{stat.label}</p>
-                  <p className="text-2xl font-bold leading-none" style={{ fontVariantNumeric: "normal", fontFeatureSettings: '"zero" 0', fontFamily: "system-ui, sans-serif" }}>{stat.value}</p>
+                  <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
+                  <p className="text-3xl font-bold leading-none" style={{ fontVariantNumeric: "normal", fontFeatureSettings: '"zero" 0', fontFamily: "system-ui, sans-serif" }}>{stat.value}</p>
                 </div>
               );
             })}
@@ -162,10 +162,10 @@ export default function Dashboard() {
 
       {/* ── Quick actions ──────────────────────────────────────────────── */}
       <section aria-label={t("Quick actions", "الإجراءات السريعة")}>
-        <h2 className="text-base font-semibold text-muted-foreground mb-3 uppercase tracking-wide text-xs">
+        <h2 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-widest">
           {t("Quick access", "وصول سريع")}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             {
               href: "/tutor",
@@ -199,17 +199,17 @@ export default function Dashboard() {
                   role="link"
                   tabIndex={0}
                   aria-label={action.ariaLabel}
-                  className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-4 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary reveal"
+                  className="group bg-card border border-border rounded-2xl p-6 flex items-start gap-4 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary reveal"
                   onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (e.currentTarget as HTMLElement).click(); }}}
                 >
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${action.iconBg}`}>
-                    <Icon className="w-5 h-5" aria-hidden="true" />
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${action.iconBg}`}>
+                    <Icon className="w-6 h-6" aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm">{action.title}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{action.desc}</p>
+                    <p className="font-semibold text-base">{action.title}</p>
+                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{action.desc}</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0 group-hover:text-primary transition-colors" aria-hidden="true" />
+                  <ChevronRight className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0 group-hover:text-primary transition-colors" aria-hidden="true" />
                 </div>
               </Link>
             );
@@ -219,15 +219,15 @@ export default function Dashboard() {
 
       {/* ── Subjects / Curricula ───────────────────────────────────────── */}
       <section aria-label={t("Your subjects", "موادك الدراسية")}>
-        <h2 className="text-base font-semibold text-muted-foreground mb-3 uppercase tracking-wide text-xs">
+        <h2 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-widest">
           {t("Subjects", "المواد الدراسية")}
         </h2>
         {loadingCurricula ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[1, 2].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {displayCurricula?.map(curr => (
               <Link key={curr.id} href={`/subjects/${curr.id}`}>
                 <div
@@ -237,15 +237,15 @@ export default function Dashboard() {
                     `${curr.titleEn} — ${curr.board} curriculum. Click to view subjects.`,
                     `${curr.titleAr} — منهج ${curr.board}. انقر لعرض المواد.`
                   )}
-                  className="group bg-card border border-border rounded-2xl p-5 flex items-center gap-4 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="group bg-card border border-border rounded-2xl p-6 flex items-center gap-5 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (e.currentTarget as HTMLElement).click(); }}}
                 >
-                  <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <GraduationCap className="w-5 h-5 text-primary" aria-hidden="true" />
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <GraduationCap className="w-7 h-7 text-primary" aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm">{locale === "ar" ? curr.titleAr : curr.titleEn}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{curr.board}</p>
+                    <p className="font-semibold text-base">{locale === "ar" ? curr.titleAr : curr.titleEn}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{curr.board}</p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" aria-hidden="true" />
                 </div>

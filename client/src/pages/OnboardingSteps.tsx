@@ -408,7 +408,7 @@ export function StepVoicePreferences({ data, onChange, locale }: { data: Onboard
             tabIndex={0}
             onClick={() => onChange({ voiceEnabled: !data.voiceEnabled })}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ voiceEnabled: !data.voiceEnabled }); }}}
-            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.voiceEnabled ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"}`}
+            data-no-min-h className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.voiceEnabled ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"}`}
           >
             <span className={`absolute top-0.5 start-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${data.voiceEnabled ? "ltr:translate-x-6 rtl:-translate-x-6" : "translate-x-0"}`} />
           </button>
@@ -438,7 +438,7 @@ export function StepVoicePreferences({ data, onChange, locale }: { data: Onboard
             tabIndex={0}
             onClick={() => onChange({ autoNarrate: !data.autoNarrate })}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ autoNarrate: !data.autoNarrate }); }}}
-            className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.autoNarrate ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"}`}
+            data-no-min-h className={`relative w-12 h-6 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary flex-shrink-0 ${data.autoNarrate ? "bg-primary" : "bg-gray-300 dark:bg-gray-600"}`}
           >
             <span className={`absolute top-0.5 start-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${data.autoNarrate ? "ltr:translate-x-6 rtl:-translate-x-6" : "translate-x-0"}`} />
           </button>

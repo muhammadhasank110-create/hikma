@@ -494,12 +494,19 @@
    * We use min-height only (not min-width) to avoid breaking inline/icon buttons.
    * Icon-only buttons get min-width too via the [data-icon-btn] selector.
    */
-  button:not([data-no-min-h]),
-  [role="button"]:not([data-no-min-h]),
+  button:not([data-no-min-h]):not([role="switch"]):not(.toggle-track),
+  [role="button"]:not([data-no-min-h]):not([role="switch"]):not(.toggle-track),
   input:not([type="hidden"]):not([type="range"]):not([type="checkbox"]):not([type="radio"]),
   select,
   textarea {
     min-height: var(--target-min);
+  }
+  /* Toggle switches must never get min-height — the thumb overflows the track */
+  [role="switch"],
+  .toggle-track,
+  button[data-no-min-h] {
+    min-height: unset !important;
+    min-width: unset !important;
   }
   /* Icon-only buttons also get min-width */
   button[aria-label]:not([data-no-min-h]),
