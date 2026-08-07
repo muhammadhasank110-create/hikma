@@ -5,8 +5,9 @@
  * Left/Right (A/D) moves to the nearest element on the same row.
  * Enter/Space activates the focused element.
  */
-import { createContext, useContext, useEffect, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, ReactNode, useCallback } from "react";
 import { playSound } from "@/lib/sound";
+import { toast } from "sonner";
 
 interface KeyboardContextValue {
   isKeyboardActive: boolean;
@@ -147,6 +148,23 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
       if (shouldPassThrough(active)) return;
 
       const key = e.key;
+
+      // ── Global back shortcut: Ctrl+B / Alt+ArrowLeft / Ctrl+[ ──────────────
+      const isCtrl = e.ctrlKey || e.metaKey;
+      if (
+        (isCtrl && key === "b") ||
+        (isCtrl && key === "[") ||
+        (e.altKey && key === "ArrowLeft")
+      ) {
+        e.preventDefault();
+        if (window.history.length > 1) {
+          window.history.back();
+          playSound("navigate");
+          toast.info("Going back…", { id: "go-back", duration: 1500 });
+        }
+        return;
+      }
+
       // Detect if user is typing in a text field — don't hijack W/A/S/D
       const isTextContext = active && (
         active.tagName === "INPUT" ||

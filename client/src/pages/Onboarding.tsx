@@ -166,7 +166,7 @@ export default function Onboarding() {
       {/* Header */}
       <div className="border-b border-border bg-card px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/manus-storage/hikma-app-icon_2d2d3fef.png" alt="Hikma" className="w-8 h-8 rounded-lg object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display="none"; }} />
+          <img src="/manus-storage/hikma-wordmark-clean_e0a3ab8b.png" alt="Hikma" className="h-8 w-auto object-contain" style={{filter:"brightness(0) invert(1) opacity(0.9)"}}/>
           <span className="font-bold text-sm">Hikma حكمة</span>
         </div>
         <button

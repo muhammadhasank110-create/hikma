@@ -23,6 +23,8 @@ import {
 import { playSound } from "@/lib/sound";
 
 const ICON_URL = "/manus-storage/hikma-app-icon_2d2d3fef.png";
+const WORDMARK_URL = "/manus-storage/hikma-wordmark-clean_e0a3ab8b.png";
+const FALCON_URL = "/manus-storage/hikma-falcon-transparent_9af556dd.png";
 
 // ── Particle canvas ───────────────────────────────────────────────────────────
 function ParticleCanvas() {
@@ -463,7 +465,7 @@ function AnimatedCounter({ to, suffix = "" }: { to: number; suffix?: string }) {
 function AppMockup() {
   return (
     <div className="w-full max-w-3xl mx-auto" aria-hidden="true">
-      <div className="bg-[#1a1a1a] rounded-t-2xl border border-white/10 px-4 py-3 flex items-center gap-2">
+      <div className="bg-[#1a2e1c] rounded-t-2xl border border-white/10 px-4 py-3 flex items-center gap-2">
         <div className="flex gap-1.5">
           <div className="w-3 h-3 rounded-full bg-red-500/60" />
           <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
@@ -473,8 +475,8 @@ function AppMockup() {
           <span className="text-[10px] text-white/30 font-mono">hikmalearn.app/dashboard</span>
         </div>
       </div>
-      <div className="bg-[#111] border-x border-b border-white/10 rounded-b-2xl overflow-hidden">
-        <div className="bg-[#0d1a0d] border-b border-white/8 px-6 py-3 flex items-center gap-6">
+      <div className="bg-[#14221a] border-x border-b border-white/10 rounded-b-2xl overflow-hidden">
+        <div className="bg-[#162a18] border-b border-white/8 px-6 py-3 flex items-center gap-6">
           <div className="flex items-center gap-2">
             <img src={ICON_URL} alt="" className="w-5 h-5 rounded-md"
               onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
@@ -624,9 +626,8 @@ export default function Home() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <img src={ICON_URL} alt="" className="w-7 h-7 rounded-xl"
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-          <span className="font-bold text-sm text-white/90 tracking-tight">Hikma — حكمة</span>
+          <img src="/manus-storage/hikma-falcon-transparent_9af556dd.png" alt="" className="w-10 h-10 object-contain" onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}/>
+          <img src="/manus-storage/hikma-wordmark-clean_e0a3ab8b.png" alt="Hikma حكمة" className="h-7 w-auto object-contain" style={{filter:"brightness(0) invert(1) opacity(0.9)"}}/>
         </motion.div>
         <motion.div
           className="flex items-center gap-3"
@@ -999,7 +1000,7 @@ export default function Home() {
       <footer className="border-t border-white/8 py-8">
         <div className="container max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 text-white/25 text-xs">
           <div className="flex items-center gap-2">
-            <img src={ICON_URL} alt="" className="w-5 h-5 rounded-lg" aria-hidden="true"
+            <img src={WORDMARK_URL} alt="Hikma" className="h-6 w-auto object-contain" aria-hidden="true" style={{filter:"brightness(0) invert(1) opacity(0.6)"}}
               onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             <span className="font-semibold text-white/45">Hikma — حكمة</span>
           </div>

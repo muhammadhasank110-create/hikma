@@ -72,7 +72,7 @@
     --progress-fill:   var(--forest);
     --progress-track:  var(--sage);
     --lesson-surface:  var(--cream);
-    --nav-bg:          var(--forest-deep);
+    --nav-bg:          30 62 34;        /* #1E3E22 — warm forest, lighter than forest-deep */
     --nav-fg:          255 255 255;
     --nav-active:      var(--maroon);
     --accessibility-bar: var(--forest-deep);
@@ -102,27 +102,27 @@
   /* ── DARK THEME ── */
   [data-theme="dark"] {
     --ring:            80 140 85;      /* WCAG AA 3:1 against dark bg */
-    --background:      15 17 15;
-    --foreground:      240 240 235;
-    --card:            22 28 22;
-    --card-foreground: 240 240 235;
-    --popover:         22 28 22;
-    --popover-foreground: 240 240 235;
+    --background:      24 38 26;        /* #18261A — warm forest green */
+    --foreground:      240 242 238;
+    --card:            32 50 34;        /* #203222 — lighter card surface */
+    --card-foreground: 240 242 238;
+    --popover:         32 50 34;
+    --popover-foreground: 240 242 238;
     --primary:         80 140 85;
     --primary-foreground: 255 255 255;
-    --secondary:       35 45 35;
-    --secondary-foreground: 200 210 200;
-    --muted:           35 45 35;
-    --muted-foreground: 140 155 140;
-    --accent:          180 60 80;
+    --secondary:       45 65 48;
+    --secondary-foreground: 200 215 202;
+    --muted:           45 65 48;
+    --muted-foreground: 150 170 152;
+    --accent:          160 55 75;
     --accent-foreground: 255 255 255;
-    --border:          50 60 50;
-    --border-strong:   80 90 80;
+    --border:          55 80 58;        /* slightly lighter border */
+    --border-strong:   90 115 93;
     --ink:             240 240 235;
     --ink-muted:       160 170 160;
     --ink-faint:       100 110 100;
-    --nav-bg:          10 14 10;
-    --lesson-surface:  18 24 18;
+    --nav-bg:          18 30 20;        /* #121E14 — deep forest nav */
+    --lesson-surface:  28 44 30;        /* #1C2C1E — lesson surface */
   }
 
   /* ── CREAM THEME — dyslexia-friendly warm off-white ── */
