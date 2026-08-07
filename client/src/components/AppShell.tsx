@@ -19,6 +19,7 @@ import {
 // startLogin removed
 import { playTestSound, playSound } from "@/lib/sound";
 import { useSpokenLabels } from "@/hooks/useSpokenLabels";
+import { HikmaLogo } from "@/components/HikmaLogo";
 
 interface NavItem {
   href: string;
@@ -228,13 +229,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
       <div className="container flex items-center justify-between h-14 gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
-          <img
-            src="/manus-storage/hikma-icon-dark-final_b6625b99.png"
-            alt=""
-            className="h-11 w-11 object-contain transition-transform group-hover:scale-105"
-            style={{mixBlendMode:"screen"}}
-            aria-hidden="true"
-          />
+          <HikmaLogo surface="dark" size={44} decorative className="transition-transform group-hover:scale-105 flex-shrink-0" />
           <span className="hidden sm:block font-bold text-sm text-white/90 tracking-tight">Hikma</span>
           <span className="hidden sm:block text-muted-foreground text-sm font-light">حكمة</span>
         </Link>
@@ -433,12 +428,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <img
-                  src="/manus-storage/hikma-icon-dark-final_b6625b99.png"
-                  alt="Hikma حكمة"
-                  className="h-11 w-11 object-contain"
-                  style={{mixBlendMode:"screen"}}
-                />
+                <HikmaLogo surface="dark" size={44} alt="Hikma" />
               </div>
               <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="text-white hover:bg-muted/50 w-8 h-8">
                 <X className="w-4 h-4" />

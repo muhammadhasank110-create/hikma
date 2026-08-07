@@ -19,9 +19,9 @@ import {
 } from "lucide-react";
 import { playSound } from "@/lib/sound";
 
-const ICON_URL = "/manus-storage/hikma-icon-dark-final_b6625b99.png";
-const WORDMARK_URL = "/manus-storage/hikma-wordmark-v3-tight_849aac71.png";
-const FALCON_URL = "/manus-storage/hikma-falcon-transparent_9af556dd.png";
+const ICON_URL = "/img/hikma-icon-dark.png";
+const WORDMARK_URL = "/img/hikma-wordmark.png";
+const FALCON_URL = "/img/hikma-icon-light.png";
 
 // ── Animated gradient background ─────────────────────────────────────────────
 function GradientBackground() {
