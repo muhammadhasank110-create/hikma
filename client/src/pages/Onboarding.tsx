@@ -166,7 +166,7 @@ export default function Onboarding() {
       {/* Header */}
       <div className="border-b border-border bg-card px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/manus-storage/hikma-wordmark-clean_e0a3ab8b.png" alt="Hikma" className="h-8 w-auto object-contain" style={{filter:"brightness(0) invert(1) opacity(0.9)"}}/>
+          <img src="/manus-storage/hikma-wordmark-v3-tight_849aac71.png" alt="Hikma" className="h-8 w-auto object-contain" />
           <span className="font-bold text-sm">Hikma حكمة</span>
         </div>
         <button

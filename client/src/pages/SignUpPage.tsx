@@ -6,7 +6,8 @@ import { Eye, EyeOff, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 
 const FALCON_URL = "/manus-storage/hikma-falcon-transparent_9af556dd.png";
-const ICON_URL = "/manus-storage/hikma-app-icon-clean_809d4c7d.png";
+const ICON_URL = "/manus-storage/hikma-icon-dark-final_b6625b99.png";
+const WORDMARK_URL = "/manus-storage/hikma-wordmark-v3-tight_849aac71.png";
 
 function scorePassword(pw: string) {
   let s = 0;
@@ -63,7 +64,7 @@ export default function SignUpPage() {
         <motion.div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(45,100,55,0.25) 0%, transparent 70%)" }}
           animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.img src={FALCON_URL} alt="" aria-hidden="true"
+        <motion.img src={WORDMARK_URL} alt="" aria-hidden="true"
           className="absolute bottom-0 right-0 w-[70%] object-contain opacity-20 pointer-events-none select-none"
           initial={{ opacity: 0, y: 40 }} animate={{ opacity: 0.2, y: 0 }} transition={{ duration: 1.2 }}
           onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />

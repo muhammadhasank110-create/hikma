@@ -6,7 +6,7 @@ import { motion, useInView, useMotionValue, useSpring, useTransform } from "fram
 import { useRef, useEffect } from "react";
 import { Bot, TrendingUp, Layers, BookOpen, ChevronRight, Zap, Star, Activity } from "lucide-react";
 
-const ICON_URL = "/manus-storage/hikma-app-icon-clean_809d4c7d.png";
+const ICON_URL = "/manus-storage/hikma-icon-dark-final_b6625b99.png";
 
 function AnimCounter({ to, suffix = "" }: { to: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
