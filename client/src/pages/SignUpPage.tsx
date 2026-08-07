@@ -96,12 +96,13 @@ export default function SignUpPage() {
       </div>
 
       {/* ── Right form panel ──────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 relative">
+      <div className="flex-1 flex flex-col p-6 sm:p-12 relative">
         <motion.button onClick={() => navigate("/")}
-          className="absolute top-6 left-6 flex items-center gap-2 text-xs text-white/40 hover:text-white/70 transition-colors"
+          className="flex items-center gap-2 text-xs text-white/40 hover:text-white/70 transition-colors mb-6 self-start"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <ArrowLeft className="w-3.5 h-3.5" /> Back
         </motion.button>
+        <div className="flex-1 flex flex-col items-center justify-center">
 
         <motion.div className="w-full max-w-md"
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] as any }}>
@@ -182,6 +183,7 @@ export default function SignUpPage() {
           </p>
           <p className="text-center text-xs text-white/15 mt-3">By creating an account you agree to our terms of service.</p>
         </motion.div>
+        </div>{/* end flex-1 center wrapper */}
       </div>
     </div>
   );

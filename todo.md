@@ -267,3 +267,10 @@
 - [x] Dashboard curriculum cards: bg-card instead of bg-white/[0.03] — clearly visible on cream background
 - [x] Focus mode readability: light sage-white bg (#F5F7F5), white card, larger text (1.125rem), line-height 1.95, explicit dark colors (#111411), bigger headings (text-2xl), generous padding (p-8/p-12)
 - [x] Added @tailwindcss/typography plugin import so prose class works in normal lesson mode
+- [x] Task 1: Unified LessonPage render path — always Streamdown (fixes bold/markdown), word-click via DOM caretRangeFromPoint
+- [x] Task 2: Fixed mobile button overlaps — Back button moved from absolute to flow positioning in SignIn/SignUp; nav Sign In hidden on mobile
+- [x] Task 3: Logo links to /dashboard when authenticated (AppShell always, Home.tsx auth-aware)
+- [x] Task 4: Device detection via matchMedia(pointer:coarse) — lesson toolbar collapses to Read Aloud + More menu on touch devices
+- [x] Task 5: Removed Share2 icon from ConceptMapSVG, replaced with Network icon
+- [x] Task 6: Fixed TRY SAYING panel contrast — white bg with dark text (#111411) instead of dark nav-bg with foreground/50
+- [x] Task 7: ELEVENLABS_API_KEY set as server secret; client-side useTTS uses VITE_ELEVENLABS_API_KEY directly from browser (bypasses geo-block); SpeechSynthesisUtterance only in useTTS.ts + intentional browser fallback in SpeechContext for short assertive announcements

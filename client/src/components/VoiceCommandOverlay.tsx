@@ -320,10 +320,10 @@ export function VoiceCommandOverlay() {
         </button>
         {showHint && (
           <div
-            className="absolute bottom-full mb-2 ltr:left-0 rtl:right-0 w-52 bg-[rgb(var(--nav-bg))] border border-border rounded-2xl p-3 shadow-2xl z-50"
+            className="absolute bottom-full mb-2 ltr:left-0 rtl:right-0 w-52 bg-white dark:bg-[#1a2e1c] border border-[#d0d0c8] dark:border-white/20 rounded-2xl p-3 shadow-2xl z-50"
             role="tooltip"
           >
-            <p className="text-[10px] font-bold text-foreground/60 mb-2 uppercase tracking-widest">{t("Try saying:", "جرّب قول:")}</p>
+            <p className="text-[10px] font-bold text-[#111411] dark:text-white/90 mb-2 uppercase tracking-widest">{t("Try saying:", "جرّب قول:")}</p>
             <ul className="space-y-1.5">
               {[
                 t('"next section"', '"القسم التالي"'),
@@ -333,8 +333,8 @@ export function VoiceCommandOverlay() {
                 t('"go home"', '"اذهب للرئيسية"'),
                 t('"open tutor"', '"افتح المعلم"'),
               ].map((cmd, i) => (
-                <li key={i} className="text-[10px] text-foreground/50 flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-primary/50 flex-shrink-0" />
+                <li key={i} className="text-[10px] text-[#111411]/80 dark:text-white/75 flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-[#1E4620] dark:bg-green-400 flex-shrink-0" />
                   {cmd}
                 </li>
               ))}

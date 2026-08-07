@@ -296,16 +296,16 @@ export default function Home() {
       <ScrollProgress />
 
       {/* ── Sticky nav ─────────────────────────────────────────────────── */}
-      <nav className="w-full flex items-center justify-between px-5 sm:px-8 py-4 sticky top-0 z-50 border-b border-white/[0.06]"
+      <nav className="w-full flex items-center justify-between px-4 sm:px-8 py-4 sticky top-0 z-50 border-b border-white/[0.06] min-w-0"
         style={{ background: "rgba(13,31,16,0.85)", backdropFilter: "blur(20px)" }}>
-        <motion.a href="/" className="flex items-center gap-3 group"
+        <motion.a href={isAuthenticated ? "/dashboard" : "/"} aria-label={isAuthenticated ? t("Go to dashboard", "الذهاب إلى لوحة التحكم") : t("Hikma home", "الصفحة الرئيسية لحكمة")} className="flex items-center gap-3 group flex-shrink-0"
           initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
           <img src={NAV_LOGO_WHITE} alt="Hikma" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" style={{ maxWidth: 260 }} />
         </motion.a>
-        <motion.div className="flex items-center gap-2 sm:gap-3"
+        <motion.div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0"
           initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
           <button onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-            className="flex items-center gap-1.5 text-white/50 hover:text-white transition-colors text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-white/8"
+            className="hidden sm:flex items-center gap-1.5 text-white/50 hover:text-white transition-colors text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-white/8"
             aria-label={t("Switch to Arabic", "التبديل إلى الإنجليزية")}>
             <Globe className="w-3.5 h-3.5" />
             <span>{locale === "ar" ? "EN" : "عربي"}</span>
@@ -313,11 +313,11 @@ export default function Home() {
           {!isAuthenticated && (
             <>
               <button onClick={() => navigate("/signin")}
-                className="text-xs font-semibold text-white/60 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/8">
+                className="hidden sm:block text-xs font-semibold text-white/60 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/8 whitespace-nowrap">
                 {t("Sign In", "دخول")}
               </button>
               <button onClick={() => { playSound("tap"); navigate("/signup"); }}
-                className="text-xs font-bold px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95"
+                className="text-xs font-bold px-3 sm:px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
                 style={{ background: "linear-gradient(135deg, rgb(45,100,55), rgb(28,70,32))", boxShadow: "0 0 20px rgba(45,100,55,0.4)" }}>
                 {t("Get Started", "ابدأ الآن")}
               </button>
@@ -325,7 +325,7 @@ export default function Home() {
           )}
           {isAuthenticated && (
             <button onClick={() => { playSound("tap"); navigate("/dashboard"); }}
-              className="text-xs font-bold px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95"
+              className="text-xs font-bold px-3 sm:px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
               style={{ background: "linear-gradient(135deg, rgb(45,100,55), rgb(28,70,32))", boxShadow: "0 0 20px rgba(45,100,55,0.4)" }}>
               {t("Dashboard →", "لوحة التحكم ←")}
             </button>

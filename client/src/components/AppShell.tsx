@@ -228,7 +228,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
     >
       <div className="container flex items-center justify-between h-16 gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
+        <Link href="/dashboard" aria-label="Go to dashboard" className="flex items-center gap-2.5 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
           <img src="/img/hikma-nav-white.png" alt="Hikma" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" style={{ maxWidth: 260 }} />
         </Link>
 

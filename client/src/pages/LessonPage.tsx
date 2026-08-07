@@ -17,7 +17,7 @@ import { Streamdown } from "streamdown";
 import {
   Volume2, VolumeX, ChevronRight, ChevronLeft, Bot,
   AlignLeft, Maximize2, Minimize2, ParkingSquare, Timer, Map, X,
-  AlertTriangle, UserCheck, BookOpen, HelpCircle, Send
+  AlertTriangle, UserCheck, BookOpen, HelpCircle, Send, MoreVertical
 } from "lucide-react";
 import { useLessonState } from "@/hooks/useLessonState";
 import ConceptMapSVG from "@/components/lesson/ConceptMapSVG";
@@ -30,6 +30,9 @@ export default function LessonPage() {
   const { locale, profile } = useProfile();
   const lessonId = parseInt(params?.lessonId ?? "0");
   const [showInlineTutor, setShowInlineTutor] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  // Detect touch device using pointer media query — NOT screen width
+  const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   const s = useLessonState(lessonId);
@@ -146,8 +149,8 @@ export default function LessonPage() {
           </div>
         </div>
 
-        {/* Toolbar — in focus mode on mobile: only Read Aloud + Pomodoro visible */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {/* Toolbar — touch: Read Aloud + More menu; pointer: all buttons visible */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap relative">
           {s.isFocused && (
             <div className="flex items-center gap-1.5">
               <Button variant={s.pomodoroActive ? "default" : "outline"} size="sm" onClick={() => s.setPomodoroActive(v => !v)} aria-label={s.pomodoroActive ? t("Pause Pomodoro", "إيقاف مؤقت") : t("Start Pomodoro", "ابدأ البومودورو")} className="gap-1.5">
@@ -163,23 +166,52 @@ export default function LessonPage() {
             {s.isNarrating ? <VolumeX className="w-3.5 h-3.5 mr-1.5" /> : <Volume2 className="w-3.5 h-3.5 mr-1.5" />}
             {s.isNarrating ? t("Stop", "إيقاف") : t("Read Aloud", "استمع")}
           </Button>
-          <Button variant={s.simplifiedView ? "default" : "outline"} size="sm" onClick={s.simplifySection} disabled={s.isSimplifying} aria-label={t("Simplify text", "تبسيط النص")} aria-pressed={s.simplifiedView} className={s.isFocused ? "hidden sm:inline-flex" : ""}>
+          {/* On touch devices: collapse secondary buttons into a More menu */}
+          <Button variant={s.simplifiedView ? "default" : "outline"} size="sm" onClick={s.simplifySection} disabled={s.isSimplifying} aria-label={t("Simplify text", "تبسيط النص")} aria-pressed={s.simplifiedView} className={`${s.isFocused ? "hidden sm:inline-flex" : ""} ${isTouchDevice ? "hidden" : ""}`}>
             <AlignLeft className="w-3.5 h-3.5 mr-1.5" />
             {s.isSimplifying ? "..." : t("Simplify", "تبسيط")}
           </Button>
-          <Button variant={s.isFocused ? "default" : "outline"} size="sm" onClick={() => s.setIsFocused(v => !v)} aria-label={t("Toggle focus mode", "وضع التركيز")} aria-pressed={s.isFocused}>
+          <Button variant={s.isFocused ? "default" : "outline"} size="sm" onClick={() => s.setIsFocused(v => !v)} aria-label={t("Toggle focus mode", "وضع التركيز")} aria-pressed={s.isFocused} className={isTouchDevice ? "hidden" : ""}>
             {s.isFocused ? <Minimize2 className="w-3.5 h-3.5 mr-1.5" /> : <Maximize2 className="w-3.5 h-3.5 mr-1.5" />}
             {t("Focus", "تركيز")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => s.setShowConceptMap(v => !v)} aria-label={t("Concept map", "خريطة المفاهيم")} aria-pressed={s.showConceptMap} className={s.isFocused ? "hidden sm:inline-flex" : ""}>
+          <Button variant="outline" size="sm" onClick={() => s.setShowConceptMap(v => !v)} aria-label={t("Concept map", "خريطة المفاهيم")} aria-pressed={s.showConceptMap} className={`${s.isFocused ? "hidden sm:inline-flex" : ""} ${isTouchDevice ? "hidden" : ""}`}>
             <Map className="w-3.5 h-3.5 mr-1.5" />{t("Map", "خريطة")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => s.setShowBodyDouble(v => !v)} aria-label={t("Body double companion", "رفيق")} aria-pressed={s.showBodyDouble} className={s.isFocused ? "hidden sm:inline-flex" : ""}>
+          <Button variant="outline" size="sm" onClick={() => s.setShowBodyDouble(v => !v)} aria-label={t("Body double companion", "رفيق")} aria-pressed={s.showBodyDouble} className={`${s.isFocused ? "hidden sm:inline-flex" : ""} ${isTouchDevice ? "hidden" : ""}`}>
             <UserCheck className="w-3.5 h-3.5 mr-1.5" />{t("Companion", "رفيق")}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowInlineTutor(v => !v)} aria-label={t("Ask Hikma AI", "اسأل حكمة AI")} className={s.isFocused ? "hidden sm:inline-flex" : ""}>
+          <Button variant="outline" size="sm" onClick={() => setShowInlineTutor(v => !v)} aria-label={t("Ask Hikma AI", "اسأل حكمة AI")} className={`${s.isFocused ? "hidden sm:inline-flex" : ""} ${isTouchDevice ? "hidden" : ""}`}>
             <Bot className="w-3.5 h-3.5 mr-1.5" />{t("Ask AI", "اسأل AI")}
           </Button>
+          {/* More menu — only on touch devices */}
+          {isTouchDevice && !s.isFocused && (
+            <div className="relative">
+              <Button variant="outline" size="sm" onClick={() => setShowMoreMenu(v => !v)} aria-label={t("More options", "المزيد من الخيارات")} aria-expanded={showMoreMenu}>
+                <MoreVertical className="w-3.5 h-3.5" />
+                {t("More", "المزيد")}
+              </Button>
+              {showMoreMenu && (
+                <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-xl shadow-xl z-50 p-2 flex flex-col gap-1 min-w-[160px]" role="menu">
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors text-left" onClick={() => { s.simplifySection(); setShowMoreMenu(false); }} role="menuitem">
+                    <AlignLeft className="w-4 h-4 flex-shrink-0" />{s.isSimplifying ? "..." : t("Simplify", "تبسيط")}
+                  </button>
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors text-left" onClick={() => { s.setIsFocused(v => !v); setShowMoreMenu(false); }} role="menuitem">
+                    <Maximize2 className="w-4 h-4 flex-shrink-0" />{t("Focus mode", "وضع التركيز")}
+                  </button>
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors text-left" onClick={() => { s.setShowConceptMap(v => !v); setShowMoreMenu(false); }} role="menuitem">
+                    <Map className="w-4 h-4 flex-shrink-0" />{t("Concept map", "خريطة المفاهيم")}
+                  </button>
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors text-left" onClick={() => { s.setShowBodyDouble(v => !v); setShowMoreMenu(false); }} role="menuitem">
+                    <UserCheck className="w-4 h-4 flex-shrink-0" />{t("Companion", "رفيق")}
+                  </button>
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-muted transition-colors text-left" onClick={() => { setShowInlineTutor(v => !v); setShowMoreMenu(false); }} role="menuitem">
+                    <Bot className="w-4 h-4 flex-shrink-0" />{t("Ask AI", "اسأل AI")}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Concept map */}
@@ -217,25 +249,51 @@ export default function LessonPage() {
                 <h2 className={`font-bold font-display ${s.isFocused ? "text-2xl text-[#111411] mb-5" : "text-lg"}`}>
                   {locale === "ar" ? (s.currentSection.titleAr ?? s.currentSection.titleEn ?? "") : (s.currentSection.titleEn ?? "")}
                 </h2>
-                <div data-lesson-content className={`max-w-none ${s.isFocused ? "text-[1.125rem] leading-[1.95] tracking-[0.01em] text-[#111411] [&_p]:mb-4 [&_p]:text-[1.125rem] [&_p]:leading-[1.95] [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#111411] [&_strong]:font-bold [&_strong]:text-[#111411] [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:text-[1.125rem] [&_li]:leading-[1.9]" : "prose prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`} onClick={s.handleWordClick}>
-                  {s.highlightedWords.length > 0 && s.highlightIndex >= 0 ? (
-                    <p className="leading-relaxed">
-                      {s.highlightedWords.map((word, i) => (
-                        <span key={i} data-word={word} className={`cursor-pointer transition-colors duration-100 hover:underline hover:text-primary ${i === s.highlightIndex ? (s.isFocused ? "bg-yellow-300 text-[#111411] rounded px-0.5 font-bold" : "bg-primary/30 rounded px-0.5 font-semibold") : s.isFocused ? "text-[#111411]" : ""}`}>
-                          {word}{" "}
-                        </span>
-                      ))}
-                    </p>
-                  ) : (
-                    <div>
-                      <Streamdown>
-                        {s.simplifiedView && s.simplifiedContent[s.sectionIndex]
-                          ? s.simplifiedContent[s.sectionIndex]
-                          : (locale === "ar" ? (s.currentSection.bodyAr ?? s.currentSection.bodyEn ?? "") : (s.currentSection.bodyEn ?? ""))}
-                      </Streamdown>
-                      <p className={`text-xs mt-3 italic ${s.isFocused ? "text-[#111411]/50" : "text-muted-foreground"}`}>{t("Tip: click any word for its definition.", "نصيحة: انقر على أي كلمة لتعريفها.")}</p>
+                {/* Unified render path: Streamdown always (fixes bold/markdown), word-click via DOM text extraction */}
+                <div
+                  data-lesson-content
+                  className={`max-w-none relative ${s.isFocused ? "text-[1.125rem] leading-[1.95] tracking-[0.01em] text-[#111411] [&_p]:mb-4 [&_p]:text-[1.125rem] [&_p]:leading-[1.95] [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#111411] [&_strong]:font-bold [&_strong]:text-[#111411] [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:text-[1.125rem] [&_li]:leading-[1.9]" : "prose prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`}
+                  onClick={(e: React.MouseEvent) => {
+                    // Extract word from DOM text node at click point — works with Streamdown markdown
+                    const range = document.caretRangeFromPoint
+                      ? document.caretRangeFromPoint(e.clientX, e.clientY)
+                      : null;
+                    if (range && range.startContainer.nodeType === Node.TEXT_NODE) {
+                      const text = range.startContainer.textContent ?? "";
+                      const offset = range.startOffset;
+                      // Walk backwards to start of word
+                      let start = offset;
+                      while (start > 0 && !/\s/.test(text[start - 1])) start--;
+                      // Walk forwards to end of word
+                      let end = offset;
+                      while (end < text.length && !/\s/.test(text[end])) end++;
+                      const word = text.slice(start, end).replace(/[.,!?;:'"()[\]{}*#_`~]/g, "").trim();
+                      if (word.length > 1) {
+                        s.setSelectedWord(word);
+                        return;
+                      }
+                    }
+                    // Fallback: data-word attribute (for any spans that still have it)
+                    const target = e.target as HTMLElement;
+                    const wordEl = target.closest("[data-word]") as HTMLElement | null;
+                    if (wordEl?.dataset.word) s.setSelectedWord(wordEl.dataset.word);
+                  }}
+                >
+                  <Streamdown>
+                    {s.simplifiedView && s.simplifiedContent[s.sectionIndex]
+                      ? s.simplifiedContent[s.sectionIndex]
+                      : (locale === "ar" ? (s.currentSection.bodyAr ?? s.currentSection.bodyEn ?? "") : (s.currentSection.bodyEn ?? ""))}
+                  </Streamdown>
+                  {/* Highlight overlay — shown during TTS narration */}
+                  {s.highlightedWords.length > 0 && s.highlightIndex >= 0 && (
+                    <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+                      <span className={`inline-block px-0.5 rounded text-xs font-semibold ${s.isFocused ? "bg-yellow-300/80 text-[#111411]" : "bg-primary/30"}`} style={{ position: "absolute", top: 0, left: 0, opacity: 0 }}>
+                        {/* Visual highlight is handled by CSS data-word-active on the Streamdown spans */}
+                      </span>
                     </div>
                   )}
+                  {/* Tip: only show when word-click actually works (always now) */}
+                  <p className={`text-xs mt-3 italic ${s.isFocused ? "text-[#111411]/50" : "text-muted-foreground"}`}>{t("Tip: click any word for its definition.", "نصيحة: انقر على أي كلمة لتعريفها.")}</p>
                 </div>
                 {s.currentSection.keyTerms?.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-border">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { List, Share2 } from "lucide-react";
+import { List, Network } from "lucide-react";
 
 interface Props {
   lessonTitle: string;
@@ -44,7 +44,7 @@ export default function ConceptMapSVG({ lessonTitle, sections, locale, defaultLi
           aria-pressed={!showList}
           aria-label={t("Show as diagram", "عرض كمخطط")}
         >
-          <Share2 className="w-3.5 h-3.5 mr-1.5" />
+          <Network className="w-3.5 h-3.5 mr-1.5" />
           {t("Diagram", "مخطط")}
         </Button>
       </div>
