@@ -932,3 +932,46 @@ button[disabled], button[aria-disabled="true"],
 @media (prefers-reduced-motion: reduce) {
   .wave-bar { animation: none; transform: scaleY(0.6); }
 }
+
+/* ── Ripple expand ─────────────────────────────────────────────────────────── */
+@keyframes ripple-expand {
+  from { transform: scale(0); opacity: 0.6; }
+  to   { transform: scale(1); opacity: 0; }
+}
+
+/* ── Nav active indicator slide ────────────────────────────────────────────── */
+.nav-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 2px;
+  background: rgb(var(--primary));
+  border-radius: 9999px;
+  transition: left 0.25s cubic-bezier(0.23, 1, 0.32, 1), width 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* ── Dialog spring entrance ─────────────────────────────────────────────────── */
+[role="dialog"], [data-radix-popper-content-wrapper] {
+  animation: dialog-spring 0.28s cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+@keyframes dialog-spring {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [role="dialog"], [data-radix-popper-content-wrapper] { animation: none; }
+}
+
+/* ── Toast slide-in ────────────────────────────────────────────────────────── */
+[data-sonner-toast] {
+  animation: toast-slide 0.3s cubic-bezier(0.23, 1, 0.32, 1) both !important;
+}
+@keyframes toast-slide {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast] { animation: none !important; }
+}
+
+/* ── Section slide perspective ─────────────────────────────────────────────── */
+.section-slide-container { perspective: 1000px; }

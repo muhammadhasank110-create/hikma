@@ -5,7 +5,8 @@
  */
 import { useProfile } from "@/contexts/ProfileContext";
 import { useRoute, useLocation } from "wouter";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,15 @@ export default function LessonPage() {
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   const s = useLessonState(lessonId);
+  const prevSectionRef = useRef(s.sectionIndex);
+  const [slideDir, setSlideDir] = useState<1 | -1>(1);
+  const prefersReducedMotion = useReducedMotion();
+  useEffect(() => {
+    if (s.sectionIndex !== prevSectionRef.current) {
+      setSlideDir(s.sectionIndex > prevSectionRef.current ? 1 : -1);
+      prevSectionRef.current = s.sectionIndex;
+    }
+  }, [s.sectionIndex]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -185,7 +195,21 @@ export default function LessonPage() {
           </Card>
         )}
 
-        {/* Section content */}
+        {/* Section content — slide transition between sections */}
+        <AnimatePresence mode="wait" custom={slideDir}>
+        <motion.div
+          key={s.sectionIndex}
+          custom={slideDir}
+          variants={{
+            enter: (dir: number) => ({ x: prefersReducedMotion ? 0 : dir * 60, opacity: 0 }),
+            center: { x: 0, opacity: 1 },
+            exit: (dir: number) => ({ x: prefersReducedMotion ? 0 : dir * -60, opacity: 0 }),
+          }}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
+        >
         <Card className={s.isFocused ? "border-white/10 bg-[#0a1a0a] shadow-2xl ring-1 ring-white/10" : ""} ref={s.contentRef as any}>
           <CardContent className="p-6">
             {s.currentSection ? (
@@ -229,6 +253,9 @@ export default function LessonPage() {
             )}
           </CardContent>
         </Card>
+
+        </motion.div>
+        </AnimatePresence>
 
         {/* Park a thought — icon-only on mobile, expands on tap */}
         <ParkAThought s={s} t={t} />
@@ -310,8 +337,15 @@ export default function LessonPage() {
         )}
 
         {/* Inline tutor panel */}
+        <AnimatePresence>
         {showInlineTutor && (
-          <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 overflow-hidden">
+          <motion.div
+            className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 overflow-hidden"
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.97 }}
+            transition={{ duration: 0.32, ease: [0.23, 1, 0.32, 1] }}
+          >
             <div className="flex items-center justify-between px-4 py-2 border-b border-primary/10">
               <span className="text-sm font-semibold text-primary flex items-center gap-1.5">
                 <Bot className="w-4 h-4" />{t("Hikma AI", "حكمة AI")}
@@ -329,8 +363,9 @@ export default function LessonPage() {
                 aria-label={t("Hikma AI Tutor panel", "لوحة مساعد حكمة AI")}
               />
             </div>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
         {/* Navigation */}
         <div className="flex items-center justify-between mt-6">
           <Button variant="outline" onClick={s.prevSection} disabled={s.sectionIndex === 0} aria-label={t("Previous section", "القسم السابق")}>

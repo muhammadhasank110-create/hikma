@@ -13,6 +13,7 @@
  * - State is preserved across step navigation
  * - curriculum sent as raw enum key (igcse_edexcel, not "IGCSE Edexcel")
  */
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -33,6 +34,8 @@ export default function Onboarding() {
   const [, navigate] = useLocation();
   const { updateProfileAsync, setLocale } = useProfile();
   const [step, setStep] = useState(1);
+  const [stepDir, setStepDir] = useState<1 | -1>(1);
+  const prefersReducedMotion = useReducedMotion();
   const { announce } = useAriaLive();
   const sounds = useSounds();
   const speech = useSpeech();
@@ -91,12 +94,14 @@ export default function Onboarding() {
   };
 
   const handleNext = () => {
+    setStepDir(1);
     sounds.navigate();
     if (step < TOTAL_STEPS) setStep(s => s + 1);
     else handleFinish();
   };
 
   const handleBack = () => {
+    setStepDir(-1);
     if (step > 1) setStep(s => s - 1);
   };
 
@@ -196,13 +201,29 @@ export default function Onboarding() {
         aria-atomic="true"
       >
         <div className="w-full max-w-lg">
-          {step === 1 && <StepAccessibility data={data} onChange={updateData} locale={data.locale} />}
-          {step === 2 && <StepLanguage data={data} onChange={updateData} locale={data.locale} />}
-          {step === 3 && <StepCurriculum data={data} onChange={updateData} locale={data.locale} />}
-          {step === 4 && <StepPersonalisation data={data} onChange={updateData} locale={data.locale} />}
-          {step === 5 && <StepVoicePreferences data={data} onChange={updateData} locale={data.locale} />}
-          {step === 6 && <StepDailyGoal data={data} onChange={updateData} locale={data.locale} />}
-          {step === 7 && <StepVoice data={data} locale={data.locale} />}
+          <AnimatePresence mode="wait" custom={stepDir}>
+            <motion.div
+              key={step}
+              custom={stepDir}
+              variants={{
+                enter: (dir: number) => ({ x: prefersReducedMotion ? 0 : dir * 40, opacity: 0, scale: 0.97 }),
+                center: { x: 0, opacity: 1, scale: 1 },
+                exit: (dir: number) => ({ x: prefersReducedMotion ? 0 : dir * -40, opacity: 0, scale: 0.97 }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] as any }}
+            >
+              {step === 1 && <StepAccessibility data={data} onChange={updateData} locale={data.locale} />}
+              {step === 2 && <StepLanguage data={data} onChange={updateData} locale={data.locale} />}
+              {step === 3 && <StepCurriculum data={data} onChange={updateData} locale={data.locale} />}
+              {step === 4 && <StepPersonalisation data={data} onChange={updateData} locale={data.locale} />}
+              {step === 5 && <StepVoicePreferences data={data} onChange={updateData} locale={data.locale} />}
+              {step === 6 && <StepDailyGoal data={data} onChange={updateData} locale={data.locale} />}
+              {step === 7 && <StepVoice data={data} locale={data.locale} />}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
