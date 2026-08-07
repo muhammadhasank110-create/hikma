@@ -227,12 +227,15 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
     >
       <div className="container flex items-center justify-between h-14 gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1">
+        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
           <img
             src="/manus-storage/hikma-app-icon_2d2d3fef.png"
-            alt="Hikma حكمة"
-            className="h-9 w-9 object-contain rounded-xl"
+            alt=""
+            className="h-8 w-8 object-contain rounded-xl transition-transform group-hover:scale-105"
+            aria-hidden="true"
           />
+          <span className="hidden sm:block font-bold text-sm text-white/90 tracking-tight">Hikma</span>
+          <span className="hidden sm:block text-white/40 text-sm font-light">حكمة</span>
         </Link>
 
         {/* Desktop nav links */}

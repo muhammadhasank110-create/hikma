@@ -41,12 +41,16 @@ function AccessibilityProfileManager() {
 
 function Router() {
   return (
-    <AppShell>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/signup" component={SignUpPage} />
-        <Route path="/signin" component={SignInPage} />
-        <Route path="/onboarding" component={Onboarding} />
+    <Switch>
+      {/* Auth and landing pages — no AppShell nav */}
+      <Route path="/" component={Home} />
+      <Route path="/signup" component={SignUpPage} />
+      <Route path="/signin" component={SignInPage} />
+      {/* App pages — wrapped in AppShell */}
+      <Route>
+        <AppShell>
+          <Switch>
+            <Route path="/onboarding" component={Onboarding} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/subjects/:curriculumId" component={SubjectPage} />
         <Route path="/subjects/:curriculumId/topics/:subjectId" component={TopicsPage} />
@@ -66,12 +70,14 @@ function Router() {
       <Route path="/curriculum" component={CurriculumPage} />
       <Route path="/class/join" component={ClassJoinPage} />
       <Route path="/404" component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
-      {/* These must be inside Router so useLocation() has a wouter context */}
-      <VoiceCommandOverlay />
-      <AccessibilityProfileManager />
-    </AppShell>
+            <Route component={NotFound} />
+          </Switch>
+          {/* These must be inside Router so useLocation() has a wouter context */}
+          <VoiceCommandOverlay />
+          <AccessibilityProfileManager />
+        </AppShell>
+      </Route>
+    </Switch>
   );
 }
 

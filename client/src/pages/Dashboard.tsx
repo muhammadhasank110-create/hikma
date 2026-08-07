@@ -1,274 +1,186 @@
-/**
- * Dashboard — professional, accessibility-first home screen.
- *
- * Design principles:
- * - Large tap targets (min 48px)
- * - High contrast text on all backgrounds
- * - Clear visual hierarchy: greeting → quick actions → subjects
- * - Keyboard navigable: Tab moves through all cards, Enter activates
- * - Screen reader: all cards have aria-label with full context
- * - No decorative icons without aria-hidden
- */
-import { PageTransition } from "@/components/PageTransition";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useProfile } from "@/contexts/ProfileContext";
 import { trpc } from "@/lib/trpc";
-import { Link } from "wouter";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
-// startLogin removed
-import {
-  Bot, TrendingUp, Layers, ChevronRight,
-  GraduationCap, Star, BookOpen, Zap
-} from "lucide-react";
+import { useLocation } from "wouter";
+import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { useRef, useEffect } from "react";
+import { Bot, TrendingUp, Layers, BookOpen, ChevronRight, Zap, Star, Activity } from "lucide-react";
 
-const CURRICULUM_LABEL: Record<string, string> = {
-  igcse_edexcel: "IGCSE Edexcel",
-  qatar_moehe: "Qatar MoEHE",
-  igcse_caie: "IGCSE Cambridge",
-  gcse: "GCSE (UK)",
-  ib: "IB",
-  a_level: "A Level",
-  none: "",
-};
+const ICON_URL = "/manus-storage/hikma-app-icon_2d2d3fef.png";
 
-const MODE_LABEL: Record<string, string> = {
-  audio_first: "Audio-First",
-  focus: "Focus",
-  reading: "Reading",
-  custom: "Custom",
-};
+function AnimCounter({ to, suffix = "" }: { to: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref as any, { once: true });
+  const mv = useMotionValue(0);
+  const spring = useSpring(mv, { stiffness: 60, damping: 18 });
+  const display = useTransform(spring, v => `${Math.round(v)}${suffix}`);
+  useEffect(() => { if (inView) mv.set(to); }, [inView, to, mv]);
+  return <motion.span ref={ref}>{display}</motion.span>;
+}
 
 export default function Dashboard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const { profile, locale } = useProfile();
+  const [, navigate] = useLocation();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
-  useScrollReveal();
 
-  const { data: curricula, isLoading: loadingCurricula } = trpc.curriculum.list.useQuery();
-  const { data: mastery } = trpc.progress.getMastery.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: curricula, isLoading } = trpc.curriculum.list.useQuery();
 
-  const masteredCount = mastery?.filter(m => m.level >= 4).length ?? 0;
-  const totalConcepts = mastery?.length ?? 0;
-  const inProgressCount = mastery?.filter(m => m.level > 0 && m.level < 4).length ?? 0;
+  const hour = new Date().getHours();
+  const greeting = hour < 12
+    ? t("Good morning", "صباح الخير")
+    : hour < 17 ? t("Good afternoon", "مساء الخير") : t("Good evening", "مساء النور");
 
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return t("Good morning", "صباح الخير");
-    if (h < 17) return t("Good afternoon", "مساء الخير");
-    return t("Good evening", "مساء النور");
+  const profileMode = (profile as any)?.accessibilityProfile ?? (profile as any)?.profile ?? "standard";
+  const modeLabel: Record<string, string> = {
+    blind: t("Audio-First Mode", "وضع الصوت الأول"),
+    dyslexia: t("Dyslexia Mode", "وضع عسر القراءة"),
+    adhd: t("ADHD Mode", "وضع ADHD"),
+    lowVision: t("Low Vision Mode", "وضع ضعف البصر"),
+    standard: t("Standard Mode", "الوضع القياسي"),
   };
 
-  const currLabel = CURRICULUM_LABEL[profile.curriculum ?? ""] || "";
-  const modeLabel = MODE_LABEL[profile.mode ?? "reading"] || "Reading";
+  const stats = [
+    { icon: Star, label: t("Mastered", "تم إتقانه"), value: 0, suffix: "", color: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-400" },
+    { icon: Activity, label: t("In Progress", "قيد التقدم"), value: 0, suffix: "", color: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-400" },
+    { icon: BookOpen, label: t("Total Concepts", "إجمالي المفاهيم"), value: 0, suffix: "", color: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-400" },
+    { icon: Zap, label: t("Daily Goal", "الهدف اليومي"), value: profile?.dailyGoalMinutes ?? 20, suffix: "m", color: "from-purple-500/20 to-purple-500/5", iconColor: "text-purple-400" },
+  ];
 
-  // Filter curricula to only show the user's selected curriculum (Issue #16)
-  const displayCurricula = curricula?.filter(curr => {
-    if (!profile.curriculum || profile.curriculum === "none") return true;
-    const profKey = profile.curriculum.toLowerCase();
-    const titleLower = curr.titleEn.toLowerCase();
-    const boardLower = (curr.board ?? "").toLowerCase();
-    return titleLower.includes(profKey.split("_")[0]) ||
-           boardLower.includes(profKey.split("_")[0]) ||
-           profKey.includes(titleLower.split(" ")[0]);
-  }) ?? curricula;
+  const quickActions = [
+    { icon: Bot, title: t("Hikma AI", "حكمة AI"), desc: t("Ask anything. Get guided, not told.", "اسأل أي شيء. احصل على توجيه."), href: "/tutor", color: "from-emerald-500/15 to-emerald-500/5", iconBg: "bg-emerald-500/20", iconColor: "text-emerald-300" },
+    { icon: TrendingUp, title: t("My Progress", "تقدمي"), desc: t("Track your mastery journey.", "تتبع رحلة إتقانك."), href: "/progress", color: "from-blue-500/15 to-blue-500/5", iconBg: "bg-blue-500/20", iconColor: "text-blue-300" },
+    { icon: Layers, title: t("ECC", "المنهج الموسّع"), desc: t("9 foundational life skills.", "9 مهارات حياتية أساسية."), href: "/ecc", color: "from-purple-500/15 to-purple-500/5", iconBg: "bg-purple-500/20", iconColor: "text-purple-300" },
+  ];
 
   return (
-    <PageTransition>
-    <main className="container py-10 space-y-12 max-w-5xl" aria-label={t("Dashboard", "لوحة التحكم")}>
+    <main id="main-content" className="min-h-screen p-6 sm:p-8 max-w-5xl mx-auto space-y-10" tabIndex={-1}>
 
-      {/* ── Greeting ──────────────────────────────────────────────────── */}
-      <section aria-label={t("Welcome", "مرحباً")}>
-        <p className="text-base text-muted-foreground font-medium" aria-hidden="true">{greeting()}</p>
-        <h1 className="text-4xl font-bold mt-1.5 tracking-tight" tabIndex={-1}>
-          {isAuthenticated ? user?.name : t("Welcome to Hikma", "أهلاً بك في حكمة")}
-        </h1>
-        {(currLabel || modeLabel) && (
-          <div className="flex items-center gap-2 mt-3 flex-wrap" aria-label={t("Your profile", "ملفك الشخصي")}>
-            {currLabel && (
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
-                {currLabel}
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-white/40 font-medium mb-1">{greeting}</p>
+            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">{user?.name?.split(" ")[0]}</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              {profile?.curriculum && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-500/30 text-emerald-300 bg-emerald-500/10">
+                  <BookOpen className="w-3 h-3" aria-hidden="true" />
+                  {profile.curriculum === "igcse_edexcel" ? "IGCSE Edexcel" : "Qatar MoEHE"}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-white/15 text-white/50 bg-white/5">
+                {modeLabel[profileMode]}
               </span>
-            )}
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-full bg-muted text-muted-foreground border border-border">
-              {modeLabel} {t("Mode", "وضع")}
-            </span>
+            </div>
           </div>
-        )}
-        {!isAuthenticated && (
-          <Button
-            onClick={() => { window.location.href = '/signin'; }}
-            className="mt-4"
-            aria-label={t("Sign in to save your progress and personalise Hikma", "سجّل الدخول لحفظ تقدمك وتخصيص حكمة")}
-          >
-            {t("Sign in to save progress", "سجّل الدخول لحفظ تقدمك")}
-          </Button>
-        )}
-      </section>
+          <img src={ICON_URL} alt="" className="w-12 h-12 rounded-2xl object-contain opacity-60" aria-hidden="true" />
+        </div>
+      </motion.div>
 
-      {/* ── Stats row (authenticated only) ────────────────────────────── */}
-      {isAuthenticated && (
-        <section aria-label={t("Your learning stats", "إحصائيات تعلمك")}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              {
-                label: t("Mastered", "أتقنت"),
-                value: masteredCount,
-                icon: Star,
-                colour: "text-amber-600 bg-amber-50 dark:bg-amber-950/30",
-                desc: t(`${masteredCount} concepts fully mastered`, `${masteredCount} مفهوم مُتقَن بالكامل`),
-              },
-              {
-                label: t("In Progress", "قيد التعلم"),
-                value: inProgressCount,
-                icon: TrendingUp,
-                colour: "text-green-700 bg-green-50 dark:bg-green-950/30",
-                desc: t(`${inProgressCount} concepts in progress`, `${inProgressCount} مفهوم قيد التعلم`),
-              },
-              {
-                label: t("Total Concepts", "إجمالي المفاهيم"),
-                value: totalConcepts,
-                icon: BookOpen,
-                colour: "text-blue-700 bg-blue-50 dark:bg-blue-950/30",
-                desc: t(`${totalConcepts} total concepts`, `${totalConcepts} مفهوم إجمالاً`),
-              },
-              {
-                label: t("Daily Goal", "الهدف اليومي"),
-                value: `${profile.dailyGoalMinutes}m`,
-                icon: Zap,
-                colour: "text-orange-600 bg-orange-50 dark:bg-orange-950/30",
-                desc: t(`Daily study goal: ${profile.dailyGoalMinutes} minutes`, `الهدف اليومي: ${profile.dailyGoalMinutes} دقيقة`),
-              },
-            ].map(stat => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.label}
-                  className="bg-card border border-border rounded-2xl p-5 space-y-3 reveal"
-                  aria-label={stat.desc}
-                >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.colour}`}>
+      {/* ── Stats ──────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <motion.div key={s.label}
+              className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${s.color} border border-white/8`}
+              initial={{ opacity: 0, y: 24, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.5, delay: i * 0.07 }}
+              whileHover={{ y: -3, scale: 1.02 }}>
+              <div className={`w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mb-4 ${s.iconColor}`}>
+                <Icon className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <p className="text-xs text-white/40 font-medium mb-1">{s.label}</p>
+              <p className="text-3xl font-black text-white tabular-nums">
+                <AnimCounter to={s.value} suffix={s.suffix} />
+              </p>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* ── Quick access ───────────────────────────────────────────────── */}
+      <div>
+        <motion.h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/30 mb-4"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          {t("Quick Access", "وصول سريع")}
+        </motion.h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {quickActions.map((a, i) => {
+            const Icon = a.icon;
+            return (
+              <motion.button key={a.href}
+                className={`text-left p-5 rounded-2xl bg-gradient-to-br ${a.color} border border-white/8 hover:border-white/20 transition-all group`}
+                onClick={() => navigate(a.href)}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.35 + i * 0.07 }}
+                whileHover={{ y: -3, scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-11 h-11 rounded-xl ${a.iconBg} flex items-center justify-center ${a.iconColor} group-hover:scale-110 transition-transform`}>
                     <Icon className="w-5 h-5" aria-hidden="true" />
                   </div>
-                  <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
-                  <p className="text-3xl font-bold leading-none" style={{ fontVariantNumeric: "normal", fontFeatureSettings: '"zero" 0', fontFamily: "system-ui, sans-serif" }}>{stat.value}</p>
+                  <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors mt-1" aria-hidden="true" />
                 </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* ── Quick actions ──────────────────────────────────────────────── */}
-      <section aria-label={t("Quick actions", "الإجراءات السريعة")}>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-widest">
-          {t("Quick access", "وصول سريع")}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            {
-              href: "/tutor",
-              icon: Bot,
-              iconBg: "bg-primary/10 text-primary",
-              title: t("Hikma AI", "حكمة AI"),
-              desc: t("Ask anything. Get guided, not told.", "اسأل أي شيء. احصل على توجيه، لا إجابات."),
-              ariaLabel: t("Open Hikma AI — your Socratic learning companion", "افتح حكمة AI — رفيقك في التعلم السقراطي"),
-            },
-            {
-              href: "/progress",
-              icon: TrendingUp,
-              iconBg: "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400",
-              title: t("My Progress", "تقدمي"),
-              desc: t("Track your mastery journey.", "تتبع رحلة إتقانك."),
-              ariaLabel: t("View my learning progress and mastery", "عرض تقدمي في التعلم والإتقان"),
-            },
-            {
-              href: "/ecc",
-              icon: Layers,
-              iconBg: "bg-purple-100 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400",
-              title: t("ECC", "المنهج الموسّع"),
-              desc: t("9 foundational life skills.", "9 مهارات حياتية أساسية."),
-              ariaLabel: t("Open Expanded Core Curriculum — 9 foundational skill areas", "افتح المنهج الأساسي الموسّع — 9 مجالات مهارية أساسية"),
-            },
-          ].map(action => {
-            const Icon = action.icon;
-            return (
-              <Link key={action.href} href={action.href}>
-                <div
-                  role="link"
-                  tabIndex={0}
-                  aria-label={action.ariaLabel}
-                  className="group bg-card border border-border rounded-2xl p-6 flex items-start gap-4 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary reveal"
-                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (e.currentTarget as HTMLElement).click(); }}}
-                >
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${action.iconBg}`}>
-                    <Icon className="w-6 h-6" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-base">{action.title}</p>
-                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{action.desc}</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0 group-hover:text-primary transition-colors" aria-hidden="true" />
-                </div>
-              </Link>
+                <p className="font-bold text-white text-base mb-1">{a.title}</p>
+                <p className="text-xs text-white/40 leading-relaxed">{a.desc}</p>
+              </motion.button>
             );
           })}
         </div>
-      </section>
+      </div>
 
-      {/* ── Subjects / Curricula ───────────────────────────────────────── */}
-      <section aria-label={t("Your subjects", "موادك الدراسية")}>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-widest">
-          {t("Subjects", "المواد الدراسية")}
-        </h2>
-        {loadingCurricula ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[1, 2].map(i => <Skeleton key={i} className="h-24 rounded-2xl" />)}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {displayCurricula?.map(curr => (
-              <Link key={curr.id} href={`/subjects/${curr.id}`}>
-                <div
-                  role="link"
-                  tabIndex={0}
-                  aria-label={t(
-                    `${curr.titleEn} — ${curr.board} curriculum. Click to view subjects.`,
-                    `${curr.titleAr} — منهج ${curr.board}. انقر لعرض المواد.`
-                  )}
-                  className="group bg-card border border-border rounded-2xl p-6 flex items-center gap-5 cursor-pointer hover:border-primary hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (e.currentTarget as HTMLElement).click(); }}}
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <GraduationCap className="w-7 h-7 text-primary" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-base">{locale === "ar" ? curr.titleAr : curr.titleEn}</p>
-                    <p className="text-sm text-muted-foreground mt-0.5">{curr.board}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0 group-hover:text-primary transition-colors" aria-hidden="true" />
-                </div>
-              </Link>
+      {/* ── Subjects ───────────────────────────────────────────────────── */}
+      <div>
+        <motion.h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/30 mb-4"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+          {t("Subjects", "المواد")}
+        </motion.h2>
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2].map(i => (
+              <div key={i} className="h-20 rounded-2xl bg-white/5 animate-pulse" />
             ))}
-            {displayCurricula?.length === 0 && (
-              <div className="col-span-full flex flex-col items-center justify-center py-12 gap-3 text-center">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-muted-foreground" />
+          </div>
+        ) : !curricula?.length ? (
+          <motion.div className="text-center py-16 rounded-2xl border border-dashed border-white/10"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+            <BookOpen className="w-10 h-10 text-white/20 mx-auto mb-3" aria-hidden="true" />
+            <p className="text-white/40 font-medium mb-2">{t("No subjects yet", "لا توجد مواد بعد")}</p>
+            <p className="text-white/25 text-sm mb-5">{t("Complete onboarding to set up your curriculum.", "أكمل الإعداد لتفعيل منهجك الدراسي.")}</p>
+            <button onClick={() => navigate("/onboarding")}
+              className="text-sm font-semibold px-5 py-2.5 rounded-xl text-white"
+              style={{ background: "rgba(45,100,55,0.4)", border: "1px solid rgba(45,100,55,0.5)" }}>
+              {t("Set up my subjects →", "إعداد موادي ←")}
+            </button>
+          </motion.div>
+        ) : (
+          <div className="space-y-3">
+            {curricula.map((c, i) => (
+              <motion.button key={c.id}
+                className="w-full text-left flex items-center gap-4 p-5 rounded-2xl border border-white/8 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all group"
+                onClick={() => navigate(`/subjects/${c.id}`)}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.5 + i * 0.07 }}
+                whileHover={{ x: 4 }}
+                whileTap={{ scale: 0.99 }}>
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="w-6 h-6 text-emerald-400" aria-hidden="true" />
                 </div>
-                <p className="font-medium text-foreground">{t("No subjects yet", "لا توجد مواد بعد")}</p>
-                <p className="text-sm text-muted-foreground max-w-xs">{t("Complete your personalisation to load your curriculum subjects.", "أكمل التخصيص لتحميل مواد منهجك الدراسي.")}</p>
-                <Link href="/onboarding" className="mt-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-                  {t("Set up my subjects", "إعداد موادي")}
-                </Link>
-              </div>
-            )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-white text-base">{c.titleEn}</p>
+                  <p className="text-xs text-white/40 mt-0.5">{c.board} · {c.family}</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-white/20 group-hover:text-white/60 transition-colors flex-shrink-0" aria-hidden="true" />
+              </motion.button>
+            ))}
           </div>
         )}
-      </section>
-
+      </div>
     </main>
-    </PageTransition>
   );
 }
-import { useScrollReveal } from "@/hooks/useScrollReveal";
