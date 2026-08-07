@@ -231,7 +231,8 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
           <img
             src="/manus-storage/hikma-icon-dark-final_b6625b99.png"
             alt=""
-            className="h-8 w-8 object-contain transition-transform group-hover:scale-105"
+            className="h-11 w-11 object-contain transition-transform group-hover:scale-105"
+            style={{mixBlendMode:"screen"}}
             aria-hidden="true"
           />
           <span className="hidden sm:block font-bold text-sm text-white/90 tracking-tight">Hikma</span>
@@ -435,7 +436,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <img
                   src="/manus-storage/hikma-icon-dark-final_b6625b99.png"
                   alt="Hikma حكمة"
-                  className="h-8 w-8 object-contain"
+                  className="h-11 w-11 object-contain"
+                  style={{mixBlendMode:"screen"}}
                 />
               </div>
               <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="text-white hover:bg-muted/50 w-8 h-8">
