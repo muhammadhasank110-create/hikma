@@ -242,6 +242,78 @@ Rules:
       return { question };
     }),
 
+  // ── Inline answer evaluator ───────────────────────────────────────────────
+  evaluateInlineAnswer: protectedProcedure
+    .input(z.object({
+      question: z.string(),
+      answer: z.string(),
+      sectionBody: z.string(),
+      locale: z.enum(["ar", "en"]),
+    }))
+    .mutation(async ({ input }) => {
+      const { question, answer, sectionBody, locale } = input;
+      if (!answer.trim()) {
+        return {
+          verdict: "incorrect" as const,
+          explanation: locale === "ar" ? "لم تقدم إجابة." : "No answer was provided.",
+          pointer: locale === "ar" ? "حاول الإجابة على السؤال." : "Try to answer the question.",
+        };
+      }
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are Hikma AI evaluating a learner's answer to a Socratic comprehension question.
+
+Return ONLY valid JSON with exactly these three fields:
+{
+  "verdict": "correct" | "partially_correct" | "incorrect",
+  "explanation": "<one sentence explaining why, in ${locale === "ar" ? "Arabic" : "English"}>",
+  "pointer": "<short phrase pointing to where in the lesson to look, e.g. 'Re-read the definition of X' or 'See the second paragraph', in ${locale === "ar" ? "Arabic" : "English"}>"
+}
+
+Rules:
+- "correct": the answer captures the main idea accurately.
+- "partially_correct": the answer shows some understanding but misses key details.
+- "incorrect": the answer is wrong or shows a misconception.
+- Be encouraging, not punitive. Explain what was right before what was wrong.
+- Keep explanation under 25 words.
+- Keep pointer under 10 words.`,
+          },
+          {
+            role: "user",
+            content: `Lesson section:
+${sectionBody.slice(0, 800)}
+
+Question: ${question}
+
+Learner's answer: ${answer}`,
+          },
+        ],
+      });
+      const rawContent = response.choices[0]?.message?.content;
+      const raw = typeof rawContent === "string" ? rawContent : (Array.isArray(rawContent) ? rawContent.map((c: any) => c.text ?? "").join("") : "");
+      try {
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (!match) throw new Error("No JSON");
+        const parsed = JSON.parse(match[0]);
+        const verdict = ["correct", "partially_correct", "incorrect"].includes(parsed.verdict)
+          ? (parsed.verdict as "correct" | "partially_correct" | "incorrect")
+          : "incorrect";
+        return {
+          verdict,
+          explanation: String(parsed.explanation ?? "").slice(0, 200),
+          pointer: String(parsed.pointer ?? "").slice(0, 100),
+        };
+      } catch {
+        return {
+          verdict: "incorrect" as const,
+          explanation: locale === "ar" ? "تعذّر تقييم إجابتك. حاول مرة أخرى." : "Could not evaluate your answer. Please try again.",
+          pointer: locale === "ar" ? "راجع محتوى القسم." : "Review the section content.",
+        };
+      }
+    }),
+
   // ── Voice intent parser ────────────────────────────────────────────────────
   parseVoiceIntent: protectedProcedure
     .input(z.object({

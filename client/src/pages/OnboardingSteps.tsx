@@ -471,6 +471,14 @@ export function StepVoice({ data, locale }: { data: OnboardingData; locale: stri
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   const [tested, setTested] = useState(false);
   const speech = useSpeech();
+
+  // ── Task 1: Stop audio when the user leaves this step (unmount or step change) ──
+  useEffect(() => {
+    return () => {
+      speech.stop();
+    };
+  }, [speech]);
+
   const testVoice = () => {
     const text = locale === "ar"
       ? "مرحباً! أنا حكمة. سأساعدك على التعلم بطريقتك الخاصة."

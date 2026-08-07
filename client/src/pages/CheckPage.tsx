@@ -43,6 +43,29 @@ export default function CheckPage() {
     </div>
   );
 
+  if (s.generationFailed) return (
+    <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-4">
+      <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+        <span className="text-2xl" aria-hidden="true">⚠</span>
+      </div>
+      <h1 className="text-xl font-bold">{t("Couldn't generate questions", "تعذّر إنشاء الأسئلة")}</h1>
+      <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+        {t(
+          "Hikma AI couldn't create questions for this lesson right now. This is usually a temporary issue.",
+          "تعذّر على حكمة AI إنشاء أسئلة لهذا الدرس الآن. هذه عادةً مشكلة مؤقتة."
+        )}
+      </p>
+      <div className="flex gap-3 justify-center">
+        <Button onClick={() => window.location.reload()} variant="default">
+          <RotateCcw className="w-4 h-4 mr-2" />{t("Try Again", "حاول مجدداً")}
+        </Button>
+        <Button onClick={() => window.history.back()} variant="outline">
+          {t("Back to Lesson", "العودة للدرس")}
+        </Button>
+      </div>
+    </div>
+  );
+
   if (s.isComplete) {
     const pct = s.totalMarks > 0 ? Math.round((s.score / s.totalMarks) * 100) : 0;
     return (

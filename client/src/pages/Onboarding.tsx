@@ -16,6 +16,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useSpeech } from "@/contexts/SpeechContext";
 import { useAriaLive } from "@/contexts/AriaLiveContext";
 import { Button } from "@/components/ui/button";
 import { useSounds } from "@/hooks/useSounds";
@@ -34,6 +35,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const { announce } = useAriaLive();
   const sounds = useSounds();
+  const speech = useSpeech();
   const [saving, setSaving] = useState(false);
   const stepRef = useRef<HTMLDivElement>(null);
 
@@ -141,6 +143,7 @@ export default function Onboarding() {
         }
       }
       toast.success(data.locale === "ar" ? "مرحباً! تم إعداد حكمة لك." : "Welcome! Hikma is set up for you.");
+      speech.stop();
       navigate("/dashboard");
       announce("Profile saved. Welcome to Hikma!", "polite");
     } catch (err) {
@@ -162,7 +165,7 @@ export default function Onboarding() {
           <span className="font-bold text-sm">Hikma حكمة</span>
         </div>
         <button
-          onClick={() => navigate("/dashboard")}
+          onClick={() => { speech.stop(); navigate("/dashboard"); }}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
           aria-label={data.locale === "ar" ? "تخطي الإعداد والذهاب إلى لوحة التحكم" : "Skip setup and go to dashboard"}
         >

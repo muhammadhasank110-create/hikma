@@ -84,6 +84,10 @@
     --user-word-spacing: 0em;
     --user-measure:    65ch;
 
+    /* Accessibility target sizes */
+    --target-min:      44px;
+    --target-gap:      8px;
+
     /* Motion */
     --duration-fast:   150ms;
     --duration-base:   250ms;
@@ -481,6 +485,33 @@
   button:active:not(:disabled), [role="button"]:active:not([aria-disabled="true"]) {
     transform: scale(0.97);
     transition: transform 160ms var(--ease-out);
+  }
+
+  /* ── ACCESSIBLE TARGET SIZES (Task 2) ────────────────────────────────────── */
+  /*
+   * --target-min is set from ProfileContext based on the active accessibility
+   * profile. Default: 44px. Blind/low-vision, dyslexia, ADHD: 56px.
+   * We use min-height only (not min-width) to avoid breaking inline/icon buttons.
+   * Icon-only buttons get min-width too via the [data-icon-btn] selector.
+   */
+  button:not([data-no-min-h]),
+  [role="button"]:not([data-no-min-h]),
+  input:not([type="hidden"]):not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    min-height: var(--target-min);
+  }
+  /* Icon-only buttons also get min-width */
+  button[aria-label]:not([data-no-min-h]),
+  [role="button"][aria-label]:not([data-no-min-h]) {
+    min-width: var(--target-min);
+  }
+  /* Gap between adjacent toolbar targets */
+  .toolbar-group { gap: var(--target-gap); }
+  /* Scale icons proportionally when large targets are active */
+  [data-large-targets="true"] .lucide {
+    width: 1.25em;
+    height: 1.25em;
   }
 
   /* ── CUSTOM SCROLLBAR ── */

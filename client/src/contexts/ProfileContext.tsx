@@ -195,6 +195,15 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       root.style.removeProperty("--duration-base");
       root.style.removeProperty("--duration-slow");
     }
+    // ── Task 2: Target size — larger hit areas for accessibility profiles ──────
+    // audio_first = blind/low-vision, opendyslexic = dyslexia, reduceMotion = ADHD
+    const needsLargeTargets =
+      profile.mode === "audio_first" ||
+      profile.fontFamily === "opendyslexic" ||
+      profile.reduceMotion;
+    root.style.setProperty("--target-min", needsLargeTargets ? "56px" : "44px");
+    root.style.setProperty("--target-gap", needsLargeTargets ? "12px" : "8px");
+    root.setAttribute("data-large-targets", needsLargeTargets ? "true" : "false");
   }, [profile]);
 
   // Apply locale/direction to document

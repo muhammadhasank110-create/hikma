@@ -17,6 +17,7 @@ export function useSounds() {
     navigate:       () => playSound("navigate"),
     questionAppear: () => playSound("questionAppear"),
     // legacy aliases
+    partiallyCorrect: () => playSound("partiallyCorrect"),
     click:          () => playSound("tap"),
     success:        () => playSound("correct"),
     levelUp:        () => playSound("achievement"),

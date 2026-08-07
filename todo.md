@@ -248,3 +248,13 @@
 - [x] useTutorState hook extracted (226 lines)
 - [x] OnboardingSteps.tsx extracted (step components)
 - [x] lesson/ sub-components: ConceptMapSVG, WordDefinitionPopup, BodyDoublePanel
+
+## Round 5 — Aug 7 2026
+- [x] Password strength indicator: 4-level meter, actionable tips, aria-live, score >= 2 gate
+- [x] Onboarding audio cleanup: stop on unmount/skip/finish (Task 1)
+- [x] --target-min CSS variable: 44px default, 56px for blind/dyslexia/ADHD profiles (Task 2)
+- [x] Inline lesson question grading: evaluateInlineAnswer tRPC, verdict card, sound cues (Task 3)
+- [x] Fix fallback quiz questions: replaced filler with honest generationFailed error state
+- [x] Universal ElevenLabs: SpeechContext routes all speech through ElevenLabs (no isShort bypass)
+- [x] ElevenLabs non-streaming endpoint: switched from /stream to base endpoint
+- [x] partiallyCorrect sound cue added to sound.ts and useSounds.ts

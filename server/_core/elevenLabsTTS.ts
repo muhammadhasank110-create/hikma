@@ -59,7 +59,7 @@ export function registerElevenLabsTTSRoute(app: Express) {
     await acquireSlot();
     try {
       const elevenRes = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}/stream`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}`,
         {
           method: "POST",
           headers: {

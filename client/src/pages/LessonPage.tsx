@@ -241,17 +241,65 @@ export default function LessonPage() {
               <span>{t("Hikma AI asks:", "حكمة AI يسأل:")}</span>
             </div>
             <p className="text-sm leading-relaxed font-medium">{s.topicQuestion}</p>
-            <div className="flex gap-2">
-              <input type="text" value={s.topicAnswer} onChange={e => s.setTopicAnswer(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && s.topicAnswer.trim()) s.advanceSection(); }}
-                placeholder={t("Type your answer or thinking…", "اكتب إجابتك أو تفكيرك…")}
-                className="flex-1 px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label={t("Your answer", "إجابتك")} />
-              <Button size="sm" onClick={s.advanceSection} className="rounded-xl" aria-label={t("Submit and continue", "أرسل وتابع")}>
-                <Send className="w-3.5 h-3.5 mr-1" />{t("Continue", "تابع")}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">{t("Have a go — a wrong answer here tells us what to explain next.", "جرّب — الإجابة الخاطئة تخبرنا ماذا نشرح بعد ذلك.")}</p>
+
+            {/* Answer input — hidden once verdict is shown */}
+            {!s.answerVerdict && (
+              <>
+                <div className="flex gap-2">
+                  <input type="text" value={s.topicAnswer} onChange={e => s.setTopicAnswer(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" && s.topicAnswer.trim() && !s.isEvaluating) s.submitTopicAnswer(); }}
+                    placeholder={t("Type your answer or thinking…", "اكتب إجابتك أو تفكيرك…")}
+                    className="flex-1 px-3 py-2 text-sm rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                    aria-label={t("Your answer", "إجابتك")}
+                    disabled={s.isEvaluating} />
+                  <Button size="sm" onClick={s.submitTopicAnswer} className="rounded-xl" disabled={!s.topicAnswer.trim() || s.isEvaluating}
+                    aria-label={t("Submit answer for feedback", "أرسل الإجابة للتقييم")}>
+                    {s.isEvaluating
+                      ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      : <><Send className="w-3.5 h-3.5 mr-1" />{t("Submit", "أرسل")}</>}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">{t("Have a go — a wrong answer here tells us what to explain next.", "جرّب — الإجابة الخاطئة تخبرنا ماذا نشرح بعد ذلك.")}</p>
+              </>
+            )}
+
+            {/* Verdict card — shown after evaluation */}
+            {s.answerVerdict && (
+              <div
+                role="region"
+                aria-live="polite"
+                aria-label={t("Answer feedback", "تغذية راجعة للإجابة")}
+                className={[
+                  "rounded-xl p-3 space-y-1.5 border animate-arrive",
+                  s.answerVerdict === "correct"
+                    ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+                    : s.answerVerdict === "partially_correct"
+                    ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+                    : "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800",
+                ].join(" ")}
+              >
+                <div className={["flex items-center gap-2 text-sm font-semibold",
+                  s.answerVerdict === "correct" ? "text-green-700 dark:text-green-300"
+                  : s.answerVerdict === "partially_correct" ? "text-amber-700 dark:text-amber-300"
+                  : "text-red-700 dark:text-red-300"].join(" ")}>
+                  {s.answerVerdict === "correct"
+                    ? <>{t("✓ Correct!", "✓ صحيح!")}</>
+                    : s.answerVerdict === "partially_correct"
+                    ? <>{t("◑ Partially correct", "◑ صحيح جزئياً")}</>
+                    : <>{t("✗ Not quite", "✗ ليس تماماً")}</>}
+                </div>
+                {s.answerExplanation && <p className="text-xs leading-relaxed">{s.answerExplanation}</p>}
+                {s.answerPointer && (
+                  <p className="text-xs text-muted-foreground italic">
+                    {t("Tip:", "تلميح:")} {s.answerPointer}
+                  </p>
+                )}
+                <Button size="sm" variant="outline" onClick={s.advanceSection} className="w-full mt-2 rounded-xl"
+                  aria-label={t("Continue to next section", "تابع إلى القسم التالي")}>
+                  {t("Continue", "تابع")} <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
         {s.generateQuestion.isPending && (

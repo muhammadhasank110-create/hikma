@@ -17,12 +17,27 @@ export default function SignUpPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const pwStrong = password.length >= 8;
+  function getPasswordStrength(pw: string): { score: 1 | 2 | 3 | 4; label: string; colour: string; barColour: string } {
+    if (pw.length === 0) return { score: 1, label: "", colour: "text-muted-foreground", barColour: "bg-muted" };
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    score = Math.max(1, score) as 1 | 2 | 3 | 4;
+    if (score === 1) return { score: 1, label: pw.length < 8 ? "Too short — add more characters" : "Very weak — add numbers and symbols", colour: "text-destructive", barColour: "bg-destructive" };
+    if (score === 2) return { score: 2, label: "Fair — add uppercase letters or symbols to strengthen", colour: "text-amber-600 dark:text-amber-400", barColour: "bg-amber-500" };
+    if (score === 3) return { score: 3, label: "Good — add a symbol to make it stronger", colour: "text-yellow-600 dark:text-yellow-400", barColour: "bg-yellow-500" };
+    return { score: 4, label: "Strong password ✓", colour: "text-green-600 dark:text-green-400", barColour: "bg-green-500" };
+  }
+
+  const pwStrength = getPasswordStrength(password);
+  const pwStrong = pwStrength.score >= 2;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!pwStrong) { setError("Password must be at least 8 characters."); return; }
+    if (!pwStrong) { setError(pwStrength.label || "Password is too weak. Please choose a stronger password."); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/auth/signup", {
@@ -200,10 +215,31 @@ export default function SignUpPage() {
                 </button>
               </div>
               {password.length > 0 && (
-                <p id="pw-hint" className={["text-xs flex items-center gap-1.5", pwStrong ? "text-green-600 dark:text-green-400" : "text-muted-foreground"].join(" ")}>
-                  {pwStrong ? <Check className="w-3 h-3" /> : <span className="w-3 h-3 rounded-full border border-current inline-block" />}
-                  {pwStrong ? "Strong password" : "At least 8 characters required"}
-                </p>
+                <div id="pw-hint" aria-live="polite" className="space-y-1.5">
+                  {/* 4-segment strength bar */}
+                  <div className="flex gap-1" role="img" aria-label={`Password strength: ${pwStrength.label}`}>
+                    {[1, 2, 3, 4].map(seg => (
+                      <div
+                        key={seg}
+                        className={["h-1.5 flex-1 rounded-full transition-all duration-300", seg <= pwStrength.score ? pwStrength.barColour : "bg-muted"].join(" ")}
+                      />
+                    ))}
+                  </div>
+                  {/* Label */}
+                  <p className={["text-xs flex items-center gap-1.5", pwStrength.colour].join(" ")}>
+                    {pwStrength.score === 4 && <Check className="w-3 h-3 flex-shrink-0" />}
+                    {pwStrength.label}
+                  </p>
+                  {/* Tips for weak passwords */}
+                  {pwStrength.score < 3 && password.length > 0 && (
+                    <ul className="text-xs text-muted-foreground space-y-0.5 mt-1 list-none">
+                      {password.length < 8 && <li className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />At least 8 characters</li>}
+                      {!/[0-9]/.test(password) && <li className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />Include a number (e.g. 7)</li>}
+                      {!(/[A-Z]/.test(password) && /[a-z]/.test(password)) && <li className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />Mix uppercase and lowercase</li>}
+                      {!/[^A-Za-z0-9]/.test(password) && <li className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />Add a symbol (e.g. ! @ # $)</li>}
+                    </ul>
+                  )}
+                </div>
               )}
             </div>
 

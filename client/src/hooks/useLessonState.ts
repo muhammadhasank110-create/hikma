@@ -56,6 +56,11 @@ export function useLessonState(lessonId: number) {
   const [topicAnswer, setTopicAnswer] = useState("");
   const [showTopicQuestion, setShowTopicQuestion] = useState(false);
   const [questionSectionIndex, setQuestionSectionIndex] = useState(-1);
+  // ── Task 3: Inline answer grading ─────────────────────────────────────────
+  const [answerVerdict, setAnswerVerdict] = useState<"correct" | "partially_correct" | "incorrect" | null>(null);
+  const [answerExplanation, setAnswerExplanation] = useState("");
+  const [answerPointer, setAnswerPointer] = useState("");
+  const [isEvaluating, setIsEvaluating] = useState(false);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [pomodoroActive, setPomodoroActive] = useState(false);
   const [pomodoroSeconds, setPomodoroSeconds] = useState(25 * 60);
@@ -90,6 +95,39 @@ export function useLessonState(lessonId: number) {
   useEffect(() => { setTutorHistory([]); }, [lessonId]);
   const sections = (lesson?.sections as any[]) ?? [];
   const currentSection = sections[sectionIndex];
+  const evaluateAnswer = trpc.tutor.evaluateInlineAnswer.useMutation({
+    onSuccess: (data) => {
+      setAnswerVerdict(data.verdict);
+      setAnswerExplanation(data.explanation);
+      setAnswerPointer(data.pointer);
+      setIsEvaluating(false);
+      if (data.verdict === "correct") sounds.correct();
+      else if (data.verdict === "partially_correct") sounds.partiallyCorrect();
+      else sounds.incorrect();
+    },
+    onError: () => {
+      setIsEvaluating(false);
+      setAnswerVerdict("incorrect");
+      setAnswerExplanation(locale === "ar" ? "تعذّر التقييم. تابع." : "Could not evaluate. You may continue.");
+      setAnswerPointer("");
+    },
+  });
+
+  const submitTopicAnswer = useCallback(() => {
+    if (!topicQuestion || !currentSection) return;
+    if (!topicAnswer.trim()) return;
+    setIsEvaluating(true);
+    const body = locale === "ar"
+      ? (currentSection.bodyAr ?? currentSection.bodyEn ?? "")
+      : (currentSection.bodyEn ?? "");
+    evaluateAnswer.mutate({
+      question: topicQuestion,
+      answer: topicAnswer,
+      sectionBody: body,
+      locale: locale as "ar" | "en",
+    });
+  }, [topicQuestion, topicAnswer, currentSection, locale, evaluateAnswer]);
+
   const totalSections = sections.length;
   const progressPct = totalSections > 0 ? Math.round(((sectionIndex + 1) / totalSections) * 100) : 0;
   const lessonTitle = locale === "ar" ? (lesson?.titleAr ?? lesson?.titleEn ?? "") : (lesson?.titleEn ?? "");
@@ -142,6 +180,9 @@ export function useLessonState(lessonId: number) {
     setShowTopicQuestion(false);
     setTopicQuestion(null);
     setTopicAnswer("");
+    setAnswerVerdict(null);
+    setAnswerExplanation("");
+    setAnswerPointer("");
   }, [sectionIndex, totalSections, lessonId, locale, navigate, saveProgress, sounds]);
 
   const nextSection = useCallback(() => {
@@ -295,6 +336,8 @@ export function useLessonState(lessonId: number) {
     // Topic question
     topicQuestion, topicAnswer, setTopicAnswer, showTopicQuestion, setShowTopicQuestion,
     generateQuestion,
+    // Inline answer grading (Task 3)
+    answerVerdict, answerExplanation, answerPointer, isEvaluating, submitTopicAnswer,
     // Word highlight & definition
     highlightedWords, highlightIndex, selectedWord, setSelectedWord,
     handleWordClick, contentRef,

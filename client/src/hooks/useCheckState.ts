@@ -66,14 +66,10 @@ async function generateQuestions(lessonTitle: string, sections: any[], locale: s
     const match = full.match(/\[[\s\S]*\]/);
     if (!match) throw new Error("No JSON found");
     const parsed = JSON.parse(match[0]) as Question[];
-    if (parsed.length >= 5) return parsed;
-    const fallbacks: Question[] = [
-      { id: "fb1", type: "true_false", question: `The lesson "${lessonTitle}" covers important academic concepts.`, questionAr: `درس "${lessonTitle}" يغطي مفاهيم أكاديمية مهمة.`, options: ["True", "False"], optionsAr: ["صحيح", "خطأ"], correct: 0, explanation: "This lesson covers key curriculum concepts.", explanationAr: "يغطي هذا الدرس مفاهيم منهجية رئيسية.", marks: 1 },
-      { id: "fb2", type: "true_false", question: "Understanding this topic helps with related exam questions.", questionAr: "فهم هذا الموضوع يساعد في الأسئلة الامتحانية ذات الصلة.", options: ["True", "False"], optionsAr: ["صحيح", "خطأ"], correct: 0, explanation: "Understanding topics always helps with exams.", explanationAr: "فهم المواضيع يساعد دائماً في الامتحانات.", marks: 1 },
-      { id: "fb3", type: "mcq", question: "Which best describes the main purpose of studying this topic?", questionAr: "ما الذي يصف بشكل أفضل الغرض الرئيسي من دراسة هذا الموضوع؟", options: ["To memorise facts", "To understand and apply concepts", "To copy notes", "To skip other topics"], optionsAr: ["لحفظ الحقائق", "لفهم المفاهيم وتطبيقها", "لنسخ الملاحظات", "لتخطي المواضيع الأخرى"], correct: 1, explanation: "The goal is to understand and apply, not just memorise.", explanationAr: "الهدف هو الفهم والتطبيق، وليس الحفظ فقط.", marks: 2 },
-    ];
-    const needed = 5 - parsed.length;
-    return [...parsed, ...fallbacks.slice(0, needed)];
+    // Task 3: Return whatever the AI generated (even if < 5) — no filler questions.
+    // If the AI returned nothing, throw so the caller shows the error state.
+    if (parsed.length === 0) throw new Error("AI returned no questions");
+    return parsed;
   } catch {
     return [];
   }
@@ -95,6 +91,7 @@ export function useCheckState(lessonId: number) {
   const [textAnswer, setTextAnswer] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [generationFailed, setGenerationFailed] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
@@ -107,11 +104,14 @@ export function useCheckState(lessonId: number) {
     generateQuestions(lesson.titleEn ?? "", sections, locale).then(qs => {
       if (qs.length > 0) {
         setQuestions(qs);
+        setGenerationFailed(false);
       } else {
-        setQuestions([
-          { id: "q1", type: "true_false", question: `The lesson "${lesson.titleEn}" covers important concepts.`, questionAr: `درس "${lesson.titleAr ?? lesson.titleEn}" يغطي مفاهيم مهمة.`, options: ["True", "False"], optionsAr: ["صحيح", "خطأ"], correct: 0, explanation: "This is a general comprehension check.", explanationAr: "هذا فحص عام للفهم.", marks: 1 },
-        ]);
+        // Task 3: Show honest error state instead of filler questions
+        setGenerationFailed(true);
       }
+      setIsGenerating(false);
+    }).catch(() => {
+      setGenerationFailed(true);
       setIsGenerating(false);
     });
   }, [lesson, locale]);
@@ -188,7 +188,7 @@ export function useCheckState(lessonId: number) {
   };
 
   return {
-    questions, isGenerating, currentIndex, currentQ,
+    questions, isGenerating, generationFailed, currentIndex, currentQ,
     answers, setAnswers, submitted,
     textAnswer, setTextAnswer,
     isRecording, isComplete,

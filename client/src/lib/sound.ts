@@ -116,6 +116,13 @@ const CUES: Record<string, (vol: number) => void> = {
     tone(NOTES.C5, 0.05, 0.06, 0.08 * v);
     tone(NOTES.E5, 0.1, 0.08, 0.1 * v);
   },
+
+  // Warm amber two-note for partially correct answers
+  partiallyCorrect: (v) => {
+    tone(NOTES.E4, 0, 0.14, 0.1 * v);
+    tone(NOTES.G4, 0.1, 0.2, 0.09 * v);
+    visualFlash("#f59e0b", "Partially correct");
+  },
 };
 
 export function playSound(name: keyof typeof CUES | string) {

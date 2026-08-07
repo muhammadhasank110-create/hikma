@@ -73,19 +73,13 @@ export function SpeechProvider({ children }: { children: React.ReactNode }) {
 
   const speak = useCallback((text: string, opts: SpeakOptions = {}) => {
     const { priority = "polite", lang } = opts;
-    const isShort = text.length < 60;
 
     if (priority === "assertive") {
-      // Cancel everything, speak immediately
+      // Cancel everything, speak immediately via ElevenLabs (or browser fallback)
       tts.stop();
       queueRef.current = [];
-      if (isShort) {
-        // Use browser voice for instant feedback (see latency note above)
-        speakBrowserInstant(text, lang);
-      } else {
-        setIsSpeaking(true);
-        tts.speak(text);
-      }
+      setIsSpeaking(true);
+      tts.speak(text);
     } else {
       // Polite: queue behind current
       if (!tts.isSpeaking && queueRef.current.length === 0) {
@@ -95,7 +89,7 @@ export function SpeechProvider({ children }: { children: React.ReactNode }) {
         queueRef.current.push({ text, lang });
       }
     }
-  }, [tts, speakBrowserInstant]);
+  }, [tts]);
 
   const stop = useCallback(() => {
     tts.stop();
