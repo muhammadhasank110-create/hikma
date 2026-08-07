@@ -2,26 +2,21 @@
  * useTTS — Text-to-speech hook.
  *
  * Priority:
- * 1. ElevenLabs (via /api/tts/speak proxy) — natural, warm voice
- * 2. Browser Web Speech API — fallback when ElevenLabs is unavailable
+ * 1. ElevenLabs — called DIRECTLY from the browser using VITE_ELEVENLABS_API_KEY
+ *    This bypasses the server entirely and avoids the geo-restriction on the server IP.
+ * 2. Browser Web Speech API — fallback when ElevenLabs is unavailable or key is missing.
  *
- * Exposes:
- * - speak(text): start speaking
- * - stop(): stop speaking
- * - isSpeaking: boolean
- * - getCleanedText(raw): the exact string charIndex values refer to
- * - onBoundary: callback for word-by-word highlight sync (both engines)
- *
- * Fixes (Aug 2026):
- * - ElevenLabs highlighting is driven off audio.currentTime via rAF instead of
- *   a fixed setInterval, so it cannot drift out of sync with playback.
- * - The highlight timer is torn down on stop(); it used to keep running and
- *   stack a second timer on the next section.
- * - Word char offsets are computed against the cleaned string instead of
- *   join(" ").length, which pointed at the space *before* each word.
- * - cleanText is exported so callers highlight the same tokens we speak.
+ * Why client-side?
+ *   The sandbox server IP is in a geo-restricted region for ElevenLabs.
+ *   Real users' browsers are not restricted, so calling directly from the browser works.
  */
 import { useState, useRef, useCallback, useEffect } from "react";
+
+// ElevenLabs voice IDs — Rachel (en) and Bella (ar) are free-tier voices
+const ELEVEN_VOICE_EN = "21m00Tcm4TlvDq8ikWAM"; // Rachel — warm, clear
+const ELEVEN_VOICE_AR = "AZnzlk1XvdvUeBnXmlld"; // Domi — closest Arabic-capable
+const ELEVEN_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY as string | undefined;
+const ELEVEN_MODEL = "eleven_multilingual_v2";
 
 interface UseTTSOptions {
   rate?: number;
@@ -58,7 +53,6 @@ function pickVoice(lang: string, hint?: string): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
   const langBase = lang.split("-")[0].toLowerCase();
-  // Prefer high-quality voices by name (Chrome/Edge/Safari premium voices)
   const premiumNames = ["Daniel", "Samantha", "Karen", "Moira", "Fiona", "Alex",
     "Google UK English Male", "Google UK English Female", "Microsoft David",
     "Microsoft Zira", "Microsoft Mark", "Microsoft George", "Microsoft Hazel"];
@@ -66,7 +60,6 @@ function pickVoice(lang: string, hint?: string): SpeechSynthesisVoice | null {
     const hinted = voices.find(v => v.name.toLowerCase().includes(hint.toLowerCase()));
     if (hinted) return hinted;
   }
-  // Try premium voices for the right language first
   for (const name of premiumNames) {
     const v = voices.find(vv => vv.name.includes(name) && vv.lang.toLowerCase().startsWith(langBase));
     if (v) return v;
@@ -79,7 +72,8 @@ function pickVoice(lang: string, hint?: string): SpeechSynthesisVoice | null {
 
 export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseTTSOptions = {}) {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [hasElevenLabs, setHasElevenLabs] = useState<boolean | null>(null);
+  // hasElevenLabs is true if the VITE key is present — we don't need a server probe
+  const hasElevenLabs = !!(ELEVEN_API_KEY && ELEVEN_API_KEY.length > 10);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const cleanedTextRef = useRef<string>("");
@@ -87,29 +81,6 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   const objectUrlRef = useRef<string | null>(null);
   const onBoundaryRef = useRef(onBoundary);
   useEffect(() => { onBoundaryRef.current = onBoundary; }, [onBoundary]);
-
-  // Check if ElevenLabs is configured — retry once after 2s on failure
-  useEffect(() => {
-    let retried = false;
-    const doFetch = () =>
-      fetch("/api/tts/config")
-        .then(r => r.json())
-        .then(d => {
-          // Log the result so a missing ELEVENLABS_API_KEY is visible in DevTools
-          console.log("[useTTS] /api/tts/config →", d);
-          setHasElevenLabs(!!d.hasElevenLabs);
-        })
-        .catch(err => {
-          console.warn("[useTTS] /api/tts/config failed:", err);
-          if (!retried) {
-            retried = true;
-            setTimeout(doFetch, 2000);
-          } else {
-            setHasElevenLabs(false);
-          }
-        });
-    doFetch();
-  }, []);
 
   const stopHighlightLoop = useCallback(() => {
     if (rafRef.current !== null) {
@@ -166,23 +137,35 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   }, [rate, lang, voiceHint, stopBrowser]);
 
   const speakWithElevenLabs = useCallback(async (text: string) => {
+    if (!ELEVEN_API_KEY) { speakWithBrowser(text); return; }
     stopElevenLabs();
     setIsSpeaking(true);
     try {
-      const res = await fetch("/api/tts/speak", {
+      const isArabic = lang.startsWith("ar");
+      const voiceId = isArabic ? ELEVEN_VOICE_AR : ELEVEN_VOICE_EN;
+
+      // Call ElevenLabs DIRECTLY from the browser — bypasses server geo-restriction
+      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, locale: lang.startsWith("ar") ? "ar" : "en" }),
+        headers: {
+          "xi-api-key": ELEVEN_API_KEY,
+          "Content-Type": "application/json",
+          "Accept": "audio/mpeg",
+        },
+        body: JSON.stringify({
+          text,
+          model_id: ELEVEN_MODEL,
+          voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.2, use_speaker_boost: true },
+        }),
       });
-      // Check for failure: non-OK status, HTML response (403 proxy block), or JSON error
+
       const contentType = res.headers.get("content-type") ?? "";
-      if (!res.ok || contentType.includes("json") || contentType.includes("html") || contentType.includes("text")) {
-        // ElevenLabs failed (403 proxy block, 402 quota, or other error) — fall back to browser
-        console.warn("[useTTS] ElevenLabs unavailable (status:", res.status, ") — using browser speech");
-        setHasElevenLabs(false);
+      if (!res.ok || !contentType.includes("audio")) {
+        console.warn("[useTTS] ElevenLabs error:", res.status, contentType, "— falling back to browser");
         speakWithBrowser(text);
         return;
       }
+
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
@@ -192,8 +175,6 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       const { words, offsets } = buildWordOffsets(text);
       let lastIdx = -1;
 
-      // Highlight is read off the real playback clock every frame, so it
-      // self-corrects instead of accumulating drift.
       const tick = () => {
         const a = audioRef.current;
         if (!a || a.paused || a.ended) { rafRef.current = null; return; }
@@ -223,11 +204,11 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
         rafRef.current = requestAnimationFrame(tick);
       };
       audio.onended = finish;
-      audio.onerror = finish;
+      audio.onerror = () => { console.warn("[useTTS] Audio playback error"); finish(); speakWithBrowser(text); };
 
       await audio.play();
-    } catch {
-      setHasElevenLabs(false);
+    } catch (err) {
+      console.warn("[useTTS] ElevenLabs fetch failed:", err);
       speakWithBrowser(text);
     }
   }, [lang, stopElevenLabs, stopHighlightLoop, speakWithBrowser]);
@@ -249,18 +230,15 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     }
   }, [hasElevenLabs, stop, speakWithElevenLabs, speakWithBrowser]);
 
-  // Expose getCleanedText for word-index math in LessonPage
   const getCleanedText = useCallback((raw: string) => cleanText(raw), []);
 
-  // Reload voices when they become available
   useEffect(() => {
     if (!("speechSynthesis" in window)) return;
-    const handler = () => {}; // just trigger re-render
+    const handler = () => {};
     window.speechSynthesis.addEventListener("voiceschanged", handler);
     return () => window.speechSynthesis.removeEventListener("voiceschanged", handler);
   }, []);
 
-  // Tear down on unmount
   useEffect(() => () => { stopHighlightLoop(); }, [stopHighlightLoop]);
 
   return { speak, stop, isSpeaking, getCleanedText, hasElevenLabs };
