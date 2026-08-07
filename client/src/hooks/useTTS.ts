@@ -17,6 +17,9 @@ const ELEVEN_VOICE_EN = "21m00Tcm4TlvDq8ikWAM"; // Rachel — warm, clear
 const ELEVEN_VOICE_AR = "AZnzlk1XvdvUeBnXmlld"; // Domi — closest Arabic-capable
 const ELEVEN_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY as string | undefined;
 const ELEVEN_MODEL = "eleven_multilingual_v2";
+// Module-level flag: once ElevenLabs returns a non-audio response, stop retrying
+// for the rest of the session. Reset on page reload.
+let elevenLabsFailedThisSession = false;
 
 interface UseTTSOptions {
   rate?: number;
@@ -73,7 +76,7 @@ function pickVoice(lang: string, hint?: string): SpeechSynthesisVoice | null {
 export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseTTSOptions = {}) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   // hasElevenLabs is true if the VITE key is present — we don't need a server probe
-  const hasElevenLabs = !!(ELEVEN_API_KEY && ELEVEN_API_KEY.length > 10);
+  const hasElevenLabs = !!(ELEVEN_API_KEY && ELEVEN_API_KEY.length > 10) && !elevenLabsFailedThisSession;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const cleanedTextRef = useRef<string>("");
@@ -162,6 +165,9 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       const contentType = res.headers.get("content-type") ?? "";
       if (!res.ok || !contentType.includes("audio")) {
         console.warn("[useTTS] ElevenLabs error:", res.status, contentType, "— falling back to browser");
+        if (res.status === 400 || res.status === 401 || res.status === 403) {
+          elevenLabsFailedThisSession = true; // stop retrying for this session
+        }
         speakWithBrowser(text);
         return;
       }

@@ -102,7 +102,7 @@ export function useVoiceCommands({
 }: UseVoiceCommandsOptions = {}) {
   const [, navigate] = useLocation();
   const speech = useSpeech();
-    const [isOn, setIsOn] = useState(false);
+  const [isOn, setIsOn] = useState(false);
   const [lastTranscript, setLastTranscript] = useState<string>("");
   const isOnRef = useRef(false);
   const recRef = useRef<any>(null);

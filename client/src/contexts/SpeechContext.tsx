@@ -18,7 +18,7 @@
  * After this change, `grep -rn "SpeechSynthesisUtterance" client/src` should
  * return results ONLY in useTTS.ts.
  */
-import React, { createContext, useContext, useRef, useCallback, useState } from "react";
+import React, { createContext, useContext, useRef, useCallback, useState, useEffect } from "react";
 import { useTTS } from "@/hooks/useTTS";
 import { useProfile } from "./ProfileContext";
 
@@ -90,6 +90,15 @@ export function SpeechProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [tts]);
+
+  // Drain the polite queue whenever TTS finishes speaking
+  useEffect(() => {
+    if (!tts.isSpeaking && queueRef.current.length > 0) {
+      speakNext();
+    } else if (!tts.isSpeaking) {
+      setIsSpeaking(false);
+    }
+  }, [tts.isSpeaking, speakNext]);
 
   const stop = useCallback(() => {
     tts.stop();
