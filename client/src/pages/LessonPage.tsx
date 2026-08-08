@@ -95,6 +95,76 @@ export default function LessonPage() {
     };
   }, [s.readAloud, s.nextSection, s.prevSection]);
 
+
+  // ── DOM-based word highlighting ──────────────────────────────────────────
+  // When TTS is narrating, highlight the current word by wrapping it in a
+  // <mark> element inside the rendered content. Works with Streamdown markdown.
+  const contentElRef = useRef<HTMLDivElement | null>(null);
+  const domWordListRef = useRef<{ node: Text; start: number; end: number }[]>([]);
+  const activeMarkRef = useRef<HTMLElement | null>(null);
+
+  // Rebuild the flat word list from DOM text nodes whenever section changes
+  useEffect(() => {
+    domWordListRef.current = [];
+    activeMarkRef.current = null;
+    const root = contentElRef.current;
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) => {
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        const tag = parent.tagName.toLowerCase();
+        if (["script", "style", "mark"].includes(tag)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const wordRegex = /\S+/g;
+    const words: { node: Text; start: number; end: number }[] = [];
+    let node: Text | null;
+    while ((node = walker.nextNode() as Text | null)) {
+      const text = node.textContent ?? "";
+      let match: RegExpExecArray | null;
+      wordRegex.lastIndex = 0;
+      while ((match = wordRegex.exec(text)) !== null) {
+        words.push({ node, start: match.index, end: match.index + match[0].length });
+      }
+    }
+    domWordListRef.current = words;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.sectionIndex, s.isNarrating]);
+
+  // Apply/remove the highlight mark when highlightIndex changes
+  useEffect(() => {
+    // Remove previous mark
+    if (activeMarkRef.current) {
+      const mark = activeMarkRef.current;
+      const parent = mark.parentNode;
+      if (parent) {
+        while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+        parent.removeChild(mark);
+        parent.normalize();
+      }
+      activeMarkRef.current = null;
+    }
+    if (s.highlightIndex < 0 || !s.isNarrating) return;
+    const wordEntry = domWordListRef.current[s.highlightIndex];
+    if (!wordEntry) return;
+    try {
+      const { node, start, end } = wordEntry;
+      const range = document.createRange();
+      range.setStart(node, start);
+      range.setEnd(node, end);
+      const mark = document.createElement("mark");
+      mark.className = s.isFocused ? "tts-word-active tts-word-focus" : "tts-word-active";
+      mark.setAttribute("aria-current", "true");
+      range.surroundContents(mark);
+      activeMarkRef.current = mark;
+      mark.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } catch {
+      // surroundContents can fail if range crosses element boundaries — ignore
+    }
+  }, [s.highlightIndex, s.isNarrating, s.isFocused]);
+
   if (!lessonId) return <div className="container py-16 text-center text-muted-foreground">{t("Invalid lesson.", "درس غير صالح.")}</div>;
 
   if (s.isLoading) return (
@@ -238,6 +308,7 @@ export default function LessonPage() {
                 {/* Unified render path: Streamdown always (fixes bold/markdown), word-click via DOM text extraction */}
                 <div
                   data-lesson-content
+                  ref={contentElRef}
                   className={`max-w-none relative ${s.isFocused ? "text-[1.125rem] leading-[1.95] tracking-[0.01em] text-[#111411] [&_p]:mb-4 [&_p]:text-[1.125rem] [&_p]:leading-[1.95] [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#111411] [&_strong]:font-bold [&_strong]:text-[#111411] [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:text-[1.125rem] [&_li]:leading-[1.9]" : "prose prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`}
                   onClick={(e: React.MouseEvent) => {
                     // Extract word from DOM text node at click point — works with Streamdown markdown
@@ -271,13 +342,7 @@ export default function LessonPage() {
                       : (locale === "ar" ? (s.currentSection.bodyAr ?? s.currentSection.bodyEn ?? "") : (s.currentSection.bodyEn ?? ""))}
                   </Streamdown>
                   {/* Highlight overlay — shown during TTS narration */}
-                  {s.highlightedWords.length > 0 && s.highlightIndex >= 0 && (
-                    <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-                      <span className={`inline-block px-0.5 rounded text-xs font-semibold ${s.isFocused ? "bg-yellow-300/80 text-[#111411]" : "bg-primary/30"}`} style={{ position: "absolute", top: 0, left: 0, opacity: 0 }}>
-                        {/* Visual highlight is handled by CSS data-word-active on the Streamdown spans */}
-                      </span>
-                    </div>
-                  )}
+                  {/* Word highlighting is now handled by DOM-based mark element injection in the useEffect above */}
                   {/* Tip: only show when word-click actually works (always now) */}
                   <p className={`text-xs mt-3 italic ${s.isFocused ? "text-[#111411]/50" : "text-muted-foreground"}`}>{t("Tip: click any word for its definition.", "نصيحة: انقر على أي كلمة لتعريفها.")}</p>
                 </div>
