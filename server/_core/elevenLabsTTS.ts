@@ -11,7 +11,7 @@ import { ENV } from "./env";
 const VOICE_IDS: Record<string, string> = {
   // FREE TIER ONLY — library/premium voices return 402 on the free plan
   en: "EXAVITQu4vr4xnSDxMaL", // Bella — warm female, free tier default
-  ar: "EXAVITQu4vr4xnSDxMaL", // Bella — multilingual, handles Arabic
+  ar: "onwK4e9ZLuTAKqWW03F9", // Daniel — deep broadcaster, best Arabic on free tier
 };
 
 // Concurrency limiter — ElevenLabs free plan: max 2 concurrent requests

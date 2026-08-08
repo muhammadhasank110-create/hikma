@@ -13,8 +13,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 // ElevenLabs voice IDs — FREE TIER ONLY (library/premium voices return 402)
 // These are the default voices available on all plans including free.
-const ELEVEN_VOICE_EN = "EXAVITQu4vr4xnSDxMaL"; // Bella — warm female, free tier
-const ELEVEN_VOICE_AR = "EXAVITQu4vr4xnSDxMaL"; // Bella — multilingual, handles Arabic
+const ELEVEN_VOICE_EN = "EXAVITQu4vr4xnSDxMaL"; // Sarah/Bella — warm female, free tier
+const ELEVEN_VOICE_AR = "onwK4e9ZLuTAKqWW03F9"; // Daniel — deep broadcaster, best Arabic on free tier
 const ELEVEN_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY as string | undefined;
 const ELEVEN_MODEL = "eleven_multilingual_v2";
 // Module-level flag: only set permanently on auth errors (401/403), NOT on 402/429
@@ -85,6 +85,8 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   const rafRef = useRef<number | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const onBoundaryRef = useRef(onBoundary);
+  // AbortController to cancel in-flight ElevenLabs fetch when speak() is called again
+  const abortRef = useRef<AbortController | null>(null);
   useEffect(() => { onBoundaryRef.current = onBoundary; }, [onBoundary]);
 
   const stopHighlightLoop = useCallback(() => {
@@ -101,6 +103,11 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
 
   const stopElevenLabs = useCallback(() => {
     stopHighlightLoop();
+    // Cancel any in-flight fetch immediately
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.onended = null;
@@ -145,6 +152,9 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     if (!ELEVEN_API_KEY) { speakWithBrowser(text); return; }
     stopElevenLabs();
     setIsSpeaking(true);
+    // Create a new AbortController for this request
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       const isArabic = lang.startsWith("ar");
       const voiceId = isArabic ? ELEVEN_VOICE_AR : ELEVEN_VOICE_EN;
@@ -156,12 +166,14 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text, locale: isArabic ? "ar" : "en", voiceId }),
+          signal: controller.signal,
         });
         // If proxy says ElevenLabs not configured, fall back to direct call
         if (res.status === 503) {
           throw new Error("proxy-not-configured");
         }
       } catch (proxyErr: any) {
+        if (proxyErr?.name === "AbortError") { setIsSpeaking(false); return; }
         // Proxy failed or not configured — try direct browser call
         res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
           method: "POST",
@@ -175,6 +187,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
             model_id: ELEVEN_MODEL,
             voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.2, use_speaker_boost: true },
           }),
+          signal: controller.signal,
         });
       }
 
@@ -189,6 +202,8 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       }
 
       const blob = await res.blob();
+      // Check if this request was aborted while we were downloading
+      if (controller.signal.aborted) { setIsSpeaking(false); return; }
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
       const audio = new Audio(url);
@@ -230,8 +245,12 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
 
       await audio.play();
     } catch (err) {
-      console.warn("[useTTS] ElevenLabs fetch failed:", err);
-      speakWithBrowser(text);
+      if ((err as any)?.name === "AbortError") {
+        setIsSpeaking(false); // Cancelled intentionally — no fallback
+      } else {
+        console.warn("[useTTS] ElevenLabs fetch failed:", err);
+        speakWithBrowser(text);
+      }
     }
   }, [lang, stopElevenLabs, stopHighlightLoop, speakWithBrowser]);
 

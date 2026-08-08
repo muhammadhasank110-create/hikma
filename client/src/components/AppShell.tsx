@@ -14,7 +14,8 @@ import { toast } from "sonner";
 import {
   Home, BookOpen, Bot, TrendingUp, Settings, Keyboard, GraduationCap,
   Users, Shield, Menu, X, Globe, Sun, Moon, Contrast, Volume2, VolumeX,
-  ChevronRight, LogOut, LogIn, Layers, Star, FileText
+  ChevronRight, LogOut, LogIn, Layers, Star, FileText, MoreHorizontal,
+  Sparkles, BarChart3, Library, Brain
 } from "lucide-react";
 // startLogin removed
 import { playTestSound, playSound } from "@/lib/sound";
@@ -32,10 +33,10 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", labelEn: "Home", labelAr: "الرئيسية", icon: Home },
-  { href: "/subjects/1", labelEn: "Subjects", labelAr: "المواد", icon: BookOpen },
-  { href: "/tutor", labelEn: "Hikma AI", labelAr: "حكمة AI", icon: Bot },
-  { href: "/progress", labelEn: "Progress", labelAr: "تقدمي", icon: TrendingUp },
-  { href: "/ecc", labelEn: "ECC", labelAr: "المنهج الموسّع", icon: Layers },
+  { href: "/subjects/1", labelEn: "Subjects", labelAr: "المواد", icon: Library },
+  { href: "/tutor", labelEn: "Hikma AI", labelAr: "حكمة AI", icon: Sparkles },
+  { href: "/progress", labelEn: "Progress", labelAr: "تقدمي", icon: BarChart3 },
+  { href: "/ecc", labelEn: "ECC", labelAr: "المنهج الموسّع", icon: Brain },
   { href: "/exam-skills", labelEn: "Exam Skills", labelAr: "مهارات الامتحان", icon: FileText },
   { href: "/teacher", labelEn: "Teacher", labelAr: "المعلم", icon: GraduationCap, roles: ["teacher", "admin"] },
   { href: "/guardian", labelEn: "Guardian", labelAr: "ولي الأمر", icon: Users, roles: ["guardian", "admin"] },
@@ -89,12 +90,12 @@ function AccessibilityBar() {
         {/* High contrast toggle */}
         <button
           onClick={() => updateProfile({ theme: profile.theme === "high_contrast" ? "light" : "high_contrast" })}
-          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
+          className="flex items-center gap-1.5 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
           aria-label={t("Toggle high contrast", "تبديل التباين العالي")}
           aria-pressed={profile.theme === "high_contrast"}
         >
           <Contrast className="w-3 h-3" />
-          <span>{t("High contrast", "تباين عالٍ")}</span>
+          <span className="hidden lg:inline">{t("Contrast", "تباين")}</span>
         </button>
         {/* Text size */}
         <button
@@ -102,34 +103,34 @@ function AccessibilityBar() {
           className="hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px] flex items-center"
           aria-label={t("Increase text size", "تكبير النص")}
         >
-          A+
+          <span className="font-bold text-xs">A+</span>
         </button>
         <button
           onClick={() => updateProfile({ fontScale: Math.max(1.0, profile.fontScale - 0.1) })}
           className="hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px] flex items-center"
           aria-label={t("Decrease text size", "تصغير النص")}
         >
-          A−
+          <span className="font-bold text-xs">A−</span>
         </button>
         {/* Audio toggle */}
         <button
           onClick={() => updateProfile({ autoNarrate: !profile.autoNarrate })}
-          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
+          className="flex items-center gap-1.5 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
           aria-label={t("Toggle audio narration", "تبديل السرد الصوتي")}
           aria-pressed={profile.autoNarrate}
         >
           {profile.autoNarrate ? <Volume2 className="w-3 h-3" /> : <VolumeX className="w-3 h-3" />}
-          <span>{t("Audio", "صوت")}</span>
+          <span className="hidden lg:inline">{t("Audio", "صوت")}</span>
         </button>
         {/* Focus mode */}
         <button
           onClick={() => updateProfile({ mode: profile.mode === "focus" ? "reading" : "focus" })}
-          className="flex items-center gap-1 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
+          className="flex items-center gap-1.5 hover:text-yellow-300 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-2 min-h-[44px]"
           aria-label={t("Toggle focus mode", "تبديل وضع التركيز")}
           aria-pressed={profile.mode === "focus"}
         >
           <Star className="w-3 h-3" />
-          <span>{t("Focus", "تركيز")}</span>
+          <span className="hidden lg:inline">{t("Focus", "تركيز")}</span>
         </button>
         {/* Sound effects toggle */}
         <div className="relative flex items-center">
@@ -234,7 +235,8 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
 
         {/* Desktop nav links */}
         <div ref={navLinksRef} className="hidden md:flex items-center gap-1 flex-1 overflow-x-auto" role="toolbar" aria-label="Navigation links">
-          {visibleItems.slice(0, 6).map(item => {
+          {/* Core 4 nav items always visible */}
+          {visibleItems.slice(0, 4).map(item => {
             const Icon = item.icon;
             const isActive = location === item.href || location.startsWith(item.href + "/");
             return (
@@ -248,11 +250,39 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
                 }`}
                 aria-current={isActive ? "page" : undefined}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className="w-4 h-4" />
                 {locale === "ar" ? item.labelAr : item.labelEn}
               </Link>
             );
           })}
+          {/* More dropdown for ECC + Exam Skills */}
+          <div className="relative group">
+            <button
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-white/80 hover:text-white hover:bg-muted/50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
+              aria-label={locale === "ar" ? "المزيد" : "More"}
+            >
+              <MoreHorizontal className="w-4 h-4" />
+              {locale === "ar" ? "المزيد" : "More"}
+            </button>
+            <div className="absolute top-full start-0 mt-1 w-48 bg-[rgb(var(--nav-bg))] border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150 z-50 overflow-hidden">
+              {visibleItems.slice(4, 6).map(item => {
+                const Icon = item.icon;
+                const isActive = location === item.href || location.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-2.5 px-4 py-3 text-sm transition-colors ${
+                      isActive ? "bg-white/15 text-white font-semibold" : "text-white/80 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    {locale === "ar" ? item.labelAr : item.labelEn}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Right side controls */}

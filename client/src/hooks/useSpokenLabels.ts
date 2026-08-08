@@ -80,7 +80,7 @@ export function useSpokenLabels() {
     debounceRef.current = setTimeout(() => {
       tts.stop();
       tts.speak(label);
-    }, 250);
+    }, 80); // 80ms — fast enough to feel responsive, long enough to avoid false triggers
   }, [tts]);
 
   useEffect(() => {
@@ -110,14 +110,26 @@ export function useSpokenLabels() {
       if (label) announce(label);
     };
 
+    // Stop audio immediately when pointer leaves an element (user moved away)
+    const handlePointerOut = () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      tts.stop();
+      lastLabel.current = ""; // Reset so re-entering the same element re-announces
+    };
+
     document.addEventListener("focusin", handleFocusIn);
     document.addEventListener("pointerover", handlePointerOver);
+    document.addEventListener("pointerout", handlePointerOut);
     return () => {
       document.removeEventListener("focusin", handleFocusIn);
       document.removeEventListener("pointerover", handlePointerOver);
+      document.removeEventListener("pointerout", handlePointerOut);
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [enabled, announce]);
+  }, [enabled, announce, tts]);
 
   const toggle = useCallback(() => {
     setEnabled(prev => {
