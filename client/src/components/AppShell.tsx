@@ -224,13 +224,13 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
 
   return (
     <nav
-      className="sticky top-0 z-40 w-full bg-[rgb(var(--nav-bg))] text-white shadow-lg"
+      className="w-full bg-[rgb(var(--nav-bg))] text-white"
       aria-label={t("Main navigation", "التنقل الرئيسي")}
     >
       <div className="container flex items-center justify-between h-16 gap-4">
         {/* Logo */}
         <Link href="/dashboard" aria-label="Go to dashboard" className="flex items-center gap-2.5 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
-          <img src="/img/hikma-nav-white.png" alt="Hikma" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" style={{ maxWidth: 260 }} />
+          <img src="/img/hikma-nav-white.png" alt="Hikma" className="h-14 w-auto object-contain transition-transform group-hover:scale-105 brightness-110" style={{ maxWidth: 280 }} />
         </Link>
 
         {/* Desktop nav links */}
@@ -444,10 +444,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {!isLanding && (
-        <>
+        <div className="sticky top-0 z-40 shadow-lg">
           <AccessibilityBar />
           <TopNav onMenuOpen={() => setMobileMenuOpen(true)} />
-        </>
+        </div>
       )}
 
       {/* Mobile drawer */}
