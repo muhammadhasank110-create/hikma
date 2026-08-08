@@ -29,6 +29,13 @@
       "when": 1786035962161,
       "tag": "0003_wise_redwing",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1786220125072,
+      "tag": "0004_chief_speed_demon",
+      "breakpoints": true
     }
   ]
 }

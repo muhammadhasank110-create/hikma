@@ -443,3 +443,20 @@ export const tutorConversations = mysqlTable("tutor_conversations", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
+
+// ============================================================
+// FEEDBACK REPORTS
+// ============================================================
+export const feedbackReports = mysqlTable("feedback_reports", {
+  id:            int("id").autoincrement().primaryKey(),
+  userId:        int("userId").notNull(),
+  message:       text("message").notNull(),
+  screenshotKey: varchar("screenshotKey", { length: 512 }),
+  screenshotUrl: varchar("screenshotUrl", { length: 1024 }),
+  page:          varchar("page", { length: 255 }),
+  userAgent:     varchar("userAgent", { length: 512 }),
+  status:        mysqlEnum("status", ["open", "acknowledged", "resolved"]).default("open").notNull(),
+  createdAt:     timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type FeedbackReport = typeof feedbackReports.$inferSelect;

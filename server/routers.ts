@@ -10,6 +10,7 @@ import { classesRouter } from "./routers/classes";
 import { ttsRouter } from "./routers/tts";
 import { sttRouter } from "./routers/stt";
 import { eccRouter } from "./routers/ecc";
+import { feedbackRouter } from "./routers/feedback";
 
 export const appRouter = router({
   system: systemRouter,
@@ -34,6 +35,7 @@ export const appRouter = router({
   tts: ttsRouter,
   stt: sttRouter,
   ecc: eccRouter,
+  feedback: feedbackRouter,
 });
 
 export type AppRouter = typeof appRouter;

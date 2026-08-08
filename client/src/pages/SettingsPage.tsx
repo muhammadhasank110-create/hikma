@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Volume2, Eye, Type, Keyboard, Globe, Accessibility , Zap} from "lucide-react";
+import { Volume2, Eye, Type, Keyboard, Globe, Accessibility, Zap } from "lucide-react";
+import { FeedbackPanel } from "@/components/FeedbackPanel";
 
 export default function SettingsPage() {
   const { profile, updateProfile, locale, setLocale } = useProfile();
@@ -319,6 +320,8 @@ export default function SettingsPage() {
       >
         {t("Save Settings", "حفظ الإعدادات")}
       </Button>
+      {/* Feedback */}
+      <FeedbackPanel locale={locale} />
     </div>
     </PageTransition>
   );
