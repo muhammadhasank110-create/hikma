@@ -149,6 +149,25 @@ export function KeyboardProvider({ children }: { children: ReactNode }) {
 
       const key = e.key;
 
+      // ── B2 FIX: prevent double-move when a grid-nav container owns the event ──
+      // This listener runs in capture phase (line 253). useGridNavigation listens
+      // in bubble phase and calls stopPropagation() — but that is too late to stop
+      // a capture-phase listener. Fix: if the focused element is inside a
+      // data-grid-nav container, let the grid handle it exclusively.
+      // Idempotence flag ensures a stray listener can never double-move.
+      if ((e as any).__hikmaNavHandled) return;
+      const isDirectionKey = [
+        "ArrowUp","ArrowDown","ArrowLeft","ArrowRight",
+        "w","W","a","A","s","S","d","D"
+      ].includes(key);
+      if (isDirectionKey && active && active.closest("[data-grid-nav]")) {
+        // The grid-nav container owns this event — do not handle it here
+        return;
+      }
+      if (isDirectionKey) {
+        (e as any).__hikmaNavHandled = true;
+      }
+
       // ── Global back shortcut: Ctrl+B / Alt+ArrowLeft / Ctrl+[ ──────────────
       const isCtrl = e.ctrlKey || e.metaKey;
       if (

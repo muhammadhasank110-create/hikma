@@ -28,7 +28,7 @@ export const profileRouter = router({
       earcons: z.boolean().optional(),
       theme: z.enum(["light", "dark", "cream", "calm", "high_contrast"]).optional(),
       fontFamily: z.enum(["atkinson", "plex", "opendyslexic", "naskh"]).optional(),
-      fontScale: z.number().min(1.0).max(2.5).optional(),
+      fontScale: z.number().min(0.8).max(2.5).optional(),
       lineHeight: z.number().min(1.5).max(2.2).optional(),
       letterSpacing: z.number().min(0).max(0.12).optional(),
       wordSpacing: z.number().min(0).max(0.3).optional(),

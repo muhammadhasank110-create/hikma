@@ -130,7 +130,7 @@ export default function SettingsPage() {
         <div className="space-y-2">
           <Label className="text-sm font-medium">{t("Text size", "حجم النص")} ({Math.round(profile.fontScale * 100)}%)</Label>
           <Slider
-            min={100} max={250} step={10}
+            min={80} max={250} step={10}
             value={[profile.fontScale * 100]}
             onValueChange={([v]) => updateProfile({ fontScale: v / 100 })}
             aria-label={t("Text size", "حجم النص")}
