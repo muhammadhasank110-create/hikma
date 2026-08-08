@@ -94,7 +94,7 @@ function TopicCard({ topic, topicIdx, isOpen, onToggle, locale, onNavigate }: {
           <CardHeader className="py-4 px-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
                   {topicIdx + 1}
                 </div>
                 <div>
@@ -142,7 +142,7 @@ function TopicCard({ topic, topicIdx, isOpen, onToggle, locale, onNavigate }: {
                   </p>
                 )}
               </div>
-              <Play className="w-3.5 h-3.5 text-muted-foreground group-hover/lesson:text-primary transition-colors flex-shrink-0" />
+              <Play className="w-3.5 h-3.5 text-primary/60 group-hover/lesson:text-primary transition-colors flex-shrink-0" />
             </button>
           ))}
           {lessons?.length === 0 && !isLoading && (

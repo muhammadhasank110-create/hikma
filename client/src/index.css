@@ -281,6 +281,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    font-feature-settings: "zero" 0; /* disable slashed zeros in Atkinson Hyperlegible */
   }
 
   /* RTL typography adjustments */

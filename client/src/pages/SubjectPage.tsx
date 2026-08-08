@@ -39,8 +39,8 @@ export default function SubjectPage() {
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <BookOpen className="w-5 h-5 text-primary" />
+                <div className="p-2 rounded-lg bg-primary/15">
+                  <BookOpen className="w-5 h-5 text-primary" style={{ strokeWidth: 2.5 }} />
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>

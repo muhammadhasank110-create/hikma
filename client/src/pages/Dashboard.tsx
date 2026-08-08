@@ -107,7 +107,7 @@ export default function Dashboard() {
                 <Icon className="w-5 h-5" aria-hidden="true" />
               </div>
               <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>
-              <p className="text-3xl font-black text-foreground tabular-nums">
+              <p className="text-3xl font-black text-foreground tabular-nums" style={{ fontVariantNumeric: "normal" }}>
                 <AnimCounter to={s.value} suffix={s.suffix} />
               </p>
             </motion.div>

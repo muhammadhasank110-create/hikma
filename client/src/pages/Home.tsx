@@ -300,7 +300,11 @@ export default function Home() {
         style={{ background: "rgba(13,31,16,0.85)", backdropFilter: "blur(20px)" }}>
         <motion.a href={isAuthenticated ? "/dashboard" : "/"} aria-label={isAuthenticated ? t("Go to dashboard", "الذهاب إلى لوحة التحكم") : t("Hikma home", "الصفحة الرئيسية لحكمة")} className="flex items-center gap-3 group flex-shrink-0"
           initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-          <img src={NAV_LOGO_WHITE} alt="Hikma" className="h-12 w-auto object-contain transition-transform group-hover:scale-105" style={{ maxWidth: 260 }} />
+          <img src="/img/hikma-icon-dark.png" alt="" aria-hidden="true" className="h-10 w-10 object-contain rounded-xl transition-transform group-hover:scale-105 flex-shrink-0" />
+          <span className="flex flex-col leading-none select-none">
+            <span className="text-white font-bold text-sm" style={{ letterSpacing: "0.2em" }}>HIKMA</span>
+            <span className="text-white/60 font-light text-xs" style={{ letterSpacing: "0.08em" }}>حكمة</span>
+          </span>
         </motion.a>
         <motion.div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0"
           initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>

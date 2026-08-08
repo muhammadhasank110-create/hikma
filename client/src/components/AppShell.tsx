@@ -209,6 +209,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
   const { profile, locale } = useProfile();
   const [cmdOpen, setCmdOpen] = useState(false);
   const [location] = useLocation();
+  const [moreOpen, setMoreOpen] = useState(false);
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   // Lane-constrained keyboard navigation for the nav bar
   const navLinksRef = useRef<HTMLDivElement>(null);
@@ -230,18 +231,17 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
       <div className="container flex items-center justify-between h-16 gap-4">
         {/* Logo */}
         <Link href="/dashboard" aria-label="Go to dashboard" className="flex items-center gap-3 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
-          {/* Clean falcon icon */}
+          {/* Logo: dark icon (green rounded square + white falcon) — visible on dark nav */}
           <img
-            src="/img/hikma-falcon-white.png"
+            src="/img/hikma-icon-dark.png"
             alt=""
             aria-hidden="true"
-            className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
-            style={{ opacity: 0.92 }}
+            className="h-10 w-10 object-contain rounded-xl transition-transform group-hover:scale-105 flex-shrink-0"
           />
-          {/* Refined text wordmark */}
-          <span className="flex flex-col leading-none select-none" style={{ opacity: 0.92 }}>
-            <span className="text-white font-semibold tracking-widest text-sm" style={{ fontFamily: "var(--font-heading, serif)", letterSpacing: "0.18em" }}>HIKMA</span>
-            <span className="text-white/80 font-light tracking-wide text-xs" style={{ fontFamily: "var(--font-heading, serif)", letterSpacing: "0.1em" }}>حكمة</span>
+          {/* Text wordmark */}
+          <span className="flex flex-col leading-none select-none">
+            <span className="text-white font-bold tracking-widest text-sm" style={{ letterSpacing: "0.2em" }}>HIKMA</span>
+            <span className="text-white/70 font-light text-xs" style={{ letterSpacing: "0.08em" }}>حكمة</span>
           </span>
         </Link>
 
@@ -267,34 +267,48 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
               </Link>
             );
           })}
-          {/* More dropdown for ECC + Exam Skills */}
-          <div className="relative group">
-            <button
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-white/80 hover:text-white hover:bg-muted/50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
-              aria-label={locale === "ar" ? "المزيد" : "More"}
-            >
-              <MoreHorizontal className="w-4 h-4" />
-              {locale === "ar" ? "المزيد" : "More"}
-            </button>
-            <div className="absolute top-full start-0 mt-1 w-48 bg-[rgb(var(--nav-bg))] border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150 z-50 overflow-hidden">
-              {visibleItems.slice(4, 6).map(item => {
-                const Icon = item.icon;
-                const isActive = location === item.href || location.startsWith(item.href + "/");
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-2.5 px-4 py-3 text-sm transition-colors ${
-                      isActive ? "bg-white/15 text-white font-semibold" : "text-white/80 hover:text-white hover:bg-white/10"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    {locale === "ar" ? item.labelAr : item.labelEn}
-                  </Link>
-                );
-              })}
+          {/* More dropdown for ECC + Exam Skills — click-toggled, works on touch */}
+          {visibleItems.length > 4 && (
+            <div className="relative">
+              <button
+                onClick={() => setMoreOpen(v => !v)}
+                onBlur={(e) => { if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) setMoreOpen(false); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
+                aria-label={locale === "ar" ? "المزيد" : "More"}
+                aria-expanded={moreOpen}
+                aria-haspopup="menu"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+                {locale === "ar" ? "المزيد" : "More"}
+              </button>
+              {moreOpen && (
+                <div
+                  role="menu"
+                  className="absolute top-full start-0 mt-1 w-52 bg-[rgb(var(--nav-bg))] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                  onMouseLeave={() => setMoreOpen(false)}
+                >
+                  {visibleItems.slice(4).map(item => {
+                    const Icon = item.icon;
+                    const isActive = location === item.href || location.startsWith(item.href + "/");
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        role="menuitem"
+                        onClick={() => setMoreOpen(false)}
+                        className={`flex items-center gap-2.5 px-4 py-3 text-sm transition-colors ${
+                          isActive ? "bg-white/15 text-white font-semibold" : "text-white/80 hover:text-white hover:bg-white/10"
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 flex-shrink-0" />
+                        {locale === "ar" ? item.labelAr : item.labelEn}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right side controls */}
@@ -408,6 +422,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [mobileMenuOpen]);
   const { locale } = useProfile();
   const [location] = useLocation();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Hide shell on landing page
   const isLanding = location === "/";
