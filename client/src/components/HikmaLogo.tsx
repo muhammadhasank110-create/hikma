@@ -1,11 +1,17 @@
 /**
- * HikmaLogo — single decision point for logo rendering.
+ * HikmaLogo — single decision point for all logo rendering in Hikma.
  *
- * surface="dark"  → dark-green rounded plate (for dark/high-contrast nav, mobile sheet)
- * surface="light" → cream rounded plate (for light/cream/calm sub-headers)
- * variant="wordmark" → full falcon + حكمة | HIKMA wordmark (for onboarding, sign-in panel)
+ * Two source PNGs (both transparent background, from the user's brand assets):
+ *   hikma-icon-dark.png  — dark green falcon calligraphy, 242×316 — for LIGHT surfaces
+ *   hikma-icon-white.png — white falcon calligraphy, 242×316   — for DARK surfaces
+ *   hikma-wordmark.png   — full dark green logo + حكمة|HIKMA text, 776×636 — for LIGHT surfaces
+ *   hikma-wordmark-white-clean.png — white version, 776×636 — for DARK surfaces
  *
- * All images are vendored in /img/ — no external fetches.
+ * Usage:
+ *   <HikmaLogo />                          → icon, auto-detects surface from theme
+ *   <HikmaLogo surface="dark" size={48} /> → white icon for dark nav
+ *   <HikmaLogo surface="light" size={48} />→ dark icon for light header
+ *   <HikmaLogo variant="wordmark" width={200} surface="light" /> → full wordmark
  */
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -16,36 +22,37 @@ interface HikmaLogoProps {
   surface?: Surface;
   variant?: Variant;
   className?: string;
-  /** px size for icon variant (width = height). Defaults to 44. */
+  /** px height for icon variant. Width is calculated from aspect ratio (242:316). Defaults to 48. */
   size?: number;
-  /** For wordmark: explicit width in px. Defaults to 160. */
+  /** For wordmark: explicit width in px. Height calculated from aspect ratio (776:636). Defaults to 180. */
   width?: number;
-  /** alt text override. Defaults to "Hikma" on the primary mark, "" on decorative. */
   alt?: string;
-  /** When true, adds aria-hidden="true" and alt="" (decorative repeat). */
   decorative?: boolean;
 }
 
-const DARK_ICON = "/img/hikma-icon-dark.png";   // dark-green plate, white falcon — for dark surfaces
-const LIGHT_ICON = "/img/hikma-icon-light.png"; // cream plate, dark falcon — for light surfaces
-const WORDMARK_LIGHT = "/img/hikma-wordmark.png";       // dark text — for light surfaces
-const WORDMARK_DARK  = "/img/hikma-wordmark-white.png"; // white text — for dark surfaces
+// Icon: 242×316 (portrait) — aspect ratio 0.7658
+const ICON_ASPECT = 242 / 316;
+// Wordmark: 776×636 (landscape) — aspect ratio 1.2201
+const WORDMARK_ASPECT = 776 / 636;
 
-/** Themes that use a dark nav surface */
+const DARK_ICON      = "/img/hikma-icon-dark.png";           // dark green — for LIGHT surfaces
+const WHITE_ICON     = "/img/hikma-icon-white.png";          // white — for DARK surfaces
+const DARK_WORDMARK  = "/img/hikma-wordmark.png";            // dark green — for LIGHT surfaces
+const WHITE_WORDMARK = "/img/hikma-wordmark-white-clean.png"; // white — for DARK surfaces
+
 const DARK_SURFACE_THEMES = new Set(["dark", "high_contrast"]);
 
 export function HikmaLogo({
   surface = "auto",
   variant = "icon",
   className = "",
-  size = 44,
-  width = 160,
+  size = 48,
+  width = 180,
   alt,
   decorative = false,
 }: HikmaLogoProps) {
   const { theme } = useTheme();
 
-  // Resolve surface from theme when "auto"
   const resolvedSurface: "dark" | "light" =
     surface === "auto"
       ? DARK_SURFACE_THEMES.has(theme) ? "dark" : "light"
@@ -55,14 +62,15 @@ export function HikmaLogo({
   const ariaHidden = decorative ? true : undefined;
 
   if (variant === "wordmark") {
-    const wordmarkSrc = resolvedSurface === "dark" ? WORDMARK_DARK : WORDMARK_LIGHT;
+    const src = resolvedSurface === "dark" ? WHITE_WORDMARK : DARK_WORDMARK;
+    const h = Math.round(width / WORDMARK_ASPECT);
     return (
       <img
-        src={wordmarkSrc}
+        src={src}
         alt={imgAlt}
         aria-hidden={ariaHidden}
         width={width}
-        height={Math.round(width * (636 / 776))} // preserve aspect ratio
+        height={h}
         className={`object-contain ${className}`}
         loading="eager"
         decoding="async"
@@ -70,20 +78,17 @@ export function HikmaLogo({
     );
   }
 
-  const src = resolvedSurface === "dark" ? DARK_ICON : LIGHT_ICON;
-  // Dark icon is 418x322 (not square — the plate is square but the canvas has some padding)
-  // Light icon is 246x246
-  const aspectH = resolvedSurface === "dark"
-    ? Math.round(size * (322 / 418))
-    : size;
+  // Icon variant — preserve portrait aspect ratio
+  const src = resolvedSurface === "dark" ? WHITE_ICON : DARK_ICON;
+  const w = Math.round(size * ICON_ASPECT);
 
   return (
     <img
       src={src}
       alt={imgAlt}
       aria-hidden={ariaHidden}
-      width={size}
-      height={aspectH}
+      width={w}
+      height={size}
       className={`object-contain ${className}`}
       loading="eager"
       decoding="async"

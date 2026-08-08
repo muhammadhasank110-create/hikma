@@ -6,6 +6,7 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useProfile } from "@/contexts/ProfileContext";
+import { HikmaLogo } from "@/components/HikmaLogo";
 import {
   motion, useReducedMotion, useInView,
   useMotionValue, useSpring, useTransform,
@@ -19,9 +20,6 @@ import {
 } from "lucide-react";
 import { playSound } from "@/lib/sound";
 
-const NAV_LOGO_WHITE = "/img/hikma-nav-white.png";
-const NAV_LOGO_DARK  = "/img/hikma-nav-dark.png";
-const FALCON_URL = "/img/hikma-icon-light.png";
 
 // ── Animated gradient background ─────────────────────────────────────────────
 function GradientBackground() {
@@ -300,7 +298,7 @@ export default function Home() {
         style={{ background: "rgba(13,31,16,0.85)", backdropFilter: "blur(20px)" }}>
         <motion.a href={isAuthenticated ? "/dashboard" : "/"} aria-label={isAuthenticated ? t("Go to dashboard", "الذهاب إلى لوحة التحكم") : t("Hikma home", "الصفحة الرئيسية لحكمة")} className="flex items-center gap-3 group flex-shrink-0"
           initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-          <img src="/img/hikma-icon-dark.png" alt="" aria-hidden="true" className="h-10 w-10 object-contain rounded-xl transition-transform group-hover:scale-105 flex-shrink-0" />
+          <HikmaLogo surface="dark" size={52} decorative />
           <span className="flex flex-col leading-none select-none">
             <span className="text-white font-bold text-sm" style={{ letterSpacing: "0.2em" }}>HIKMA</span>
             <span className="text-white/60 font-light text-xs" style={{ letterSpacing: "0.08em" }}>حكمة</span>
@@ -344,7 +342,7 @@ export default function Home() {
         <ParticleCanvas />
 
         {/* Falcon watermark */}
-        <motion.img src={FALCON_URL} alt="" aria-hidden="true"
+        <motion.img src="/img/hikma-wordmark.png" alt="" aria-hidden="true"
           className="absolute right-0 bottom-0 w-[55vw] max-w-[700px] object-contain select-none pointer-events-none"
           style={{ opacity: falconOpacity, y: falconY, filter: "brightness(0.4) saturate(0.5)" }}
           onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
@@ -569,7 +567,7 @@ export default function Home() {
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="py-8 border-t border-white/8 text-center">
         <div className="flex items-center justify-center gap-3 mb-3">
-          <img src={NAV_LOGO_DARK} alt="" className="h-6 w-auto object-contain" aria-hidden="true" />
+          <HikmaLogo surface="dark" size={28} decorative />
           <span className="font-bold text-white/60 text-sm">Hikma — حكمة</span>
         </div>
         <p className="text-white/25 text-xs">{t("Built to MADA Qatar & WCAG 2.2 AA accessibility standards", "مبني وفق معايير مادا قطر و WCAG 2.2 AA")}</p>

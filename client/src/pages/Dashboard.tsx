@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useProfile } from "@/contexts/ProfileContext";
+import { HikmaLogo } from "@/components/HikmaLogo";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
@@ -7,7 +8,7 @@ import { useRef, useEffect } from "react";
 import { Bot, TrendingUp, Layers, BookOpen, ChevronRight, Zap, Star, Activity } from "lucide-react";
 import { useSpeech } from "@/contexts/SpeechContext";
 
-const ICON_URL = "/img/hikma-icon-dark.png";
+// ICON_URL removed — use HikmaLogo component
 
 function AnimCounter({ to, suffix = "" }: { to: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -88,7 +89,7 @@ export default function Dashboard() {
               </span>
             </div>
           </div>
-          <img src={ICON_URL} alt="" className="w-12 h-12 object-contain" aria-hidden="true" />
+          <HikmaLogo surface="auto" size={40} decorative />
         </div>
       </motion.div>
 

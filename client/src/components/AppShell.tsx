@@ -231,16 +231,10 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
       <div className="container flex items-center justify-between h-16 gap-4">
         {/* Logo */}
         <Link href="/dashboard" aria-label="Go to dashboard" className="flex items-center gap-3 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
-          {/* Logo: dark icon (green rounded square + white falcon) — visible on dark nav */}
-          <img
-            src="/img/hikma-icon-dark.png"
-            alt=""
-            aria-hidden="true"
-            className="h-10 w-10 object-contain rounded-xl transition-transform group-hover:scale-105 flex-shrink-0"
-          />
-          {/* Text wordmark */}
+          {/* Logo — white icon on dark nav */}
+          <HikmaLogo surface="dark" size={52} decorative />
           <span className="flex flex-col leading-none select-none">
-            <span className="text-white font-bold tracking-widest text-sm" style={{ letterSpacing: "0.2em" }}>HIKMA</span>
+            <span className="text-white font-bold text-sm" style={{ letterSpacing: "0.2em" }}>HIKMA</span>
             <span className="text-white/70 font-light text-xs" style={{ letterSpacing: "0.08em" }}>حكمة</span>
           </span>
         </Link>

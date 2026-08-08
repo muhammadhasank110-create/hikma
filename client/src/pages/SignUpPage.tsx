@@ -1,3 +1,4 @@
+import { HikmaLogo } from "@/components/HikmaLogo";
 import { useState } from "react";
 import { startSignUp } from "@/const";
 import { useLocation } from "wouter";
@@ -5,9 +6,6 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { toast } from "sonner";
 
-const FALCON_URL = "/img/hikma-icon-light.png";
-const ICON_URL = "/img/hikma-icon-dark.png";
-const WORDMARK_URL = "/img/hikma-wordmark.png";
 
 function scorePassword(pw: string) {
   let s = 0;
@@ -64,13 +62,13 @@ export default function SignUpPage() {
         <motion.div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle, rgba(45,100,55,0.25) 0%, transparent 70%)" }}
           animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
-        <motion.img src={WORDMARK_URL} alt="" aria-hidden="true"
-          className="absolute bottom-0 right-0 w-[70%] object-contain opacity-20 pointer-events-none select-none"
-          initial={{ opacity: 0, y: 40 }} animate={{ opacity: 0.2, y: 0 }} transition={{ duration: 1.2 }}
+        <motion.img src="/img/hikma-wordmark.png" alt="" aria-hidden="true"
+          className="absolute bottom-0 right-0 w-[70%] object-contain opacity-15 pointer-events-none select-none"
+          initial={{ opacity: 0, y: 40 }} animate={{ opacity: 0.15, y: 0 }} transition={{ duration: 1.2, ease: "easeOut" }}
           onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
           <a href="/" className="flex items-center gap-3">
-            <img src={ICON_URL} alt="" className="w-10 h-10 object-contain" aria-hidden="true" />
+            <HikmaLogo surface="dark" size={44} decorative />
             <div>
               <p className="font-black text-lg text-white leading-none">Hikma</p>
               <p className="text-[10px] text-white/40 tracking-widest">حكمة</p>
@@ -107,7 +105,7 @@ export default function SignUpPage() {
         <motion.div className="w-full max-w-md"
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] as any }}>
           <div className="lg:hidden flex items-center gap-2 mb-8">
-            <img src={ICON_URL} alt="" className="w-8 h-8 object-contain" aria-hidden="true" />
+            <HikmaLogo surface="dark" size={44} decorative />
             <span className="font-black text-white">Hikma</span>
           </div>
 

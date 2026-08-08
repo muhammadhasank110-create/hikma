@@ -16,6 +16,7 @@
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
+import { HikmaLogo } from "@/components/HikmaLogo";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useSpeech } from "@/contexts/SpeechContext";
 import { useAriaLive } from "@/contexts/AriaLiveContext";
@@ -166,7 +167,7 @@ export default function Onboarding() {
       {/* Header */}
       <div className="border-b border-border bg-card px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/img/hikma-wordmark.png" alt="Hikma" className="h-8 w-auto object-contain" />
+          <HikmaLogo surface="light" variant="wordmark" width={120} alt="Hikma" />
           <span className="font-bold text-sm">Hikma حكمة</span>
         </div>
         <button
