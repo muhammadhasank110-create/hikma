@@ -76,7 +76,6 @@
     --nav-bg:          30 62 34;        /* #1E3E22 — warm forest, lighter than forest-deep */
     --nav-fg:          255 255 255;
     --nav-active:      var(--maroon);
-    --accessibility-bar: var(--forest-deep);
 
     /* Typography scale */
     --font-scale:      1;

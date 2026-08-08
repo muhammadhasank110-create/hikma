@@ -82,7 +82,7 @@ function AccessibilityBar() {
   return (
     <div
       id="accessibility-bar"
-      className="w-full bg-[rgb(var(--nav-bg))] text-white text-xs flex items-center justify-between px-4 py-0 gap-4 flex-wrap min-h-[44px]"
+      className="w-full text-white text-xs flex items-center justify-between px-4 py-0 gap-4 flex-wrap min-h-[44px]" style={{ background: "rgb(var(--nav-bg))" }}
       role="toolbar"
       aria-label={t("Accessibility controls", "أدوات إمكانية الوصول")}
     >
@@ -229,8 +229,20 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
     >
       <div className="container flex items-center justify-between h-16 gap-4">
         {/* Logo */}
-        <Link href="/dashboard" aria-label="Go to dashboard" className="flex items-center gap-2.5 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
-          <img src="/img/hikma-nav-white.png" alt="Hikma" className="h-14 w-auto object-contain transition-transform group-hover:scale-105 brightness-110" style={{ maxWidth: 280 }} />
+        <Link href="/dashboard" aria-label="Go to dashboard" className="flex items-center gap-3 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
+          {/* Clean falcon icon */}
+          <img
+            src="/img/hikma-falcon-white.png"
+            alt=""
+            aria-hidden="true"
+            className="h-12 w-auto object-contain transition-transform group-hover:scale-105"
+            style={{ opacity: 0.92 }}
+          />
+          {/* Refined text wordmark */}
+          <span className="flex flex-col leading-none select-none" style={{ opacity: 0.92 }}>
+            <span className="text-white font-semibold tracking-widest text-sm" style={{ fontFamily: "var(--font-heading, serif)", letterSpacing: "0.18em" }}>HIKMA</span>
+            <span className="text-white/80 font-light tracking-wide text-xs" style={{ fontFamily: "var(--font-heading, serif)", letterSpacing: "0.1em" }}>حكمة</span>
+          </span>
         </Link>
 
         {/* Desktop nav links */}
