@@ -70,7 +70,7 @@ function getAccessibleName(el: HTMLElement): string {
 export function useAccessibilityProfile() {
   const { profile } = useProfile();
   // Use the shared speech service — no direct SpeechSynthesisUtterance here
-  const speech = useSpeech();
+  const { speak, stop } = useSpeech();
   const lastSpokenRef = useRef<string>("");
 
   const isBlindMode = profile.mode === "audio_first" && profile.autoNarrate;
@@ -100,15 +100,15 @@ export function useAccessibilityProfile() {
       // assertive priority: cancels narration immediately.
       // SpeechContext uses browser voice for short items (< 60 chars) to avoid
       // ElevenLabs network latency on every focus event — this is intentional.
-      speech.speak(announcement, { priority: "assertive" });
+      speak(announcement, { priority: "assertive" });
     };
 
     document.addEventListener("focusin", handleFocus);
     return () => {
       document.removeEventListener("focusin", handleFocus);
-      speech.stop();
+      stop();
     };
-  }, [isBlindMode, speech]);
+  }, [isBlindMode, speak, stop]);
 
   // ── ADHD focus mode: set HTML attribute for CSS ───────────────────────────
   useEffect(() => {

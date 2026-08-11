@@ -53,8 +53,7 @@ export function useTutorState() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const tts = useTTS({
@@ -207,31 +206,45 @@ export function useTutorState() {
   }, [input, isStreaming, isAuthenticated, messages, sessionId, profile, locale, ttsEnabled, modality, triggerSocraticCheck, speakText, sounds]);
 
   const startRecording = async () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error(locale === "ar" ? "يتطلب الإدخال الصوتي متصفح Chrome أو Edge" : "Voice input requires Chrome or Edge.");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-      mr.ondataavailable = e => audioChunksRef.current.push(e.data);
-      mr.onstop = async () => {
-        if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
-          const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-          const recognition = new SR();
-          recognition.lang = locale === "ar" ? "ar-QA" : "en-GB";
-          recognition.onresult = (e: any) => { setInput(e.results[0][0].transcript); };
-          recognition.start();
-        }
-        stream.getTracks().forEach(t => t.stop());
+      stream.getTracks().forEach(track => track.stop());
+      recognitionRef.current?.abort?.();
+      const recognition = new SpeechRecognition();
+      recognition.lang = locale === "ar" ? "ar-QA" : "en-GB";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = (event: any) => setInput(event.results[0]?.[0]?.transcript ?? "");
+      recognition.onerror = (event: any) => {
+        if (event.error !== "aborted") toast.error(locale === "ar" ? "تعذّر سماع رسالتك. حاول مرة أخرى." : "Could not hear your message. Try again.");
       };
-      mr.start();
-      mediaRecorderRef.current = mr;
+      recognition.onend = () => {
+        recognitionRef.current = null;
+        setIsRecording(false);
+      };
+      recognitionRef.current = recognition;
+      recognition.start();
       setIsRecording(true);
     } catch { toast.error(locale === "ar" ? "الميكروفون غير متاح" : "Microphone not available"); }
   };
 
   const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
+    recognitionRef.current?.stop?.();
     setIsRecording(false);
   };
+
+  useEffect(() => () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    recognitionRef.current?.abort?.();
+    recognitionRef.current = null;
+    tts.stop();
+  }, [tts.stop]);
 
   const clearConversation = () => {
     setMessages([]);

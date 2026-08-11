@@ -16,7 +16,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 const ELEVEN_VOICE_EN = "EXAVITQu4vr4xnSDxMaL"; // Sarah/Bella — warm female, free tier
 const ELEVEN_VOICE_AR = "onwK4e9ZLuTAKqWW03F9"; // Daniel — deep broadcaster, best Arabic on free tier
 const ELEVEN_MODEL = "eleven_multilingual_v2";
-// Module-level flag: only set permanently on auth errors (401/403). Reset on page reload.
+// Module-level flag: set for the current browser session when the proxy reports
+// invalid credentials or an exhausted quota. Reset on page reload.
 let elevenLabsFailedThisSession = false;
 // Server proxy URL — the ONLY path to ElevenLabs. API key stays server-side.
 const TTS_PROXY_URL = "/api/tts/speak";
@@ -159,6 +160,8 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     stopElevenLabs();
     setIsSpeaking(false);
   }, [stopBrowser, stopElevenLabs]);
+  const stopRef = useRef(stop);
+  useEffect(() => { stopRef.current = stop; }, [stop]);
 
   const speakWithBrowser = useCallback((text: string) => {
     if (!("speechSynthesis" in window)) return;
@@ -200,9 +203,13 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
 
       const contentType = res.headers.get("content-type") ?? "";
       if (!res.ok || !contentType.includes("audio")) {
-        console.warn("[useTTS] ElevenLabs proxy error:", res.status, contentType, "— falling back to browser");
-        // Permanently disable only on auth errors (401/403). 402/429/502 are transient.
-        if (res.status === 401 || res.status === 403) elevenLabsFailedThisSession = true;
+        const errorText = await res.text().catch(() => "");
+        const quotaExceeded = /quota_exceeded|quota of|credits remaining/i.test(errorText);
+        console.warn("[useTTS] ElevenLabs proxy unavailable — falling back to browser", { status: res.status, quotaExceeded });
+        if (res.status === 401 || res.status === 403 || quotaExceeded) {
+          elevenLabsFailedThisSession = true;
+          setHasElevenLabs(false);
+        }
         speakWithBrowser(text);
         return;
       }
@@ -270,7 +277,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioContext) { const ctx = new AudioContext(); ctx.resume().catch(() => {}); }
     } catch {}
-    if (hasElevenLabs) {
+    if (hasElevenLabs && !elevenLabsFailedThisSession) {
       speakWithElevenLabs(text);
     } else {
       speakWithBrowser(text);
@@ -289,13 +296,13 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   // All active TTS instances respond to app-wide route changes. This includes
   // page-local narration (for example, LessonPage) as well as shared speech.
   useEffect(() => {
-    const stopForNavigation = () => stop();
+    const stopForNavigation = () => stopRef.current();
     window.addEventListener("hikma:stop-speech", stopForNavigation);
     return () => {
       window.removeEventListener("hikma:stop-speech", stopForNavigation);
-      stop();
+      stopRef.current();
     };
-  }, [stop]);
+  }, []);
 
   return { speak, stop, isSpeaking, getCleanedText, hasElevenLabs };
 }

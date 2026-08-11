@@ -27,7 +27,7 @@ import BodyDoublePanel from "@/components/lesson/BodyDoublePanel";
 export default function LessonPage() {
   const [, params] = useRoute("/lesson/:lessonId");
   const [, navigate] = useLocation();
-  const { locale, profile } = useProfile();
+  const { locale, profile, updateProfile } = useProfile();
   const lessonId = parseInt(params?.lessonId ?? "0");
   const [showInlineTutor, setShowInlineTutor] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -36,6 +36,15 @@ export default function LessonPage() {
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   const s = useLessonState(lessonId);
+  const setLessonFocusMode = useCallback((active: boolean) => {
+    s.setIsFocused(active);
+    if (active) {
+      s.sounds.focus?.();
+      updateProfile({ mode: "focus", hideDecorative: true, reduceMotion: true, chunkSize: "micro" });
+    } else {
+      updateProfile({ mode: "reading", hideDecorative: false, reduceMotion: false, chunkSize: "standard" });
+    }
+  }, [s.setIsFocused, s.sounds, updateProfile]);
   const prevSectionRef = useRef(s.sectionIndex);
   const [slideDir, setSlideDir] = useState<1 | -1>(1);
   const prefersReducedMotion = useReducedMotion();
@@ -68,17 +77,17 @@ export default function LessonPage() {
       }
       if (e.key === " ") { e.preventDefault(); s.readAloud(); }
       if (e.key === "r" || e.key === "R") s.readAloud();
-      if (e.key === "f" || e.key === "F") { s.setIsFocused(v => { if (!v) s.sounds.focus?.(); return !v; }); }
+      if (e.key === "f" || e.key === "F") setLessonFocusMode(!s.isFocused);
       if (e.key === "s" || e.key === "S") s.simplifySection();
       if (e.key === "m" || e.key === "M") s.setShowConceptMap(v => !v);
       if (e.key === "t" || e.key === "T") s.setPomodoroActive(v => !v);
       if (e.key === "b" || e.key === "B") s.setShowBodyDouble(v => !v);
       if (e.key === "p" && e.ctrlKey) { e.preventDefault(); s.announcePosition(); }
-      if (e.key === "Escape") { s.setIsFocused(false); s.setShowOverwhelmEscape(false); s.setSelectedWord(null); s.setShowConceptMap(false); s.setShowBodyDouble(false); if (s.showTopicQuestion) { s.setShowTopicQuestion(false); } }
+      if (e.key === "Escape") { setLessonFocusMode(false); s.setShowOverwhelmEscape(false); s.setSelectedWord(null); s.setShowConceptMap(false); s.setShowBodyDouble(false); if (s.showTopicQuestion) { s.setShowTopicQuestion(false); } }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [s.nextSection, s.prevSection, s.readAloud, s.simplifySection, s.announcePosition]);
+  }, [s.nextSection, s.prevSection, s.readAloud, s.simplifySection, s.announcePosition, s.isFocused, setLessonFocusMode]);
 
   // Voice command events
   useEffect(() => {
@@ -239,7 +248,7 @@ export default function LessonPage() {
             {s.isNarrating ? t("Stop", "إيقاف") : t("Listen", "استمع")}
           </Button>
           {/* Primary: Focus mode toggle */}
-          <Button variant={s.isFocused ? "default" : "outline"} size="sm" onClick={() => s.setIsFocused(v => !v)} aria-label={t("Toggle focus mode", "وضع التركيز")} aria-pressed={s.isFocused}>
+          <Button variant={s.isFocused ? "default" : "outline"} size="sm" onClick={() => setLessonFocusMode(!s.isFocused)} aria-label={t("Toggle focus mode", "وضع التركيز")} aria-pressed={s.isFocused}>
             {s.isFocused ? <Minimize2 className="w-3.5 h-3.5 mr-1.5" /> : <Maximize2 className="w-3.5 h-3.5 mr-1.5" />}
             {t("Focus", "تركيز")}
           </Button>

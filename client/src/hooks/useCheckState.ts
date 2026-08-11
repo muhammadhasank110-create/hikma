@@ -92,16 +92,31 @@ export function useCheckState(lessonId: number) {
   const [isRecording, setIsRecording] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [generationFailed, setGenerationFailed] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
 
-  const { data: lesson } = trpc.curriculum.lesson.useQuery({ lessonId }, { enabled: lessonId > 0 });
+  const { data: lesson, isError: lessonLoadFailed } = trpc.curriculum.lesson.useQuery({ lessonId }, { enabled: lessonId > 0 });
   const saveProgress = trpc.progress.updateProgress.useMutation();
 
   useEffect(() => {
-    if (!lesson) return;
+    let cancelled = false;
+    if (!lesson) {
+      if (lessonLoadFailed) {
+        setGenerationFailed(true);
+        setIsGenerating(false);
+      }
+      return () => { cancelled = true; };
+    }
+    setIsGenerating(true);
+    setGenerationFailed(false);
+    setQuestions([]);
+    setCurrentIndex(0);
+    setAnswers({});
+    setSubmitted({});
+    setTextAnswer("");
+    setIsComplete(false);
     const sections = (lesson.sections as any[]) ?? [];
     generateQuestions(lesson.titleEn ?? "", sections, locale).then(qs => {
+      if (cancelled) return;
       if (qs.length > 0) {
         setQuestions(qs);
         setGenerationFailed(false);
@@ -111,10 +126,12 @@ export function useCheckState(lessonId: number) {
       }
       setIsGenerating(false);
     }).catch(() => {
+      if (cancelled) return;
       setGenerationFailed(true);
       setIsGenerating(false);
     });
-  }, [lesson, locale]);
+    return () => { cancelled = true; };
+  }, [lesson, lessonId, locale, lessonLoadFailed]);
 
   const currentQ = questions[currentIndex];
   const progressPct = questions.length > 0 ? Math.round(((currentIndex + (submitted[currentQ?.id ?? ""] ? 1 : 0)) / questions.length) * 100) : 0;
@@ -172,31 +189,42 @@ export function useCheckState(lessonId: number) {
   }, [currentIndex, currentQ?.id, profile.autoNarrate]);
 
   const startRecording = async () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error(t("Voice answers require Chrome or Edge", "تتطلب الإجابات الصوتية متصفح Chrome أو Edge"));
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-      mr.ondataavailable = e => audioChunksRef.current.push(e.data);
-      mr.onstop = async () => {
-        if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
-          const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-          const recognition = new SR();
-          recognition.lang = locale === "ar" ? "ar-QA" : "en-GB";
-          recognition.onresult = (e: any) => { setTextAnswer(e.results[0][0].transcript); };
-          recognition.start();
-        }
-        stream.getTracks().forEach(t => t.stop());
+      stream.getTracks().forEach(track => track.stop());
+      recognitionRef.current?.abort?.();
+      const recognition = new SpeechRecognition();
+      recognition.lang = locale === "ar" ? "ar-QA" : "en-GB";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = (event: any) => setTextAnswer(event.results[0]?.[0]?.transcript ?? "");
+      recognition.onerror = (event: any) => {
+        if (event.error !== "aborted") toast.error(t("Could not hear an answer. Try again.", "تعذّر سماع الإجابة. حاول مرة أخرى."));
       };
-      mr.start();
-      mediaRecorderRef.current = mr;
+      recognition.onend = () => {
+        recognitionRef.current = null;
+        setIsRecording(false);
+      };
+      recognitionRef.current = recognition;
+      recognition.start();
       setIsRecording(true);
     } catch { toast.error(t("Microphone not available", "الميكروفون غير متاح")); }
   };
 
   const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
+    recognitionRef.current?.stop?.();
     setIsRecording(false);
   };
+
+  useEffect(() => () => {
+    recognitionRef.current?.abort?.();
+    recognitionRef.current = null;
+  }, []);
 
   return {
     questions, isGenerating, generationFailed, currentIndex, currentQ,

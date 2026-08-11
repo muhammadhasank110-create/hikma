@@ -108,7 +108,10 @@ export default function Dashboard() {
                 <Icon className="w-5 h-5" aria-hidden="true" />
               </div>
               <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>
-              <p className="text-3xl font-black text-foreground tabular-nums" style={{ fontVariantNumeric: "normal" }}>
+              <p
+                className="text-3xl font-black text-foreground tabular-nums"
+                style={{ fontVariantNumeric: "lining-nums tabular-nums", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+              >
                 <AnimCounter to={s.value} suffix={s.suffix} />
               </p>
             </motion.div>

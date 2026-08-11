@@ -16,7 +16,7 @@ import {
   Home, BookOpen, Bot, TrendingUp, Settings, Keyboard, GraduationCap,
   Users, Shield, Menu, X, Globe, Sun, Moon, Contrast, Volume2, VolumeX,
   ChevronRight, LogOut, LogIn, Layers, Star, FileText, MoreHorizontal,
-  Sparkles, BarChart3, Library, Brain
+  Sparkles, BarChart3, Library, Brain, Search
 } from "lucide-react";
 // startLogin removed
 import { playTestSound, playSound } from "@/lib/sound";
@@ -44,6 +44,11 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/guardian", labelEn: "Guardian", labelAr: "ولي الأمر", icon: Users, roles: ["guardian", "admin"] },
   { href: "/admin", labelEn: "Admin", labelAr: "الإدارة", icon: Shield, roles: ["admin"] },
 ];
+
+function getVisibleNavItems(user: { role?: string } | null | undefined): NavItem[] {
+  const role = user?.role ?? "learner";
+  return NAV_ITEMS.filter(item => !item.roles || item.roles.includes(role));
+}
 
 function AccessibilityBar() {
   const { profile, updateProfile, locale, setLocale } = useProfile();
@@ -206,9 +211,9 @@ function AccessibilityBar() {
   );
 }
 
-function TopNav({ onMenuOpen, onSearchOpen }: { onMenuOpen: () => void; onSearchOpen: () => void }) {
+function TopNav({ onMenuOpen, onSearchOpen, visibleItems }: { onMenuOpen: () => void; onSearchOpen: () => void; visibleItems: NavItem[] }) {
   const { user, isAuthenticated, logout } = useAuth();
-  const { profile, locale } = useProfile();
+  const { locale } = useProfile();
   const [location] = useLocation();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   // Lane-constrained keyboard navigation for the nav bar
@@ -216,12 +221,6 @@ function TopNav({ onMenuOpen, onSearchOpen }: { onMenuOpen: () => void; onSearch
   useGridNavigation(navLinksRef, { disableWASD: false });
   const navRightRef = useRef<HTMLDivElement>(null);
   useGridNavigation(navRightRef, { disableWASD: false });
-
-  const visibleItems = NAV_ITEMS.filter(item => {
-    if (!item.roles) return true;
-    if (!user) return false;
-    return item.roles.includes((user as any).role ?? "learner");
-  });
 
   return (
     <nav
@@ -358,15 +357,12 @@ function TopNav({ onMenuOpen, onSearchOpen }: { onMenuOpen: () => void; onSearch
   );
 }
 
-function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+function CommandPalette({ open, onOpenChange, visibleItems }: { open: boolean; onOpenChange: (open: boolean) => void; visibleItems: NavItem[] }) {
   const { locale } = useProfile();
   const [, navigate] = useLocation();
 
   const commands = [
-    { label: locale === "ar" ? "الرئيسية" : "Home", href: "/dashboard", icon: Home },
-    { label: locale === "ar" ? "المواد" : "Subjects", href: "/subjects/1", icon: BookOpen },
-    { label: locale === "ar" ? "حكمة AI" : "Hikma AI", href: "/tutor", icon: Bot },
-    { label: locale === "ar" ? "تقدمي" : "My Progress", href: "/progress", icon: TrendingUp },
+    ...visibleItems.map(item => ({ label: locale === "ar" ? item.labelAr : item.labelEn, href: item.href, icon: item.icon })),
     { label: locale === "ar" ? "الإعدادات" : "Settings", href: "/settings", icon: Settings },
     { label: locale === "ar" ? "الاختصارات" : "Keyboard Shortcuts", href: "/shortcuts", icon: Keyboard },
     { label: locale === "ar" ? "المنهج الموسّع" : "ECC", href: "/ecc", icon: Layers },
@@ -399,6 +395,7 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { profile } = useProfile();
+  const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
   const { stop: stopSpeech } = useSpeech();
@@ -408,7 +405,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [mobileMenuOpen]);
   const { locale } = useProfile();
   const [location] = useLocation();
-  const [moreOpen, setMoreOpen] = useState(false);
+  const visibleItems = getVisibleNavItems(user as { role?: string } | null);
 
   // Hide shell on landing page
   const isLanding = location === "/";
@@ -461,7 +458,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {!isLanding && (
         <div className="sticky top-0 z-40 shadow-lg">
           <AccessibilityBar />
-          <TopNav onMenuOpen={() => setMobileMenuOpen(true)} onSearchOpen={() => setCommandOpen(true)} />
+          <TopNav onMenuOpen={() => setMobileMenuOpen(true)} onSearchOpen={() => setCommandOpen(true)} visibleItems={visibleItems} />
         </div>
       )}
 
@@ -479,7 +476,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <nav className="p-3 space-y-1" aria-label={locale === "ar" ? "قائمة التنقل" : "Mobile navigation"}>
-            {NAV_ITEMS.map(item => {
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 px-3 py-2.5 text-sm text-white/80 hover:text-white hover:bg-muted/50"
+              onClick={() => { setMobileMenuOpen(false); setCommandOpen(true); }}
+            >
+              <Search className="w-4 h-4" />
+              {locale === "ar" ? "بحث" : "Search"}
+            </Button>
+            {visibleItems.map(item => {
               const Icon = item.icon;
               return (
                 <Link
@@ -498,7 +503,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </Sheet>
 
       {/* Command palette */}
-      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} visibleItems={visibleItems} />
 
       {/* Sound announcer — required by sound.ts visualFlash() for screen reader announcements */}
       <div id="sound-announcer" aria-live="polite" aria-atomic="true" className="sr-only" />

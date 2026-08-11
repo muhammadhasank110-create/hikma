@@ -14,7 +14,7 @@ import {
 } from "framer-motion";
 import { useRef, useEffect, useState, useCallback } from "react";
 import {
-  ArrowRight, Globe, Sparkles,
+  ArrowRight, Globe, Sparkles, Contrast,
   Volume2, ChevronDown, Mic,
   CheckCircle2, Headphones, Brain, Keyboard,
 } from "lucide-react";
@@ -22,12 +22,12 @@ import { playSound } from "@/lib/sound";
 
 
 // ── Animated gradient background ─────────────────────────────────────────────
-function GradientBackground() {
+function GradientBackground({ highContrast = false }: { highContrast?: boolean }) {
   const prefersReducedMotion = useReducedMotion();
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
       {/* Base */}
-      <div className="absolute inset-0 bg-[#0d1f10]" />
+      <div className={`absolute inset-0 ${highContrast ? "bg-black" : "bg-[#0d1f10]"}`} />
       {/* Animated orbs */}
       {!prefersReducedMotion && (
         <>
@@ -279,9 +279,10 @@ export default function Home() {
   const prefersReducedMotion = useReducedMotion();
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
-  const { locale, setLocale } = useProfile();
+  const { profile, locale, setLocale, updateProfile } = useProfile();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   const dir = locale === "ar" ? "rtl" : "ltr";
+  const isHighContrast = profile.theme === "high_contrast";
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -289,7 +290,7 @@ export default function Home() {
   const falconOpacity = useTransform(scrollYProgress, [0, 0.6], [0.15, 0]);
 
   return (
-    <div className="min-h-screen text-white overflow-x-hidden" dir={dir} style={{ background: "#0d1f10" }}>
+    <div className="min-h-screen text-white overflow-x-hidden" dir={dir} style={{ background: isHighContrast ? "#000" : "#0d1f10" }}>
       <GlowOrb />
       <ScrollProgress />
 
@@ -304,14 +305,32 @@ export default function Home() {
             <span className="text-white/60 font-light text-xs" style={{ letterSpacing: "0.08em" }}>حكمة</span>
           </span>
         </motion.a>
-        <motion.div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0"
+        <motion.div className="flex items-center gap-1 sm:gap-3 flex-shrink-0"
           initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
           <button onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-            className="hidden sm:flex items-center gap-1.5 text-white/50 hover:text-white transition-colors text-xs font-semibold px-2.5 py-1.5 rounded-lg hover:bg-white/8"
+            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-xs font-semibold px-2 py-2 rounded-lg hover:bg-white/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
             aria-label={t("Switch to Arabic", "التبديل إلى الإنجليزية")}>
             <Globe className="w-3.5 h-3.5" />
-            <span>{locale === "ar" ? "EN" : "عربي"}</span>
+            <span className="hidden sm:inline">{locale === "ar" ? "EN" : "عربي"}</span>
           </button>
+          <button
+            onClick={() => updateProfile({ theme: isHighContrast ? "light" : "high_contrast" })}
+            className="flex items-center justify-center rounded-lg px-2 py-2 text-white/70 transition-colors hover:bg-white/8 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
+            aria-label={t("Toggle high contrast", "تبديل التباين العالي")}
+            aria-pressed={isHighContrast}
+          >
+            <Contrast className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => updateProfile({ fontScale: Math.max(0.8, profile.fontScale - 0.1) })}
+            className="hidden sm:flex items-center justify-center rounded-lg px-2 py-2 text-xs font-bold text-white/70 transition-colors hover:bg-white/8 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
+            aria-label={t("Decrease text size", "تصغير النص")}
+          >A−</button>
+          <button
+            onClick={() => updateProfile({ fontScale: Math.min(2.5, profile.fontScale + 0.1) })}
+            className="flex items-center justify-center rounded-lg px-2 py-2 text-xs font-bold text-white/70 transition-colors hover:bg-white/8 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
+            aria-label={t("Increase text size", "تكبير النص")}
+          >A+</button>
           {!isAuthenticated && (
             <>
               <button onClick={() => navigate("/signin")}
@@ -338,7 +357,7 @@ export default function Home() {
       {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section ref={heroRef} className="relative min-h-[100vh] flex flex-col items-center justify-center overflow-hidden"
         aria-label={t("Hikma — adaptive learning platform", "حكمة — منصة التعلم التكيفي")}>
-        <GradientBackground />
+        <GradientBackground highContrast={isHighContrast} />
         <ParticleCanvas />
 
         {/* Falcon watermark */}

@@ -55,3 +55,29 @@ Full debug sweep of all pages. 7 confirmed bugs found and fixed. TypeScript: 0 e
 ### Current operational note
 
 The configured ElevenLabs key currently reports `quota_exceeded` with one credit remaining. The new narration lifecycle fixes are independent of that quota condition; until the key is topped up or replaced, speech uses the browser fallback after the server rejects an ElevenLabs request.
+
+## Full Reliability Audit (2026-08-11)
+
+| ID | Severity | Area | Confirmed root cause | Reliability repair | Verification |
+|---|---|---|---|---|---|
+| R-001 | P0 | Lesson narration | A cleanup effect depended on an unstable TTS object and repeatedly called state-changing stop logic. | Replaced the dependency with stable TTS methods and retained explicit route/unmount cancellation. | Lesson route renders without the React update loop; TypeScript passed. |
+| R-002 | P1 | Navigation | Desktop, More, mobile, and command-palette paths did not share one filtered navigation source; Search was absent from mobile. | Centralized filtered navigation and exposed Search through the mobile path. | Code-path audit and responsive preview. |
+| R-003 | P1 | Direct routes | Direct URL access had no explicit authentication/role boundary. | Added protected and role-aware route boundaries for learner, teacher, guardian, and admin surfaces. | Route tree and auth endpoint checked. |
+| R-004 | P1 | Landing accessibility | Anonymous users lacked the minimum language, contrast, and text-size controls. | Added a compact pre-auth control cluster, retaining a mobile text-size increase action. | Mobile landing screenshot. |
+| R-005 | P1 | Lesson state | Local Focus state could diverge from profile preference; completion navigation could fire after leaving a lesson; normal Markdown words could not be clicked for definitions. | Synchronized Focus with profile state, cleared completion timers, and added DOM caret-based English/Arabic word selection. | TypeScript passed. |
+| R-006 | P1 | Assessment | Quiz generation could commit stale results after lesson/locale changes; recording used unused MediaRecorder buffers. | Added cancellation guards, actionable failed-load state, and direct SpeechRecognition cleanup. | TypeScript and test suite passed. |
+| R-007 | P1 | Tutor | Streams and voice-input resources could survive page exit. | Abort tutor streams, release recognition, and stop local narration on unmount. | TypeScript passed. |
+| R-008 | P1 | Global speech | Playback-state rerenders recreated shared speech callbacks, allowing accessibility effects to cancel narration unexpectedly. | Memoized stable shared speech methods and context value; narrowed focus-profile effect dependencies. | TypeScript and regression suite passed. |
+| R-009 | P1 | Dark theme | The profile stored `data-theme="dark"` but did not set Tailwind’s `.dark` class, so dark variants failed. | Synchronize `.dark` with the profile theme. | Mobile dashboard visual check. |
+| R-010 | P2 | TTS quota | Exhausted ElevenLabs quota caused repeated failed requests. | Detect quota/auth failure once per browser session and switch cleanly to browser speech. | Static review; external quota remains an operational limit. |
+
+### Reliability verification matrix
+
+| Verification | Result |
+|---|---|
+| TypeScript | `npx tsc --noEmit` passed. |
+| Automated tests | `pnpm test` passed: 3 files, 5 tests. |
+| Server auth response | `/api/trpc/auth.me` returned in 52 ms for the unauthenticated case. |
+| Mobile visual checks | Landing, dashboard, lesson, quiz, tutor, and settings routes captured at 375×812. |
+| Dark/light token behavior | Dashboard visual check confirmed readable counters, icons, and cards after theme-class synchronization. |
+| Known external limit | ElevenLabs remains quota-exhausted until its account is topped up or a fresh key is supplied; session fallback prevents repeated failed requests. |

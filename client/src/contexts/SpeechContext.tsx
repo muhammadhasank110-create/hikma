@@ -3,15 +3,8 @@
  *
  * Wraps useTTS and exposes speak(text, { priority }) and stop().
  * Mount once in App.tsx so all components share one audio instance.
- *
- * Priority queue:
- *   "assertive" — cancels whatever is playing immediately (focus announcements, errors).
- *   "polite"    — queues behind the current utterance (lesson narration, tutor replies).
- *
- * ALL speech routes through ElevenLabs (via useTTS → /api/tts/speak proxy).
- * Browser speech is only used as a final fallback inside useTTS itself.
  */
-import React, { createContext, useContext, useRef, useCallback, useState, useEffect } from "react";
+import React, { createContext, useContext, useRef, useCallback, useState, useEffect, useMemo } from "react";
 import { useTTS } from "@/hooks/useTTS";
 import { useProfile } from "./ProfileContext";
 
@@ -34,64 +27,61 @@ const SpeechContext = createContext<SpeechContextValue>({
 
 export function SpeechProvider({ children }: { children: React.ReactNode }) {
   const { profile, locale } = useProfile();
-  const tts = useTTS({
+  const { speak: ttsSpeak, stop: ttsStop, isSpeaking: ttsIsSpeaking } = useTTS({
     rate: profile.speechRate ?? 1,
     lang: locale === "ar" ? "ar-SA" : "en-GB",
   });
-
-  // Queue for polite utterances
   const queueRef = useRef<Array<{ text: string; lang?: string }>>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const speakNext = useCallback(() => {
-    if (tts.isSpeaking) return;
+    if (ttsIsSpeaking) return;
     const next = queueRef.current.shift();
-    if (!next) { setIsSpeaking(false); return; }
+    if (!next) {
+      setIsSpeaking(false);
+      return;
+    }
     setIsSpeaking(true);
-    tts.speak(next.text);
-  }, [tts]);
+    ttsSpeak(next.text);
+  }, [ttsIsSpeaking, ttsSpeak]);
 
-  const speak = useCallback((text: string, opts: SpeakOptions = {}) => {
+  const speak = useCallback((rawText: string, opts: SpeakOptions = {}) => {
+    const text = rawText.trim();
+    if (!text) return;
     const { priority = "polite" } = opts;
-
     if (priority === "assertive") {
-      // Cancel everything, speak immediately via ElevenLabs
-      tts.stop();
+      ttsStop();
       queueRef.current = [];
       setIsSpeaking(true);
-      tts.speak(text);
-    } else {
-      // Polite: queue behind current
-      if (!tts.isSpeaking && queueRef.current.length === 0) {
-        setIsSpeaking(true);
-        tts.speak(text);
-      } else {
-        queueRef.current.push({ text });
-      }
+      ttsSpeak(text);
+      return;
     }
-  }, [tts]);
+    if (!ttsIsSpeaking && queueRef.current.length === 0) {
+      setIsSpeaking(true);
+      ttsSpeak(text);
+    } else {
+      queueRef.current.push({ text });
+    }
+  }, [ttsIsSpeaking, ttsSpeak, ttsStop]);
 
-  // Drain the polite queue whenever TTS finishes speaking
   useEffect(() => {
-    if (!tts.isSpeaking && queueRef.current.length > 0) {
+    if (!ttsIsSpeaking && queueRef.current.length > 0) {
       speakNext();
-    } else if (!tts.isSpeaking) {
+    } else if (!ttsIsSpeaking) {
       setIsSpeaking(false);
     }
-  }, [tts.isSpeaking, speakNext]);
+  }, [ttsIsSpeaking, speakNext]);
 
   const stop = useCallback(() => {
-    tts.stop();
+    ttsStop();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     queueRef.current = [];
     setIsSpeaking(false);
-  }, [tts]);
+  }, [ttsStop]);
 
-  return (
-    <SpeechContext.Provider value={{ speak, stop, isSpeaking }}>
-      {children}
-    </SpeechContext.Provider>
-  );
+  const contextValue = useMemo(() => ({ speak, stop, isSpeaking }), [speak, stop, isSpeaking]);
+
+  return <SpeechContext.Provider value={contextValue}>{children}</SpeechContext.Provider>;
 }
 
 export function useSpeech() {

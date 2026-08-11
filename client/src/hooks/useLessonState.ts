@@ -63,6 +63,9 @@ export function useLessonState(lessonId: number) {
   const [isFocused, setIsFocused] = useState(
     profile.mode === "focus" || profile.mode === "audio_first"
   );
+  useEffect(() => {
+    setIsFocused(profile.mode === "focus" || profile.mode === "audio_first");
+  }, [profile.mode]);
   const [simplifiedView, setSimplifiedView] = useState(false);
   const [simplifiedContent, setSimplifiedContent] = useState<Record<number, string>>({});
   const [isSimplifying, setIsSimplifying] = useState(false);
@@ -85,6 +88,7 @@ export function useLessonState(lessonId: number) {
   const [pomodoroSeconds, setPomodoroSeconds] = useState(25 * 60);
   const [pomodoroPhase, setPomodoroPhase] = useState<"work" | "break">("work");
   const pomodoroRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const completionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [highlightedWords, setHighlightedWords] = useState<string[]>([]);
   // Tutor conversation history for the simplify/explain feature — reset when lesson changes
   const [tutorHistory, setTutorHistory] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
@@ -196,7 +200,8 @@ export function useLessonState(lessonId: number) {
       saveProgress.mutate({ lessonId, sectionId: sectionIndex, cursorOffset: 0, status: "complete" });
       sounds.complete();
       toast.success(locale === "ar" ? "أحسنت! أكملت الدرس. جاري تحميل الاختبار…" : "Well done! Lesson complete. Loading quiz…");
-      setTimeout(() => navigate(`/check/${lessonId}`), 1200);
+      if (completionTimerRef.current) clearTimeout(completionTimerRef.current);
+      completionTimerRef.current = setTimeout(() => navigate(`/check/${lessonId}`), 1200);
     }
     setShowTopicQuestion(false);
     setTopicQuestion(null);
@@ -314,10 +319,33 @@ export function useLessonState(lessonId: number) {
   }, [lesson, locale, sectionIndex, totalSections, currentSection, tts]);
 
   const handleWordClick = useCallback((e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.tagName === "SPAN" && target.dataset.word) {
-      setSelectedWord(target.dataset.word);
+    const selected = window.getSelection?.()?.toString().trim();
+    if (selected && /^[-A-Za-zÀ-ÖØ-öø-ÿ\u0600-\u06FF\u0750-\u077F'’]+$/.test(selected)) {
+      setSelectedWord(selected);
+      return;
     }
+
+    const doc = document as Document & {
+      caretRangeFromPoint?: (x: number, y: number) => Range | null;
+      caretPositionFromPoint?: (x: number, y: number) => CaretPosition | null;
+    };
+    const range = doc.caretRangeFromPoint?.(e.clientX, e.clientY);
+    const caret = !range ? doc.caretPositionFromPoint?.(e.clientX, e.clientY) : null;
+    const node = range?.startContainer ?? caret?.offsetNode;
+    const offset = range?.startOffset ?? caret?.offset ?? 0;
+    if (!node || node.nodeType !== Node.TEXT_NODE) return;
+
+    const text = node.textContent ?? "";
+    const matches = Array.from(text.matchAll(/[-A-Za-zÀ-ÖØ-öø-ÿ\u0600-\u06FF\u0750-\u077F'’]+/g));
+    const match = matches.find(item => {
+      const start = item.index ?? 0;
+      return offset >= start && offset <= start + item[0].length;
+    });
+    if (match?.[0]) setSelectedWord(match[0]);
+  }, []);
+
+  useEffect(() => () => {
+    if (completionTimerRef.current) clearTimeout(completionTimerRef.current);
   }, []);
 
   // Pomodoro timer
@@ -349,11 +377,6 @@ export function useLessonState(lessonId: number) {
       return () => clearTimeout(timer);
     }
   }, [sectionIndex, profile.autoNarrate]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => () => {
-    tts.stop();
-    stopWordHighlight();
-  }, [tts, stopWordHighlight]);
 
   const pomodoroDisplay = `${String(Math.floor(pomodoroSeconds / 60)).padStart(2, "0")}:${String(pomodoroSeconds % 60).padStart(2, "0")}`;
 

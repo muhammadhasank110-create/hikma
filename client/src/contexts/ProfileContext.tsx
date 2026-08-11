@@ -179,6 +179,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const root = document.documentElement;
     root.setAttribute("data-theme", profile.theme);
+    root.classList.toggle("dark", profile.theme === "dark");
     root.setAttribute("data-font", profile.fontFamily);
     root.style.setProperty("--font-scale", String(profile.fontScale));
     root.style.setProperty("--user-line-height", String(profile.lineHeight));

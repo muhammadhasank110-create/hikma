@@ -289,3 +289,26 @@
 - [x] Fix visual selection state in Settings.
 - [x] Render simplified lesson Markdown safely without literal asterisk artifacts.
 - [x] Preserve Hikma AI chat messages while contrast and focus preferences change.
+
+## Full Reliability Audit — Aug 11 2026
+- [x] Establish current build, test, console, dependency, and credential-exposure baseline without reading secrets.
+- [x] Fix the P0 lesson TTS cleanup render loop found during baseline console inspection.
+- [x] Trace navigation, authentication, onboarding, settings, responsive, and RTL flows end-to-end.
+- [x] Fix role-filtered navigation parity across desktop nav, More, mobile drawer, and command palette.
+- [x] Make Search reachable from the mobile navigation path.
+- [x] Add explicit authentication and role guards for direct app, teacher, guardian, and admin routes.
+- [x] Restore minimal pre-auth language, contrast, and text-size controls on the landing page.
+- [x] Fix dashboard counter zero glyph rendering without changing accessibility profile body fonts.
+- [x] Trace lessons, assessments, tutor, voice, keyboard, and accessibility-profile flows end-to-end.
+- [x] Synchronize the lesson Focus control with persisted profile focus state.
+- [x] Cancel delayed lesson-completion navigation when a learner leaves the lesson.
+- [x] Restore word-definition selection for normal Markdown lesson text.
+- [x] Prevent stale quiz-generation responses from replacing the current lesson or locale state.
+- [x] Ensure failed or missing quiz lessons leave the learner in an actionable state instead of an indefinite spinner.
+- [x] Clean up quiz recording and recognition resources when the page changes or unmounts.
+- [x] Abort tutor streams and release tutor voice-input resources when leaving the tutor page.
+- [x] Stabilize the shared speech context so focus-profile effects cannot cancel narration on ordinary re-renders.
+- [x] Suppress repeated ElevenLabs quota failures and use a controlled browser-voice fallback for the rest of the session.
+- [x] Fix dashboard card contrast under data-theme dark, where Tailwind dark variants do not activate.
+- [x] Fix every confirmed root cause with an issue-focused regression test or mechanical guardrail where practical.
+- [x] Run the full accessibility verification matrix, update AUDIT.md, and publish only verified fixes.
