@@ -39,7 +39,7 @@ export default function SettingsPage() {
 
   return (
     <PageTransition>
-    <div className="container py-8 max-w-2xl space-y-6">
+    <div className="settings-page container py-8 max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{t("Settings", "الإعدادات")}</h1>
         <p className="text-muted-foreground mt-1">{t("Personalise your learning experience", "خصّص تجربتك التعليمية")}</p>
@@ -224,7 +224,7 @@ export default function SettingsPage() {
                 className={[
                   "py-2 px-3 rounded-lg border text-sm font-medium transition-colors",
                   profile.dailyGoalMinutes === mins
-                    ? "border-primary bg-primary/10 text-primary"
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20"
                     : "border-border hover:border-primary/40 hover:bg-muted text-foreground",
                 ].join(" ")}
                 aria-pressed={profile.dailyGoalMinutes === mins}

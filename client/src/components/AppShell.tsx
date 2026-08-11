@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   Home, BookOpen, Bot, TrendingUp, Settings, Keyboard, GraduationCap,
@@ -21,6 +22,7 @@ import {
 import { playTestSound, playSound } from "@/lib/sound";
 import { useSpokenLabels } from "@/hooks/useSpokenLabels";
 import { HikmaLogo } from "@/components/HikmaLogo";
+import { useSpeech } from "@/contexts/SpeechContext";
 
 interface NavItem {
   href: string;
@@ -204,12 +206,10 @@ function AccessibilityBar() {
   );
 }
 
-function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
+function TopNav({ onMenuOpen, onSearchOpen }: { onMenuOpen: () => void; onSearchOpen: () => void }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { profile, locale } = useProfile();
-  const [cmdOpen, setCmdOpen] = useState(false);
   const [location] = useLocation();
-  const [moreOpen, setMoreOpen] = useState(false);
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   // Lane-constrained keyboard navigation for the nav bar
   const navLinksRef = useRef<HTMLDivElement>(null);
@@ -263,45 +263,36 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
           })}
           {/* More dropdown for ECC + Exam Skills — click-toggled, works on touch */}
           {visibleItems.length > 4 && (
-            <div className="relative">
-              <button
-                onClick={() => setMoreOpen(v => !v)}
-                onBlur={(e) => { if (!e.currentTarget.parentElement?.contains(e.relatedTarget as Node)) setMoreOpen(false); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
-                aria-label={locale === "ar" ? "المزيد" : "More"}
-                aria-expanded={moreOpen}
-                aria-haspopup="menu"
-              >
-                <MoreHorizontal className="w-4 h-4" />
-                {locale === "ar" ? "المزيد" : "More"}
-              </button>
-              {moreOpen && (
-                <div
-                  role="menu"
-                  className="absolute top-full start-0 mt-1 w-52 bg-[rgb(var(--nav-bg))] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
-                  onMouseLeave={() => setMoreOpen(false)}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-white/80 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
+                  aria-label={locale === "ar" ? "المزيد" : "More"}
                 >
-                  {visibleItems.slice(4).map(item => {
-                    const Icon = item.icon;
-                    const isActive = location === item.href || location.startsWith(item.href + "/");
-                    return (
+                  <MoreHorizontal className="w-4 h-4" />
+                  {locale === "ar" ? "المزيد" : "More"}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52 bg-[rgb(var(--nav-bg))] text-white border-white/10 p-1.5 shadow-2xl">
+                {visibleItems.slice(4).map(item => {
+                  const Icon = item.icon;
+                  const isActive = location === item.href || location.startsWith(item.href + "/");
+                  return (
+                    <DropdownMenuItem key={item.href} asChild>
                       <Link
-                        key={item.href}
                         href={item.href}
-                        role="menuitem"
-                        onClick={() => setMoreOpen(false)}
-                        className={`flex items-center gap-2.5 px-4 py-3 text-sm transition-colors ${
+                        className={`flex items-center gap-2.5 px-3 py-2.5 text-sm ${
                           isActive ? "bg-white/15 text-white font-semibold" : "text-white/80 hover:text-white hover:bg-white/10"
                         }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         {locale === "ar" ? item.labelAr : item.labelEn}
                       </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
@@ -309,7 +300,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
         <div ref={navRightRef} className="flex items-center gap-2 flex-shrink-0" role="toolbar" aria-label="Navigation controls">
           {/* Command palette */}
           <button
-            onClick={() => setCmdOpen(true)}
+            onClick={onSearchOpen}
             className="hidden md:flex items-center gap-2 px-2 py-1 rounded-md bg-muted/50 text-white/70 text-xs hover:bg-white/20 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
             aria-label={t("Open command palette (Ctrl+K)", "فتح لوحة الأوامر (Ctrl+K)")}
           >
@@ -345,11 +336,11 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
           )}
 
           {/* Settings */}
-          <Link href="/settings" aria-label={t("Settings", "الإعدادات")}>
-            <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-muted/50 w-8 h-8">
+          <Button asChild variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-muted/50 w-8 h-8">
+            <Link href="/settings" aria-label={t("Settings", "الإعدادات")}>
               <Settings className="w-4 h-4" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
 
           {/* Mobile menu */}
           <Button
@@ -367,8 +358,7 @@ function TopNav({ onMenuOpen }: { onMenuOpen: () => void }) {
   );
 }
 
-function CommandPalette() {
-  const [cmdOpen, setCmdOpen] = useState(false);
+function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { locale } = useProfile();
   const [, navigate] = useLocation();
 
@@ -384,7 +374,7 @@ function CommandPalette() {
   ];
 
   return (
-    <CommandDialog open={cmdOpen} onOpenChange={setCmdOpen}>
+    <CommandDialog open={open} onOpenChange={onOpenChange}>
       <CommandInput placeholder={locale === "ar" ? "ابحث عن أي شيء…" : "Search anything…"} />
       <CommandList>
         <CommandEmpty>{locale === "ar" ? "لا توجد نتائج." : "No results found."}</CommandEmpty>
@@ -394,7 +384,7 @@ function CommandPalette() {
             return (
               <CommandItem
                 key={cmd.href}
-                onSelect={() => { navigate(cmd.href); setCmdOpen(false); }}
+                onSelect={() => { navigate(cmd.href); onOpenChange(false); }}
               >
                 <Icon className="w-4 h-4 mr-2" />
                 {cmd.label}
@@ -410,6 +400,8 @@ function CommandPalette() {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { profile } = useProfile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const { stop: stopSpeech } = useSpeech();
   // Notify VoiceCommandOverlay to hide itself when mobile menu opens/closes
   useEffect(() => {
     window.dispatchEvent(new CustomEvent(mobileMenuOpen ? "hikma:mobile-menu-open" : "hikma:mobile-menu-close"));
@@ -427,6 +419,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (prevLocationRef.current !== location) {
       prevLocationRef.current = location;
+      stopSpeech();
+      window.dispatchEvent(new Event("hikma:stop-speech"));
       playSound("navigate");
       // Move focus to the page's h1 after route change so screen reader users
       // are not left on document.body after navigation.
@@ -444,7 +438,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         }
       });
     }
-  }, [location, announce]);
+  }, [location, announce, stopSpeech]);
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       {/* Skip to main content — visible on focus for keyboard/screen-reader users */}
@@ -467,7 +461,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {!isLanding && (
         <div className="sticky top-0 z-40 shadow-lg">
           <AccessibilityBar />
-          <TopNav onMenuOpen={() => setMobileMenuOpen(true)} />
+          <TopNav onMenuOpen={() => setMobileMenuOpen(true)} onSearchOpen={() => setCommandOpen(true)} />
         </div>
       )}
 
@@ -504,7 +498,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </Sheet>
 
       {/* Command palette */}
-      <CommandPalette />
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
 
       {/* Sound announcer — required by sound.ts visualFlash() for screen reader announcements */}
       <div id="sound-announcer" aria-live="polite" aria-atomic="true" className="sr-only" />

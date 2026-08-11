@@ -10,6 +10,21 @@ import { useSounds } from "@/hooks/useSounds";
 import { useTTS, cleanText, buildWordOffsets } from "@/hooks/useTTS";
 import { toast } from "sonner";
 
+/** Keep streamed Markdown readable when an emphasis token arrives incomplete. */
+export function normaliseSimplifiedMarkdown(raw: string): string {
+  let text = raw.replace(/\r/g, "");
+  const delimiters = Array.from(text.matchAll(/\*\*/g));
+  if (delimiters.length % 2 === 1) {
+    const last = delimiters.at(-1);
+    if (last?.index !== undefined) text = `${text.slice(0, last.index)}${text.slice(last.index + 2)}`;
+  }
+  return text
+    .replace(/\*\*\s+([^*\n][\s\S]*?)\s+\*\*/g, "**$1**")
+    .replace(/(^|\n)\s*\*\s+(?=\S)/g, "$1- ")
+    .replace(/\*\s+\*/g, "")
+    .replace(/\*{3,}/g, "**");
+}
+
 export function useLessonState(lessonId: number) {
   const [, navigate] = useLocation();
   const { profile, locale } = useProfile();
@@ -154,9 +169,9 @@ export function useLessonState(lessonId: number) {
   }, []);
   // Clear the highlight when speech finishes on its own.
   useEffect(() => {
-    if (!tts.isSpeaking) setHighlightIndex(-1);
-  }, [tts.isSpeaking]);
-    const readAloud = useCallback(() => {
+    if (!tts.isSpeaking) stopWordHighlight();
+  }, [tts.isSpeaking, stopWordHighlight]);
+  const readAloud = useCallback(() => {
     if (!currentSection) return;
     if (isNarrating) {
       tts.stop();
@@ -171,6 +186,8 @@ export function useLessonState(lessonId: number) {
   }, [currentSection, isNarrating, tts, locale, startWordHighlight, stopWordHighlight]);
 
   const advanceSection = useCallback(() => {
+    tts.stop();
+    stopWordHighlight();
     if (sectionIndex < totalSections - 1) {
       setSectionIndex(i => i + 1);
       saveProgress.mutate({ lessonId, sectionId: sectionIndex + 1, cursorOffset: 0, status: "in_progress" });
@@ -187,7 +204,7 @@ export function useLessonState(lessonId: number) {
     setAnswerVerdict(null);
     setAnswerExplanation("");
     setAnswerPointer("");
-  }, [sectionIndex, totalSections, lessonId, locale, navigate, saveProgress, sounds]);
+  }, [sectionIndex, totalSections, lessonId, locale, navigate, saveProgress, sounds, tts, stopWordHighlight]);
 
   const nextSection = useCallback(() => {
     sounds.navigate();
@@ -215,8 +232,12 @@ export function useLessonState(lessonId: number) {
   }, [currentSection, sectionIndex, questionSectionIndex, showTopicQuestion, locale, profile, generateQuestion, advanceSection, sounds]);
 
   const prevSection = useCallback(() => {
-    if (sectionIndex > 0) setSectionIndex(i => i - 1);
-  }, [sectionIndex]);
+    if (sectionIndex > 0) {
+      tts.stop();
+      stopWordHighlight();
+      setSectionIndex(i => i - 1);
+    }
+  }, [sectionIndex, tts, stopWordHighlight]);
 
   const simplifySection = useCallback(async () => {
     if (!lesson) return;
@@ -257,7 +278,13 @@ export function useLessonState(lessonId: number) {
           const trimmed = line.trim();
           if (trimmed === "data: [DONE]") break;
           if (trimmed.startsWith("data: ")) {
-            try { const p = JSON.parse(trimmed.slice(6)); if (p.delta) { full += p.delta; setSimplifiedContent(prev => ({ ...prev, [key]: full })); } } catch { /* skip */ }
+            try {
+              const p = JSON.parse(trimmed.slice(6));
+              if (p.delta) {
+                full += p.delta;
+                setSimplifiedContent(prev => ({ ...prev, [key]: normaliseSimplifiedMarkdown(full) }));
+              }
+            } catch { /* skip */ }
           }
         }
       }
@@ -265,7 +292,7 @@ export function useLessonState(lessonId: number) {
       setTutorHistory(prev => [
         ...prev,
         { role: "user" as const, content: prompt },
-        { role: "assistant" as const, content: full },
+        { role: "assistant" as const, content: normaliseSimplifiedMarkdown(full) },
       ].slice(-10));
     } catch {
       toast.error(locale === "ar" ? "فشل التبسيط" : "Simplification failed");
@@ -322,6 +349,11 @@ export function useLessonState(lessonId: number) {
       return () => clearTimeout(timer);
     }
   }, [sectionIndex, profile.autoNarrate]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => () => {
+    tts.stop();
+    stopWordHighlight();
+  }, [tts, stopWordHighlight]);
 
   const pomodoroDisplay = `${String(Math.floor(pomodoroSeconds / 60)).padStart(2, "0")}:${String(pomodoroSeconds % 60).padStart(2, "0")}`;
 

@@ -17,6 +17,22 @@ export interface Message {
   timestamp: number;
 }
 export type TutorModality = "read" | "listen" | "map";
+const TUTOR_SESSION_STORAGE_KEY = "hikma:tutor-session:v1";
+
+function restoreMessages(): Message[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.sessionStorage.getItem(TUTOR_SESSION_STORAGE_KEY) ?? "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((message): message is Message =>
+      (message?.role === "user" || message?.role === "assistant") &&
+      typeof message?.content === "string" &&
+      typeof message?.timestamp === "number"
+    ).slice(-30);
+  } catch {
+    return [];
+  }
+}
 
 export function useTutorState() {
   const { isAuthenticated } = useAuth() as any;
@@ -25,7 +41,7 @@ export function useTutorState() {
   const sounds = useSounds();
 
   const [sessionId] = useState(() => nanoid());
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(restoreMessages);
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(profile.autoNarrate);
@@ -56,6 +72,17 @@ export function useTutorState() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, socraticQuestion]);
+
+  // Preserve this browser-session's conversation through profile-driven
+  // rerenders and any safe remounts caused by theme or focus changes.
+  useEffect(() => {
+    try {
+      if (messages.length) window.sessionStorage.setItem(TUTOR_SESSION_STORAGE_KEY, JSON.stringify(messages.slice(-30)));
+      else window.sessionStorage.removeItem(TUTOR_SESSION_STORAGE_KEY);
+    } catch {
+      // Storage is optional; the in-memory conversation still remains usable.
+    }
+  }, [messages]);
 
   // Greeting on mount
   useEffect(() => {

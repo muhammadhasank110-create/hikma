@@ -19,7 +19,7 @@ import {
   AlignLeft, Maximize2, Minimize2, ParkingSquare, Timer, Map, X,
   AlertTriangle, UserCheck, BookOpen, HelpCircle, Send, MoreVertical
 } from "lucide-react";
-import { useLessonState } from "@/hooks/useLessonState";
+import { normaliseSimplifiedMarkdown, useLessonState } from "@/hooks/useLessonState";
 import ConceptMapSVG from "@/components/lesson/ConceptMapSVG";
 import WordDefinitionPopup from "@/components/lesson/WordDefinitionPopup";
 import BodyDoublePanel from "@/components/lesson/BodyDoublePanel";
@@ -338,7 +338,7 @@ export default function LessonPage() {
                 >
                   <Streamdown>
                     {s.simplifiedView && s.simplifiedContent[s.sectionIndex]
-                      ? s.simplifiedContent[s.sectionIndex]
+                      ? normaliseSimplifiedMarkdown(s.simplifiedContent[s.sectionIndex])
                       : (locale === "ar" ? (s.currentSection.bodyAr ?? s.currentSection.bodyEn ?? "") : (s.currentSection.bodyEn ?? ""))}
                   </Streamdown>
                   {/* Highlight overlay — shown during TTS narration */}

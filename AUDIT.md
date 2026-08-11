@@ -32,3 +32,26 @@ Full debug sweep of all pages. 7 confirmed bugs found and fixed. TypeScript: 0 e
 
 - ElevenLabs 402 errors in console log from old cached requests (old key used premium voices) — these are stale log entries, not current failures. New key uses free-tier Bella voice.
 - Slashed zeros fix requires browser reload to take effect (CSS change applied, HMR propagated).
+
+## Edge-Case Debug Pass (2026-08-11)
+
+| ID | Category | Symptom | Root cause | Fix | Status |
+|---|---|---|---|---|---|
+| E-001 | Search | Clicking **Search** did nothing | TopNav and CommandPalette owned different `cmdOpen` state values | Lifted the command-palette state to AppShell and passed a controlled open handler to both | ✅ Done |
+| E-002 | Audio lifecycle | Narration carried on after route changes | Lesson-local TTS instances were not included in the shared navigation stop path | Added an app-wide stop event, route-change dispatch, and `useTTS` unmount cleanup | ✅ Done |
+| E-003 | Navigation menu | **More** scrolled inside the nav instead of opening a menu | Menu content was positioned inside an overflow-scrolling nav container | Replaced it with a Radix dropdown portal, which anchors below the trigger and escapes the nav overflow | ✅ Done |
+| E-004 | Lesson narration | Word highlighting could outlive Listen playback | Highlight state was only partly cleared on TTS completion | Clear highlight state on stop, section changes, and lesson unmount | ✅ Done |
+| E-005 | Concept map | Diagram nodes overlapped and ignored active theme tokens | Radial layout used invalid SVG color variables and variable node spacing | Rebuilt as a bounded 1–3/2-column SVG layout with semantic colors, unique arrow IDs, and a robust list fallback | ✅ Done |
+| E-006 | Settings | Selected/open controls were visually inconsistent | Settings depended on generic transparent Select surfaces; the nav settings control had invalid nested interaction | Added explicit semantic Select states, high-contrast selected goal state, and valid `Button asChild` navigation | ✅ Done |
+| E-007 | Simplify | Literal `*` / `**` artifacts appeared while streaming | Markdown delimiters arrived in partial server-sent chunks | Normalise incomplete emphasis and list markers before rendering through Streamdown; added regression tests | ✅ Done |
+| E-008 | Hikma AI | Chat content appeared to disappear after focus/contrast changes | Focus CSS globally recolored every paragraph and list item, including chat bubbles | Scoped focus typography to lesson content only; browser-session conversation persistence added as a safety net | ✅ Done |
+
+### Verification
+
+- `npx tsc --noEmit`: passed.
+- `pnpm test`: 3 files / 5 tests passed, including new simplified-Markdown regression tests.
+- Visual checks: Settings, Hikma AI, Dashboard, and Lesson route surfaces captured in the live development preview.
+
+### Current operational note
+
+The configured ElevenLabs key currently reports `quota_exceeded` with one credit remaining. The new narration lifecycle fixes are independent of that quota condition; until the key is topped up or replaced, speech uses the browser fallback after the server rejects an ElevenLabs request.

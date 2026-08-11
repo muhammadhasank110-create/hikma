@@ -286,7 +286,16 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     return () => window.speechSynthesis.removeEventListener("voiceschanged", handler);
   }, []);
 
-  useEffect(() => () => { stopHighlightLoop(); }, [stopHighlightLoop]);
+  // All active TTS instances respond to app-wide route changes. This includes
+  // page-local narration (for example, LessonPage) as well as shared speech.
+  useEffect(() => {
+    const stopForNavigation = () => stop();
+    window.addEventListener("hikma:stop-speech", stopForNavigation);
+    return () => {
+      window.removeEventListener("hikma:stop-speech", stopForNavigation);
+      stop();
+    };
+  }, [stop]);
 
   return { speak, stop, isSpeaking, getCleanedText, hasElevenLabs };
 }

@@ -528,6 +528,23 @@
   ::-webkit-scrollbar-thumb { background: rgb(var(--border-strong)); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: rgb(var(--ink-muted)); }
 
+  /* Settings controls: use explicit semantic surfaces so selected/open states
+     remain visible when a learner switches themes or increases text size. */
+  .settings-page [data-slot="select-trigger"] {
+    background-color: rgb(var(--card));
+    border-color: rgb(var(--border));
+    color: rgb(var(--foreground));
+  }
+  .settings-page [data-slot="select-trigger"][data-state="open"] {
+    border-color: rgb(var(--primary));
+    box-shadow: 0 0 0 3px rgb(var(--primary) / 0.18);
+  }
+  .settings-page [data-slot="select-content"] {
+    background-color: rgb(var(--popover));
+    border-color: rgb(var(--border-strong));
+    color: rgb(var(--popover-foreground));
+  }
+
   /* ── FLEX MIN-SIZE FIX ── */
   .flex { min-width: 0; min-height: 0; }
 
@@ -589,8 +606,11 @@
     color: #FFFFFF !important;
   }
 
-  /* Larger, more readable text */
-  p, li, .lesson-body {
+  /* Larger, more readable lesson text only. Do not override global chat,
+     navigation, dialog, or button text while focus mode is active. */
+  [data-lesson-content] p,
+  [data-lesson-content] li,
+  [data-lesson-content] .lesson-body {
     font-size: 1.125rem;
     line-height: 1.95;
     max-width: 68ch;

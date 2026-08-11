@@ -279,3 +279,13 @@
 - [x] Fix button overlaps: mic button moved to bottom-right, VoiceChatPanel anchored to bottom-right, Commands hint removed from below mic (now shows on hover)
 - [x] Simplify lesson toolbar: reduced to Listen + Focus + More (dropdown), secondary tools hidden in dropdown
 - [x] Auto-enter focus mode for ADHD (mode=focus) and blind/audio-first users when opening a lesson
+
+## Edge-Case Debug Pass — Aug 11 2026
+- [x] Fix Search action so clicking opens and operates the search interface.
+- [x] Stop active narration immediately on route change or component unmount.
+- [x] Replace the cramped More menu with an accessible anchored dropdown that does not scroll internally.
+- [x] Keep lesson word highlighting in sync with Listen start/stop state.
+- [x] Repair Concept Map diagram rendering and fallback behavior.
+- [x] Fix visual selection state in Settings.
+- [x] Render simplified lesson Markdown safely without literal asterisk artifacts.
+- [x] Preserve Hikma AI chat messages while contrast and focus preferences change.
