@@ -13,4 +13,4 @@
 - [x] Diagnose and fix the reported client render failure originating while the ProfileProvider calls useAuth/state; verify the public landing route recovers without console errors.
 - [x] Restore readable dashboard card text and progress values when the active dark or high-contrast profile is applied.
 - [x] Verify the dashboard card correction through the high-contrast semantic token mapping and record the exact evidence in AUDIT.md.
-- [ ] Create the required checkpoint after final verification so the completed UI and SEO update is published.
+- [x] Create the required checkpoint after final verification so the completed UI and SEO update is published.
