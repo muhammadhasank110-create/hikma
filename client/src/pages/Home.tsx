@@ -6,6 +6,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { HikmaLogo } from "@/components/HikmaLogo";
 import { useHikmaMotion } from "@/hooks/useHikmaMotion";
 import { useProfile } from "@/contexts/ProfileContext";
+import { usePageMetadata } from "@/hooks/usePageMetadata";
 
 const LANDING_PAGE_TITLE = "Hikma | Accessible AI Learning for Every Learner";
 
@@ -52,6 +53,7 @@ export default function Home() {
   const motionConfig = useHikmaMotion();
   const [showEntry, setShowEntry] = useState(true);
   const t = (english: string, arabic: string) => locale === "ar" ? arabic : english;
+  usePageMetadata({ title: LANDING_PAGE_TITLE, description: "HIKMA is an accessible adaptive learning platform with bilingual guidance, AI tutoring, and study support.", path: "/" });
 
   useEffect(() => {
     document.title = LANDING_PAGE_TITLE;
@@ -75,7 +77,8 @@ export default function Home() {
           <HikmaLogo surface="light" size={38} alt="Hikma logo" />
           <span className="leading-tight"><strong className="block text-sm tracking-[0.18em]">HIKMA</strong><span className="text-xs text-[#627066]">حكمة</span></span>
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <nav className="flex items-center gap-1 text-xs font-medium text-[#344438] sm:text-sm" aria-label="Public navigation"><Link href="/about" className="rounded-full px-2 py-2 hover:bg-[#e8ebe4] sm:px-3">About</Link><Link href="/contact" className="rounded-full px-2 py-2 hover:bg-[#e8ebe4] sm:px-3">Contact</Link></nav>
           {!isAuthenticated && <button type="button" onClick={() => navigate("/signin")} className="min-h-11 rounded-full px-4 text-sm font-medium text-[#344438] hover:bg-[#e8ebe4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#2c5c3a]">{t("Sign in", "تسجيل الدخول")}</button>}
           <button type="button" onClick={() => navigate(destination)} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#173a25] px-4 text-sm font-semibold text-white hover:bg-[#0d2919] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2c5c3a]">
             {isAuthenticated ? t("Open dashboard", "فتح لوحة التحكم") : t("Start learning", "ابدأ التعلّم")}<ArrowUpRight className="size-4 rtl:rotate-180" aria-hidden="true" />
@@ -83,7 +86,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <section className="mx-auto grid max-w-6xl gap-12 px-5 pb-16 pt-12 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:pb-24 lg:pt-20">
           <motion.div className="text-start" initial={motionConfig.page.initial} animate={motionConfig.page.animate} transition={motionConfig.enterTransition}>
             <p className="mb-5 text-xs font-bold uppercase tracking-[0.2em] text-[#4a7b5a]">{t("Adaptive learning for real people", "تعلّم تكيّفي لأشخاص حقيقيين")}</p>

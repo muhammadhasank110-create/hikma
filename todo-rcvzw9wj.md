@@ -42,5 +42,21 @@
 - [x] Implement a server-side RAG-style retrieval layer that supplies current study evidence to the tutor without exposing credentials or inventing sources.
 - [x] Display retrieved study sources and evidence boundaries in the tutor UI, with bilingual accessible labels.
 - [x] Add retrieval and tutor-grounding tests covering source availability, fallback behavior, and citation rendering.
+- [x] Review existing public navigation, routing, contact-delivery infrastructure, and reduced-motion utilities before adding new pages.
+- [x] Build a responsive About page that explains HIKMA’s learning approach, accessibility commitments, and bilingual support with restrained 3D visual depth.
+- [x] Build a responsive Contact page with accessible name, email, subject, and message fields; clear validation; and bilingual success/error feedback.
+- [x] Retain the approved email-client fallback in place of server-side delivery because live mail credentials were not provided.
+- [x] Add About and Contact routes and public navigation links, including keyboard and narrow-viewport reachability.
+- [x] Enhance shared page transitions with interruption-safe transform/opacity depth while preserving reduced-motion fallbacks.
+- [x] Add or update tests and verify desktop/mobile forms, page navigation, contact fallback, and public reduced-motion-safe behavior; live authenticated voice behavior remains a future fixture requirement.
+- [x] Record verified results in AUDIT.md and publish the completed public-site expansion.
+- [x] Retain the Contact page email-client fallback and remove the pending server-mail requirement from the active delivery scope.
+- [x] Audit and improve keyboard traversal, skip links, focus restoration, and visible focus behavior across public navigation, contact form, and tutor controls.
+- [x] Add device-aware initial theme selection while preserving explicit learner accessibility-profile themes and avoiding hydration or storage errors.
+- [x] Add an accessible, reduced-motion-safe voice activity interface that communicates listening, speaking, and idle states without relying on visual motion alone.
+- [x] Extend animation polish through shared transform/opacity transitions, clear interaction feedback, and static reduced-motion fallbacks.
+- [x] Complete public-page SEO metadata, including route-specific titles, descriptions, canonical URLs, social previews, structured data, and robots/sitemap assets.
+- [x] Add or update unit and browser coverage for keyboard paths, device-theme behavior, voice feedback semantics, and public SEO fields.
+- [x] Run the full validation suite and record actual results in AUDIT.md; publish the experience polish update.
 - [x] Verify narrow responsive landing behavior with a 375×812 browser assertion.
 - [x] Document that browser verification of live tutor citation rendering requires an authenticated tutor fixture; server retrieval, client source handling, and visible citation markup are covered by TypeScript and unit validation only.

@@ -12,6 +12,7 @@ import { Streamdown } from "streamdown";
 import { Send, Mic, MicOff, Volume2, Bot, User, Loader2, RefreshCw, Headphones, BookOpen, Map, HelpCircle } from "lucide-react";
 import { useTutorState, type TutorModality } from "@/hooks/useTutorState";
 import { useVoiceCommands } from "@/hooks/useVoiceCommands";
+import { VoiceActivityIndicator } from "@/components/VoiceActivityIndicator";
 
 export default function TutorPage() {
   const s = useTutorState();
@@ -67,6 +68,7 @@ export default function TutorPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <VoiceActivityIndicator state={s.isRecording ? "listening" : s.tts.isSpeaking ? "speaking" : "idle"} locale={locale} />
           <div className="flex items-center gap-2">
             <Label htmlFor="tts-toggle" className="text-xs text-muted-foreground">{t.tts}</Label>
             <Switch id="tts-toggle" checked={s.ttsEnabled} onCheckedChange={s.setTtsEnabled} aria-label={t.tts} />

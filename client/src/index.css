@@ -397,6 +397,13 @@
   .caption { font-size: 0.875rem; line-height: 1.5; }
   .label { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 
+  @keyframes voice-wave {
+    0%, 100% { height: 0.3rem; opacity: 0.55; }
+    50% { height: 1rem; opacity: 1; }
+  }
+  .voice-wave-bar { width: 0.16rem; height: 0.35rem; border-radius: 999px; background: currentColor; animation: voice-wave 720ms var(--ease-out) infinite; }
+  @media (prefers-reduced-motion: reduce) { .voice-wave-bar { animation: none; height: 0.45rem; } }
+
   /* Arabic is a first-class surface: use an Arabic-optimized fallback stack,
      remove Latin display tracking, and preserve comfortable line height. */
   [dir="rtl"] {

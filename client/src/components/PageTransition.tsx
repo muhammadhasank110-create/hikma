@@ -24,10 +24,11 @@ export function PageTransition({ children, className }: PageTransitionProps) {
   return (
     <motion.div
       className={className}
-      initial={motionConfig.page.initial}
-      animate={motionConfig.page.animate}
+      initial={{ ...motionConfig.page.initial, rotateX: 1.5, transformOrigin: "50% 0%" }}
+      animate={{ ...motionConfig.page.animate, rotateX: 0, transformOrigin: "50% 0%" }}
       exit={motionConfig.page.exit}
       transition={motionConfig.transition}
+      style={{ transformPerspective: 1200 }}
     >
       {children}
     </motion.div>

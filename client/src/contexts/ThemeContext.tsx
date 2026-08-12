@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
+type ThemePreference = Theme | "system";
 
 interface ThemeContextType {
   theme: Theme;
@@ -12,34 +13,46 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 interface ThemeProviderProps {
   children: React.ReactNode;
-  defaultTheme?: Theme;
+  defaultTheme?: ThemePreference;
   switchable?: boolean;
 }
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "system",
   switchable = false,
 }: ThemeProviderProps) {
+  const getDeviceTheme = (): Theme => typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   const [theme, setTheme] = useState<Theme>(() => {
     if (switchable) {
-      const stored = localStorage.getItem("theme");
-      return (stored as Theme) || defaultTheme;
+      try {
+        const stored = localStorage.getItem("theme");
+        if (stored === "light" || stored === "dark") return stored;
+      } catch {}
     }
-    return defaultTheme;
+    return defaultTheme === "system" ? getDeviceTheme() : defaultTheme;
   });
 
   useEffect(() => {
+    if (switchable || defaultTheme !== "system" || typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const update = () => setTheme(media.matches ? "dark" : "light");
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, [defaultTheme, switchable]);
+
+  useEffect(() => {
     const root = document.documentElement;
+    const profileTheme = root.getAttribute("data-theme");
+    // Non-light profile themes (calm, cream, high contrast) are explicit learner choices.
+    if (profileTheme && profileTheme !== "light" && theme !== "dark") return;
     if (theme === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
     }
 
-    if (switchable) {
-      localStorage.setItem("theme", theme);
-    }
+    if (switchable) try { localStorage.setItem("theme", theme); } catch {}
   }, [theme, switchable]);
 
   const toggleTheme = switchable

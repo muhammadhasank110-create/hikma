@@ -31,6 +31,8 @@ import TopicsPage from "./pages/TopicsPage";
 import CheckPage from "./pages/CheckPage";
 import SignUpPage from "./pages/SignUpPage";
 import SignInPage from "./pages/SignInPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
 import { VoiceCommandOverlay } from "./components/VoiceCommandOverlay";
 import { useAccessibilityProfile } from "./hooks/useAccessibilityProfile";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -82,6 +84,8 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/signup" component={SignUpPage} />
       <Route path="/signin" component={SignInPage} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/contact" component={ContactPage} />
       <Route>
         <AccessBoundary>
           <AppShell>
@@ -120,7 +124,7 @@ function Router() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="system">
         <ProfileProvider>
           <SpeechProvider>
             <KeyboardProvider>
