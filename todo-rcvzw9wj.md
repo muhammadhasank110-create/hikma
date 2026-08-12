@@ -31,3 +31,16 @@
 - [x] Add a focused automated sound-storage safety regression test; tutor-session restoration and keyboard search activation remain manual follow-ups.
 - [x] Document the outstanding manual search-flow check; Ctrl/Cmd+K and route selection are wired, while open/filter/navigate behavior requires an interactive learner session.
 - [x] Document the outstanding manual Arabic/RTL and reduced-motion interaction checks; neither is claimed as completed in AUDIT.md.
+- [x] Diagnose the attached `TitleWarning` passive-effect render failure and identify the command-dialog semantic recurrence pattern; resolved the dialog warning at its shared primitive.
+- [x] Replace the entry button with an accessible, reduced-motion-safe automatic transition into the landing page.
+- [x] Improve Arabic landing copy, RTL direction, and global Arabic typography. Authenticated shell, dashboard, settings, and tutor interaction require a future authenticated Arabic visual pass.
+- [x] Add browser-level tutor boundary coverage and document the need for an authenticated fixture before testing conversation persistence, send/stream states, and narration stop behavior.
+- [x] Add browser coverage for automatic entry and narrow responsive layouts; document the need for an authenticated fixture for command search and Arabic profile switching.
+- [x] Review the existing role and authentication model and document secure administrator and teacher access provisioning; do not add hard-coded default credentials.
+- [x] Run the full test suite and record real verification evidence in AUDIT.md; publish the verified update.
+- [x] Research and define a current-source grounding strategy for study guidance, including trusted-source selection, citation display, retrieval limits, and failure behavior.
+- [x] Implement a server-side RAG-style retrieval layer that supplies current study evidence to the tutor without exposing credentials or inventing sources.
+- [x] Display retrieved study sources and evidence boundaries in the tutor UI, with bilingual accessible labels.
+- [x] Add retrieval and tutor-grounding tests covering source availability, fallback behavior, and citation rendering.
+- [x] Verify narrow responsive landing behavior with a 375×812 browser assertion.
+- [x] Document that browser verification of live tutor citation rendering requires an authenticated tutor fixture; server retrieval, client source handling, and visible citation markup are covered by TypeScript and unit validation only.

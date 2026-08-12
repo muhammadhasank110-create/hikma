@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { tutorConversations } from "../drizzle/schema";
 import { and, eq } from "drizzle-orm";
 import { sdk } from "./_core/sdk";
+import { formatStudyGrounding, retrieveCurrentStudySources } from "./studyGrounding";
 
 const TUTOR_SYSTEM_PROMPT = `You are the Hikma (حكمة) AI tutor. You teach one concept at a time to a learner whose profile is supplied with every request. Obey the profile absolutely.
 
@@ -85,9 +86,10 @@ Learner profile:
 - Tashkeel: ${profile?.tashkeel ?? false}
 - Numerals: ${profile?.numerals ?? "western"}
 `;
+      const studySources = await retrieveCurrentStudySources(message);
 
       const messages = [
-        { role: "system" as const, content: TUTOR_SYSTEM_PROMPT + "\n\n" + profileContext },
+        { role: "system" as const, content: TUTOR_SYSTEM_PROMPT + "\n\n" + profileContext + "\n\n" + formatStudyGrounding(studySources) },
         ...conversationHistory.map((m: { role: "user" | "assistant"; content: string }) => ({
           role: m.role,
           content: m.content,
@@ -101,6 +103,7 @@ Learner profile:
       res.setHeader("Connection", "keep-alive");
       res.setHeader("X-Accel-Buffering", "no");
       res.flushHeaders();
+      if (studySources.length) res.write(`data: ${JSON.stringify({ sources: studySources })}\n\n`);
 
       let finished = false;
       req.on("close", () => { finished = true; });

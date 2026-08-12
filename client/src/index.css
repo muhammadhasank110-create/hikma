@@ -397,6 +397,24 @@
   .caption { font-size: 0.875rem; line-height: 1.5; }
   .label { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 
+  /* Arabic is a first-class surface: use an Arabic-optimized fallback stack,
+     remove Latin display tracking, and preserve comfortable line height. */
+  [dir="rtl"] {
+    font-family: "Noto Naskh Arabic", "Amiri", "Segoe UI", sans-serif;
+    letter-spacing: normal;
+    word-spacing: normal;
+  }
+  [dir="rtl"] h1,
+  [dir="rtl"] h2,
+  [dir="rtl"] h3 {
+    letter-spacing: normal;
+    line-height: 1.35;
+  }
+  [dir="rtl"] .uppercase {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
   /* Max measure for readability */
   .prose-hikma {
     max-width: var(--user-measure, 65ch);

@@ -17,6 +17,7 @@ export interface Message {
   timestamp: number;
 }
 export type TutorModality = "read" | "listen" | "map";
+export type StudySource = { id: string; title: string; authors: string; year: number | null; venue: string; url: string };
 const TUTOR_SESSION_STORAGE_KEY = "hikma:tutor-session:v1";
 const TUTOR_SESSION_ID_STORAGE_KEY = "hikma:tutor-session-id:v1";
 
@@ -62,6 +63,7 @@ export function useTutorState() {
   const [streamingContent, setStreamingContent] = useState("");
   const [modality, setModality] = useState<TutorModality>("read");
   const [socraticQuestion, setSocraticQuestion] = useState<string | null>(null);
+  const [sources, setSources] = useState<StudySource[]>([]);
   const [isSocraticLoading, setIsSocraticLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -160,6 +162,7 @@ export function useTutorState() {
     setIsStreaming(true);
     setStreamingContent("");
     setSocraticQuestion(null);
+    setSources([]);
     const controller = new AbortController();
     abortControllerRef.current = controller;
     const currentMessages = messages;
@@ -194,6 +197,7 @@ export function useTutorState() {
               try {
                 const parsed = JSON.parse(trimmed.slice(6));
                 if (parsed.delta) { fullContent += parsed.delta; setStreamingContent(fullContent); }
+                if (Array.isArray(parsed.sources)) setSources(parsed.sources as StudySource[]);
                 if (parsed.error) toast.error(locale === "ar" ? "خطأ في حكمة AI" : "Hikma AI error: " + parsed.error);
               } catch { /* skip */ }
             }
@@ -272,6 +276,7 @@ export function useTutorState() {
     isStreaming, streamingContent,
     modality, setModality,
     socraticQuestion, setSocraticQuestion, isSocraticLoading,
+    sources,
     messagesEndRef, textareaRef,
     isSpeaking, tts,
     sendMessage, startRecording, stopRecording, clearConversation, speakText,

@@ -143,6 +143,14 @@ export default function TutorPage() {
           </div>
         ))}
 
+        {s.sources.length > 0 && (
+          <section className="rounded-2xl border border-border bg-muted/30 p-3" aria-label={locale === "ar" ? "مصادر دراسية حديثة" : "Current study sources"}>
+            <p className="text-xs font-semibold text-foreground">{locale === "ar" ? "مصادر دراسية حديثة" : "Current study sources"}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{locale === "ar" ? "تُعرض هذه المراجع للتحقق، ولا تحل محل معلمك أو منهجك." : "These references support checking the guidance; they do not replace your teacher or curriculum."}</p>
+            <ul className="mt-2 space-y-2">{s.sources.map((source, index) => <li key={source.id} className="text-xs"><a className="font-medium text-primary underline underline-offset-2" href={source.url} target="_blank" rel="noreferrer">[{index + 1}] {source.title}</a><span className="text-muted-foreground"> — {source.authors}{source.year ? ` (${source.year})` : ""}</span></li>)}</ul>
+          </section>
+        )}
+
         {/* Socratic question */}
         {s.socraticQuestion && !s.isStreaming && (
           <div className="flex gap-3 animate-arrive">
