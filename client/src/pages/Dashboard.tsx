@@ -7,16 +7,20 @@ import { motion, useInView, useMotionValue, useSpring, useTransform } from "fram
 import { useRef, useEffect } from "react";
 import { Bot, TrendingUp, Layers, BookOpen, ChevronRight, Zap, Star, Activity } from "lucide-react";
 import { useSpeech } from "@/contexts/SpeechContext";
+import { useHikmaMotion } from "@/hooks/useHikmaMotion";
+import { StatusSkeleton } from "@/components/StatusSkeleton";
 
 // ICON_URL removed — use HikmaLogo component
 
-function AnimCounter({ to, suffix = "" }: { to: number; suffix?: string }) {
+function AnimCounter({ to, suffix = "", reduceMotion }: { to: number; suffix?: string; reduceMotion: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref as any, { once: true });
   const mv = useMotionValue(0);
   const spring = useSpring(mv, { stiffness: 60, damping: 18 });
   const display = useTransform(spring, v => `${Math.round(v)}${suffix}`);
-  useEffect(() => { if (inView) mv.set(to); }, [inView, to, mv]);
+  useEffect(() => {
+    mv.set(reduceMotion || inView ? to : 0);
+  }, [inView, mv, reduceMotion, to]);
   return <motion.span ref={ref}>{display}</motion.span>;
 }
 
@@ -25,6 +29,7 @@ export default function Dashboard() {
   const { profile, locale } = useProfile();
   const [, navigate] = useLocation();
   const speech = useSpeech();
+  const motionConfig = useHikmaMotion();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   const { data: curricula, isLoading } = trpc.curriculum.list.useQuery();
@@ -72,7 +77,11 @@ export default function Dashboard() {
     <main id="main-content" className="min-h-screen p-6 sm:p-8 max-w-5xl mx-auto space-y-10" tabIndex={-1}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      <motion.div
+        initial={motionConfig.page.initial}
+        animate={motionConfig.page.animate}
+        transition={motionConfig.enterTransition}
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground font-medium mb-1">{greeting}</p>
@@ -99,11 +108,12 @@ export default function Dashboard() {
           const Icon = s.icon;
           return (
             <motion.div key={s.label}
-              className={`relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br ${s.color} border border-border`}
-              initial={{ opacity: 0, y: 24, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.5, delay: i * 0.07 }}
-              whileHover={{ y: -3, scale: 1.02 }}>
+              className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 text-card-foreground"
+              initial={motionConfig.item.initial}
+              animate={motionConfig.item.animate}
+              transition={{ ...motionConfig.transition, delay: motionConfig.reduceMotion ? 0 : i * 0.06 }}
+              whileHover={motionConfig.hover}
+            >
               <div className={`w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center mb-4 ${s.iconColor}`}>
                 <Icon className="w-5 h-5" aria-hidden="true" />
               </div>
@@ -112,7 +122,7 @@ export default function Dashboard() {
                 className="text-3xl font-black text-foreground tabular-nums"
                 style={{ fontVariantNumeric: "lining-nums tabular-nums", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
               >
-                <AnimCounter to={s.value} suffix={s.suffix} />
+                <AnimCounter to={s.value} suffix={s.suffix} reduceMotion={motionConfig.reduceMotion} />
               </p>
             </motion.div>
           );
@@ -122,7 +132,7 @@ export default function Dashboard() {
       {/* ── Quick access ───────────────────────────────────────────────── */}
       <div>
         <motion.h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          initial={motionConfig.reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={motionConfig.transition}>
           {t("Quick Access", "وصول سريع")}
         </motion.h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -130,13 +140,14 @@ export default function Dashboard() {
             const Icon = a.icon;
             return (
               <motion.button key={a.href}
-                className={`text-left p-5 rounded-2xl bg-gradient-to-br ${a.color} border border-border hover:border-border/60 transition-all group`}
+                className="group rounded-2xl border border-border bg-card p-5 text-left text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                 onClick={() => navigate(a.href)}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.35 + i * 0.07 }}
-                whileHover={{ y: -3, scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}>
+                initial={motionConfig.item.initial}
+                animate={motionConfig.item.animate}
+                transition={{ ...motionConfig.transition, delay: motionConfig.reduceMotion ? 0 : 0.12 + i * 0.06 }}
+                whileHover={motionConfig.hover}
+                whileTap={motionConfig.press}
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div className={`w-11 h-11 rounded-xl ${a.iconBg} flex items-center justify-center ${a.iconColor} group-hover:scale-110 transition-transform`}>
                     <Icon className="w-5 h-5" aria-hidden="true" />
@@ -154,18 +165,19 @@ export default function Dashboard() {
       {/* ── Subjects ───────────────────────────────────────────────────── */}
       <div>
         <motion.h2 className="text-[11px] font-bold tracking-[0.2em] uppercase text-muted-foreground mb-4"
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+          initial={motionConfig.reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={motionConfig.transition}>
           {t("Subjects", "المواد")}
         </motion.h2>
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-3" role="status" aria-live="polite" aria-label={t("Loading subjects", "جارٍ تحميل المواد")}>
+            <span className="sr-only">{t("Loading subjects", "جارٍ تحميل المواد")}</span>
             {[1, 2].map(i => (
-              <div key={i} className="h-20 rounded-2xl bg-muted/30 animate-pulse" />
+              <StatusSkeleton key={i} className="h-20" />
             ))}
           </div>
         ) : !curricula?.length ? (
           <motion.div className="text-center py-16 rounded-2xl border border-dashed border-border"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+            initial={motionConfig.reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={motionConfig.transition}>
             <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3" aria-hidden="true" />
             <p className="text-muted-foreground font-medium mb-2">{t("No subjects yet", "لا توجد مواد بعد")}</p>
             <p className="text-muted-foreground text-sm mb-5">{t("Complete onboarding to set up your curriculum.", "أكمل الإعداد لتفعيل منهجك الدراسي.")}</p>
@@ -181,11 +193,12 @@ export default function Dashboard() {
               <motion.button key={c.id}
                 className="w-full text-left flex items-center gap-4 p-5 rounded-2xl border border-border bg-card hover:bg-muted/50 hover:border-primary/30 transition-all group shadow-sm"
                 onClick={() => navigate(`/subjects/${c.id}`)}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.5 + i * 0.07 }}
-                whileHover={{ x: 4 }}
-                whileTap={{ scale: 0.99 }}>
+                initial={motionConfig.item.initial}
+                animate={motionConfig.item.animate}
+                transition={{ ...motionConfig.transition, delay: motionConfig.reduceMotion ? 0 : i * 0.06 }}
+                whileHover={motionConfig.hover}
+                whileTap={motionConfig.press}
+              >
                 <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
                   <BookOpen className="w-6 h-6 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
                 </div>

@@ -13,7 +13,7 @@
  * - State is preserved across step navigation
  * - curriculum sent as raw enum key (igcse_edexcel, not "IGCSE Edexcel")
  */
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { HikmaLogo } from "@/components/HikmaLogo";
@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { useSounds } from "@/hooks/useSounds";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { AnimatedProgress } from "@/components/PageTransition";
+import { useHikmaMotion } from "@/hooks/useHikmaMotion";
 import {
   StepAccessibility, StepLanguage, StepCurriculum,
   StepPersonalisation, StepVoicePreferences, StepVoice, StepDailyGoal,
@@ -36,7 +38,8 @@ export default function Onboarding() {
   const { updateProfileAsync, setLocale } = useProfile();
   const [step, setStep] = useState(1);
   const [stepDir, setStepDir] = useState<1 | -1>(1);
-  const prefersReducedMotion = useReducedMotion();
+  const motionConfig = useHikmaMotion();
+  const prefersReducedMotion = motionConfig.reduceMotion;
   const { announce } = useAriaLive();
   const sounds = useSounds();
   const speech = useSpeech();
@@ -180,12 +183,11 @@ export default function Onboarding() {
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-muted" role="progressbar" aria-valuenow={step} aria-valuemin={1} aria-valuemax={TOTAL_STEPS} aria-label={`Step ${step} of ${TOTAL_STEPS}: ${stepTitles[step - 1]}`}>
-        <div
-          className="h-full bg-primary transition-all duration-300"
-          style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
-        />
-      </div>
+      <AnimatedProgress
+        value={(step / TOTAL_STEPS) * 100}
+        className="h-1 rounded-none"
+        aria-label={`Step ${step} of ${TOTAL_STEPS}: ${stepTitles[step - 1]}`}
+      />
 
       {/* Step indicator */}
       <div className="px-4 py-3 flex items-center justify-between text-xs text-muted-foreground">
@@ -207,14 +209,14 @@ export default function Onboarding() {
               key={step}
               custom={stepDir}
               variants={{
-                enter: (dir: number) => ({ x: prefersReducedMotion ? 0 : dir * 40, opacity: 0, scale: 0.97 }),
+                enter: (dir: number) => (prefersReducedMotion ? { opacity: 0 } : { x: dir * 20, opacity: 0, scale: 0.98 }),
                 center: { x: 0, opacity: 1, scale: 1 },
-                exit: (dir: number) => ({ x: prefersReducedMotion ? 0 : dir * -40, opacity: 0, scale: 0.97 }),
+                exit: (dir: number) => (prefersReducedMotion ? { opacity: 0 } : { x: dir * -20, opacity: 0, scale: 0.98 }),
               }}
-              initial="enter"
+              initial={prefersReducedMotion ? false : "enter"}
               animate="center"
               exit="exit"
-              transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] as any }}
+              transition={motionConfig.transition}
             >
               {step === 1 && <StepAccessibility data={data} onChange={updateData} locale={data.locale} />}
               {step === 2 && <StepLanguage data={data} onChange={updateData} locale={data.locale} />}

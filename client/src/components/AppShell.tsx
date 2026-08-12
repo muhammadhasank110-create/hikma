@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
 import { useGridNavigation } from "@/hooks/useGridNavigation";
 import { useAriaLive } from "@/contexts/AriaLiveContext";
 import { Link, useLocation } from "wouter";
@@ -23,6 +24,7 @@ import { playTestSound, playSound } from "@/lib/sound";
 import { useSpokenLabels } from "@/hooks/useSpokenLabels";
 import { HikmaLogo } from "@/components/HikmaLogo";
 import { useSpeech } from "@/contexts/SpeechContext";
+import { useHikmaMotion } from "@/hooks/useHikmaMotion";
 
 interface NavItem {
   href: string;
@@ -215,6 +217,7 @@ function TopNav({ onMenuOpen, onSearchOpen, visibleItems }: { onMenuOpen: () => 
   const { user, isAuthenticated, logout } = useAuth();
   const { locale } = useProfile();
   const [location] = useLocation();
+  const motionConfig = useHikmaMotion();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   // Lane-constrained keyboard navigation for the nav bar
   const navLinksRef = useRef<HTMLDivElement>(null);
@@ -248,15 +251,27 @@ function TopNav({ onMenuOpen, onSearchOpen, visibleItems }: { onMenuOpen: () => 
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 ${
+                className={`relative isolate flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 ${
                   isActive
-                    ? "bg-white/15 text-white font-semibold"
+                    ? "text-white font-semibold"
                     : "text-white/80 hover:text-white hover:bg-muted/50"
                 }`}
                 aria-current={isActive ? "page" : undefined}
               >
-                <Icon className="w-4 h-4" />
-                {locale === "ar" ? item.labelAr : item.labelEn}
+                {isActive && (motionConfig.reduceMotion ? (
+                  <span aria-hidden="true" className="absolute inset-0 -z-10 rounded-md bg-white/15" />
+                ) : (
+                  <motion.span
+                    aria-hidden="true"
+                    layoutId="main-navigation-active-item"
+                    className="absolute inset-0 -z-10 rounded-md bg-white/15"
+                    transition={motionConfig.spring}
+                  />
+                ))}
+                <span className="relative flex items-center gap-1.5">
+                  <Icon className="w-4 h-4" />
+                  {locale === "ar" ? item.labelAr : item.labelEn}
+                </span>
               </Link>
             );
           })}
@@ -360,6 +375,7 @@ function TopNav({ onMenuOpen, onSearchOpen, visibleItems }: { onMenuOpen: () => 
 function CommandPalette({ open, onOpenChange, visibleItems }: { open: boolean; onOpenChange: (open: boolean) => void; visibleItems: NavItem[] }) {
   const { locale } = useProfile();
   const [, navigate] = useLocation();
+  const motionConfig = useHikmaMotion();
 
   const commands = [
     ...visibleItems.map(item => ({ label: locale === "ar" ? item.labelAr : item.labelEn, href: item.href, icon: item.icon })),
@@ -371,30 +387,33 @@ function CommandPalette({ open, onOpenChange, visibleItems }: { open: boolean; o
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder={locale === "ar" ? "ابحث عن أي شيء…" : "Search anything…"} />
-      <CommandList>
-        <CommandEmpty>{locale === "ar" ? "لا توجد نتائج." : "No results found."}</CommandEmpty>
-        <CommandGroup heading={locale === "ar" ? "التنقل" : "Navigation"}>
-          {commands.map(cmd => {
-            const Icon = cmd.icon;
-            return (
-              <CommandItem
-                key={cmd.href}
-                onSelect={() => { navigate(cmd.href); onOpenChange(false); }}
-              >
-                <Icon className="w-4 h-4 mr-2" />
-                {cmd.label}
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
-      </CommandList>
+      <motion.div initial={motionConfig.item.initial} animate={motionConfig.item.animate} transition={motionConfig.transition}>
+        <CommandInput placeholder={locale === "ar" ? "ابحث عن أي شيء…" : "Search anything…"} />
+        <CommandList>
+          <CommandEmpty>{locale === "ar" ? "لا توجد نتائج." : "No results found."}</CommandEmpty>
+          <CommandGroup heading={locale === "ar" ? "التنقل" : "Navigation"}>
+            {commands.map(cmd => {
+              const Icon = cmd.icon;
+              return (
+                <CommandItem
+                  key={cmd.href}
+                  onSelect={() => { navigate(cmd.href); onOpenChange(false); }}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {cmd.label}
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        </CommandList>
+      </motion.div>
     </CommandDialog>
   );
 }
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { profile } = useProfile();
+  const motionConfig = useHikmaMotion();
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
@@ -465,6 +484,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile drawer */}
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetContent side={locale === "ar" ? "right" : "left"} className="w-72 bg-[rgb(var(--nav-bg))] text-white border-0 p-0">
+          <motion.div className="h-full" initial={motionConfig.item.initial} animate={motionConfig.item.animate} transition={motionConfig.transition}>
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -499,6 +519,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+          </motion.div>
         </SheetContent>
       </Sheet>
 

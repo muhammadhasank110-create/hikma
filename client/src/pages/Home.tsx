@@ -8,28 +8,31 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useProfile } from "@/contexts/ProfileContext";
 import { HikmaLogo } from "@/components/HikmaLogo";
 import {
-  motion, useReducedMotion, useInView,
+  motion, useInView,
   useMotionValue, useSpring, useTransform,
   useScroll, AnimatePresence,
 } from "framer-motion";
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
   ArrowRight, Globe, Sparkles, Contrast,
   Volume2, ChevronDown, Mic,
   CheckCircle2, Headphones, Brain, Keyboard,
 } from "lucide-react";
 import { playSound } from "@/lib/sound";
+import { useDocumentVisibility, useHikmaMotion } from "@/hooks/useHikmaMotion";
 
+const LANDING_PAGE_TITLE = "Hikma | Accessible AI Learning for Every Learner";
 
 // ── Animated gradient background ─────────────────────────────────────────────
 function GradientBackground({ highContrast = false }: { highContrast?: boolean }) {
-  const prefersReducedMotion = useReducedMotion();
+  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
+  const isDocumentVisible = useDocumentVisibility();
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
       {/* Base */}
       <div className={`absolute inset-0 ${highContrast ? "bg-black" : "bg-[#0d1f10]"}`} />
       {/* Animated orbs */}
-      {!prefersReducedMotion && (
+      {!prefersReducedMotion && isDocumentVisible && (
         <>
           <motion.div
             className="absolute w-[900px] h-[900px] rounded-full"
@@ -72,7 +75,7 @@ function GradientBackground({ highContrast = false }: { highContrast?: boolean }
 function ParticleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouseRef = useRef({ x: -9999, y: -9999 });
-  const prefersReducedMotion = useReducedMotion();
+  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
 
   useEffect(() => {
     if (prefersReducedMotion) return;
@@ -163,7 +166,7 @@ function GlowOrb() {
   const x = useMotionValue(-400), y = useMotionValue(-400);
   const sx = useSpring(x, { stiffness: 60, damping: 20 });
   const sy = useSpring(y, { stiffness: 60, damping: 20 });
-  const prefersReducedMotion = useReducedMotion();
+  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
   useEffect(() => {
     if (prefersReducedMotion) return;
     const move = (e: MouseEvent) => { x.set(e.clientX); y.set(e.clientY); };
@@ -185,20 +188,21 @@ function GlowOrb() {
 const PHRASES = ["meets you", "adapts to you", "listens to you", "grows with you"];
 function MorphingWord() {
   const [idx, setIdx] = useState(0);
-  const prefersReducedMotion = useReducedMotion();
+  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
+  const isDocumentVisible = useDocumentVisibility();
   useEffect(() => {
-    if (prefersReducedMotion) return;
+    if (prefersReducedMotion || !isDocumentVisible) return;
     const id = setInterval(() => setIdx(i => (i + 1) % PHRASES.length), 3000);
     return () => clearInterval(id);
-  }, [prefersReducedMotion]);
+  }, [isDocumentVisible, prefersReducedMotion]);
   return (
     <span className="relative inline-block overflow-hidden" style={{ color: "rgb(201,153,126)" }}>
       <AnimatePresence mode="wait">
         <motion.span key={idx} className="block"
-          initial={{ y: "110%", opacity: 0 }}
+          initial={prefersReducedMotion ? false : { y: "110%", opacity: 0 }}
           animate={{ y: "0%", opacity: 1 }}
-          exit={{ y: "-110%", opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] as any }}>
+          exit={prefersReducedMotion ? { opacity: 0 } : { y: "-110%", opacity: 0 }}
+          transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.5, ease: [0.23, 1, 0.32, 1] as any }}>
           {PHRASES[idx]}
         </motion.span>
       </AnimatePresence>
@@ -210,6 +214,8 @@ function MorphingWord() {
 function ScrollProgress() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
+  const { reduceMotion } = useHikmaMotion();
+  if (reduceMotion) return null;
   return (
     <motion.div className="fixed top-0 left-0 right-0 h-[3px] z-[100] origin-left"
       style={{ scaleX, background: "linear-gradient(90deg, rgb(45,100,55), rgb(201,153,126))" }}
@@ -234,7 +240,7 @@ function FeatureCard({ icon, title, desc, gradient, delay }: {
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref as any, { once: true, margin: "-60px" });
-  const prefersReducedMotion = useReducedMotion();
+  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
   return (
     <motion.div ref={ref}
       className={`relative overflow-hidden rounded-3xl p-6 border border-white/8 ${gradient} group cursor-default`}
@@ -276,13 +282,17 @@ function Marquee() {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Home() {
-  const prefersReducedMotion = useReducedMotion();
+  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
   const { profile, locale, setLocale, updateProfile } = useProfile();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   const dir = locale === "ar" ? "rtl" : "ltr";
   const isHighContrast = profile.theme === "high_contrast";
+
+  useEffect(() => {
+    document.title = LANDING_PAGE_TITLE;
+  }, []);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -291,7 +301,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen text-white overflow-x-hidden" dir={dir} style={{ background: isHighContrast ? "#000" : "#0d1f10" }}>
-      <GlowOrb />
       <ScrollProgress />
 
       {/* ── Sticky nav ─────────────────────────────────────────────────── */}
@@ -299,7 +308,11 @@ export default function Home() {
         style={{ background: "rgba(13,31,16,0.85)", backdropFilter: "blur(20px)" }}>
         <motion.a href={isAuthenticated ? "/dashboard" : "/"} aria-label={isAuthenticated ? t("Go to dashboard", "الذهاب إلى لوحة التحكم") : t("Hikma home", "الصفحة الرئيسية لحكمة")} className="flex items-center gap-3 group flex-shrink-0"
           initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-          <HikmaLogo surface="dark" size={52} decorative />
+          <HikmaLogo
+            surface="dark"
+            size={52}
+            alt={t("Hikma adaptive learning platform logo", "شعار منصة حكمة للتعلم التكيفي")}
+          />
           <span className="flex flex-col leading-none select-none">
             <span className="text-white font-bold text-sm" style={{ letterSpacing: "0.2em" }}>HIKMA</span>
             <span className="text-white/60 font-light text-xs" style={{ letterSpacing: "0.08em" }}>حكمة</span>
@@ -358,10 +371,11 @@ export default function Home() {
       <section ref={heroRef} className="relative min-h-[100vh] flex flex-col items-center justify-center overflow-hidden"
         aria-label={t("Hikma — adaptive learning platform", "حكمة — منصة التعلم التكيفي")}>
         <GradientBackground highContrast={isHighContrast} />
-        <ParticleCanvas />
 
         {/* Falcon watermark */}
-        <motion.img src="/img/hikma-wordmark.png" alt="" aria-hidden="true"
+        <motion.img
+          src="/img/hikma-wordmark.png"
+          alt={t("Hikma falcon calligraphy watermark", "علامة الصقر الخطية لحكمة")}
           className="absolute right-0 bottom-0 w-[55vw] max-w-[700px] object-contain select-none pointer-events-none"
           style={{ opacity: falconOpacity, y: falconY, filter: "brightness(0.4) saturate(0.5)" }}
           onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
@@ -378,24 +392,24 @@ export default function Home() {
             </span>
           </motion.div>
 
-          {/* Headline — MASSIVE */}
-          <div className="space-y-2">
+          {/* Headline */}
+          <h1 className="space-y-2" aria-label={t("Learning that meets you where you are", "تعلّم يلاقيك أينما كنت")}>
             {[
               { text: t("Learning that", "تعلّم"), delay: 0.1, class: "text-white" },
               { text: null, delay: 0.2, class: "" }, // morphing word
               { text: t("where you are.", "أينما كنت."), delay: 0.3, class: "text-white/40" },
             ].map((line, i) => (
-              <motion.div key={i}
-                className="overflow-hidden"
+              <motion.span key={i}
+                className="block overflow-hidden"
                 initial={prefersReducedMotion ? {} : { opacity: 0, y: 60 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: line.delay, ease: [0.23, 1, 0.32, 1] as any }}>
                 <span className={`block text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-[1.0] tracking-tight ${line.class}`}>
                   {line.text ?? <MorphingWord />}
                 </span>
-              </motion.div>
+              </motion.span>
             ))}
-          </div>
+          </h1>
 
           {/* Subheadline */}
           <motion.p className="text-white/50 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto"
@@ -586,7 +600,11 @@ export default function Home() {
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="py-8 border-t border-white/8 text-center">
         <div className="flex items-center justify-center gap-3 mb-3">
-          <HikmaLogo surface="dark" size={28} decorative />
+          <HikmaLogo
+            surface="dark"
+            size={28}
+            alt={t("Hikma adaptive learning platform logo", "شعار منصة حكمة للتعلم التكيفي")}
+          />
           <span className="font-bold text-white/60 text-sm">Hikma — حكمة</span>
         </div>
         <p className="text-white/25 text-xs">{t("Built to MADA Qatar & WCAG 2.2 AA accessibility standards", "مبني وفق معايير مادا قطر و WCAG 2.2 AA")}</p>

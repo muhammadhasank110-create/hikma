@@ -3,30 +3,31 @@
  * Respects prefers-reduced-motion AND profile.reduceMotion.
  * Usage: wrap the outermost element of each page with <PageTransition>.
  */
-import { motion, useReducedMotion } from "framer-motion";
+import { Children, isValidElement, type ReactNode } from "react";
+import { motion } from "framer-motion";
 import { useProfile } from "@/contexts/ProfileContext";
+import { motionTokens } from "@/lib/motion";
+import { useHikmaMotion } from "@/hooks/useHikmaMotion";
 
 interface PageTransitionProps {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }
 
 export function PageTransition({ children, className }: PageTransitionProps) {
-  const systemReducedMotion = useReducedMotion();
-  const { profile } = useProfile();
-  const reduceMotion = systemReducedMotion || profile.reduceMotion;
+  const motionConfig = useHikmaMotion();
 
-  if (reduceMotion) {
+  if (motionConfig.reduceMotion) {
     return <div className={className}>{children}</div>;
   }
 
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -4 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      initial={motionConfig.page.initial}
+      animate={motionConfig.page.animate}
+      exit={motionConfig.page.exit}
+      transition={motionConfig.transition}
     >
       {children}
     </motion.div>
@@ -38,17 +39,16 @@ export function PageTransition({ children, className }: PageTransitionProps) {
  * Re-renders do NOT re-stagger (key is stable).
  */
 interface StaggerListProps {
-  children: React.ReactNode[];
+  children: ReactNode;
   className?: string;
   staggerMs?: number;
 }
 
 export function StaggerList({ children, className, staggerMs = 40 }: StaggerListProps) {
-  const systemReducedMotion = useReducedMotion();
-  const { profile } = useProfile();
-  const reduceMotion = systemReducedMotion || profile.reduceMotion;
+  const motionConfig = useHikmaMotion();
+  const items = Children.toArray(children);
 
-  if (reduceMotion) {
+  if (motionConfig.reduceMotion) {
     return <div className={className}>{children}</div>;
   }
 
@@ -59,15 +59,15 @@ export function StaggerList({ children, className, staggerMs = 40 }: StaggerList
       animate="visible"
       variants={{
         hidden: {},
-        visible: { transition: { staggerChildren: staggerMs / 1000 } },
+        visible: { transition: { staggerChildren: Math.min(staggerMs / 1000, 0.08) } },
       }}
     >
-      {children.map((child, i) => (
+      {items.map((child, index) => (
         <motion.div
-          key={i}
+          key={isValidElement(child) && child.key !== null ? child.key : `staggered-item-${index}`}
           variants={{
-            hidden: { opacity: 0, y: 6 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } },
+            hidden: { opacity: 0, y: motionTokens.distance.subtle },
+            visible: { ...motionConfig.item.animate, transition: motionConfig.transition },
           }}
         >
           {child}
@@ -88,14 +88,14 @@ interface AnimatedProgressProps {
 }
 
 export function AnimatedProgress({ value, className, barClassName, "aria-label": ariaLabel }: AnimatedProgressProps) {
-  const systemReducedMotion = useReducedMotion();
-  const { profile } = useProfile();
-  const reduceMotion = systemReducedMotion || profile.reduceMotion;
+  const { locale } = useProfile();
+  const motionConfig = useHikmaMotion();
+  const clampedValue = Math.max(0, Math.min(100, value));
 
   return (
     <div
       role="progressbar"
-      aria-valuenow={value}
+      aria-valuenow={clampedValue}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={ariaLabel}
@@ -103,9 +103,12 @@ export function AnimatedProgress({ value, className, barClassName, "aria-label":
     >
       <motion.div
         className={["h-full bg-primary rounded-full", barClassName].filter(Boolean).join(" ")}
-        initial={{ width: 0 }}
-        animate={{ width: `${value}%` }}
-        transition={reduceMotion ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        initial={motionConfig.reduceMotion ? false : { scaleX: 0 }}
+        animate={{ scaleX: clampedValue / 100 }}
+        transition={motionConfig.reduceMotion
+          ? { duration: motionTokens.duration.instant }
+          : { duration: motionTokens.duration.deliberate, ease: motionTokens.easing.enter }}
+        style={{ transformOrigin: locale === "ar" ? "right" : "left" }}
       />
     </div>
   );
