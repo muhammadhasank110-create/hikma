@@ -53,6 +53,23 @@ test.describe("public entry and protected tutor", () => {
     await expect(page.getByRole("link", { name: "Contact" })).toBeVisible();
   });
 
+  test("localizes public Arabic navigation and uses RTL direction", async ({ page }) => {
+    await page.goto("/about?lang=ar");
+    await expect(page.locator("html")).toHaveAttribute("lang", "ar");
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expect(page.getByRole("link", { name: "تواصل" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /دعم تعليمي/i })).toBeVisible();
+  });
+
+  test("completes the Arabic entry transition and keeps Arabic navigation stable across a public route change", async ({ page }) => {
+    await page.goto("/?lang=ar");
+    await expect(page.getByRole("heading", { name: /مساحة تعلّم تمنحك/i })).toBeVisible({ timeout: 4_000 });
+    await page.getByRole("link", { name: "من نحن" }).click();
+    await expect(page).toHaveURL(/\/about/);
+    await expect(page.getByRole("heading", { name: /دعم تعليمي/i })).toBeVisible();
+    await expect(page.locator("main")).toHaveAttribute("dir", "rtl");
+  });
+
   test("renders a complete and labelled contact form", async ({ page }) => {
     await page.goto("/contact");
     await expect(page.getByRole("heading", { name: /tell us what would help/i })).toBeVisible();

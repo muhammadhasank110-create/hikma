@@ -104,7 +104,10 @@ const ProfileContext = createContext<ProfileContextValue>({
 export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [profile, setProfile] = useState<LearnerProfileState>(defaultProfile);
-  const [locale, setLocaleState] = useState<Locale>("en");
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    if (typeof window === "undefined") return "en";
+    return new URLSearchParams(window.location.search).get("lang") === "ar" ? "ar" : "en";
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   const dir = locale === "ar" ? "rtl" : "ltr";

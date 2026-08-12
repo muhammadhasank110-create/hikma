@@ -16,7 +16,7 @@ const features = (t: (english: string, arabic: string) => string) => [
   { icon: Brain, title: t("Learn with Hikma AI", "تعلّم مع حكمة AI"), text: t("Guidance that works from your pace, not against it.", "توجيه يراعي وتيرتك ولا يفرض عليك إيقاعاً مختلفاً.") },
 ];
 
-function BrandEntry() {
+function BrandEntry({ locale }: { locale: "en" | "ar" }) {
   const motionConfig = useHikmaMotion();
 
   return (
@@ -36,11 +36,11 @@ function BrandEntry() {
           transition={motionConfig.spring}
           style={{ transformPerspective: 900 }}
         >
-          <HikmaLogo surface="dark" size={84} alt="Hikma logo" />
+          <HikmaLogo surface="dark" size={84} alt={locale === "ar" ? "شعار حكمة" : "Hikma logo"} />
         </motion.div>
         <p className="mb-3 text-[0.7rem] font-bold uppercase tracking-[0.24em] text-emerald-200/80">Hikma — حكمة</p>
-        <h1 id="intro-title" className="text-3xl font-semibold tracking-tight">A calmer way to learn.</h1>
-        <p className="mt-3 text-sm leading-6 text-white/60">Built around your access needs, attention, and next small step.</p>
+        <h1 id="intro-title" className="text-3xl font-semibold tracking-tight">{locale === "ar" ? "طريقة أهدأ للتعلّم." : "A calmer way to learn."}</h1>
+        <p className="mt-3 text-sm leading-6 text-white/60">{locale === "ar" ? "مصممة لاحتياجاتك في الإتاحة والتركيز وخطوتك التالية الصغيرة." : "Built around your access needs, attention, and next small step."}</p>
       </div>
     </motion.div>
   );
@@ -69,7 +69,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#f7f8f4] text-[#152119]" dir={locale === "ar" ? "rtl" : "ltr"}>
       <AnimatePresence mode="wait">
-        {showEntry && <BrandEntry />}
+        {showEntry && <BrandEntry locale={locale} />}
       </AnimatePresence>
 
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
@@ -78,7 +78,7 @@ export default function Home() {
           <span className="leading-tight"><strong className="block text-sm tracking-[0.18em]">HIKMA</strong><span className="text-xs text-[#627066]">حكمة</span></span>
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">
-          <nav className="flex items-center gap-1 text-xs font-medium text-[#344438] sm:text-sm" aria-label="Public navigation"><Link href="/about" className="rounded-full px-2 py-2 hover:bg-[#e8ebe4] sm:px-3">About</Link><Link href="/contact" className="rounded-full px-2 py-2 hover:bg-[#e8ebe4] sm:px-3">Contact</Link></nav>
+          <nav className="flex items-center gap-1 text-xs font-medium text-[#344438] sm:text-sm" aria-label={t("Public navigation", "التنقّل العام")}><Link href="/about" className="rounded-full px-2 py-2 hover:bg-[#e8ebe4] sm:px-3">{t("About", "من نحن")}</Link><Link href="/contact" className="rounded-full px-2 py-2 hover:bg-[#e8ebe4] sm:px-3">{t("Contact", "تواصل")}</Link></nav>
           {!isAuthenticated && <button type="button" onClick={() => navigate("/signin")} className="min-h-11 rounded-full px-4 text-sm font-medium text-[#344438] hover:bg-[#e8ebe4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#2c5c3a]">{t("Sign in", "تسجيل الدخول")}</button>}
           <button type="button" onClick={() => navigate(destination)} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#173a25] px-4 text-sm font-semibold text-white hover:bg-[#0d2919] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2c5c3a]">
             {isAuthenticated ? t("Open dashboard", "فتح لوحة التحكم") : t("Start learning", "ابدأ التعلّم")}<ArrowUpRight className="size-4 rtl:rotate-180" aria-hidden="true" />

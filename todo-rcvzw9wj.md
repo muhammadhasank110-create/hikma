@@ -60,3 +60,9 @@
 - [x] Run the full validation suite and record actual results in AUDIT.md; publish the experience polish update.
 - [x] Verify narrow responsive landing behavior with a 375×812 browser assertion.
 - [x] Document that browser verification of live tutor citation rendering requires an authenticated tutor fixture; server retrieval, client source handling, and visible citation markup are covered by TypeScript and unit validation only.
+- [x] Audit tutor playback state, public Arabic navigation behavior, and the available authentication strategy for browser tests.
+- [x] Enhance the tutor’s active playback wave with richer but reduced-motion-safe amplitude, timing, and accessible speaking state feedback.
+- [x] Add browser coverage for Arabic public navigation, direction, labels, and page transitions.
+- [x] Add authenticated browser coverage for tutor voice controls, including start, speaking feedback, and stop interaction, without embedding privileged credentials in tests.
+- [x] Create and validate a reusable skill that captures HIKMA’s accessible motion, voice, bilingual, SEO, and browser-test workflow.
+- [x] Run the full validation suite and update AUDIT.md with actual evidence; publish the application improvements.

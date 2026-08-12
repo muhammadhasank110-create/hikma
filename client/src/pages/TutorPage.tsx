@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Streamdown } from "streamdown";
-import { Send, Mic, MicOff, Volume2, Bot, User, Loader2, RefreshCw, Headphones, BookOpen, Map, HelpCircle } from "lucide-react";
+import { Send, Mic, MicOff, Volume2, Square, Bot, User, Loader2, RefreshCw, Headphones, BookOpen, Map, HelpCircle } from "lucide-react";
 import { useTutorState, type TutorModality } from "@/hooks/useTutorState";
 import { useVoiceCommands } from "@/hooks/useVoiceCommands";
 import { VoiceActivityIndicator } from "@/components/VoiceActivityIndicator";
@@ -69,6 +69,7 @@ export default function TutorPage() {
         </div>
         <div className="flex items-center gap-3">
           <VoiceActivityIndicator state={s.isRecording ? "listening" : s.tts.isSpeaking ? "speaking" : "idle"} locale={locale} />
+          {s.tts.isSpeaking && <Button variant="ghost" size="sm" onClick={s.tts.stop} aria-label={locale === "ar" ? "إيقاف القراءة" : "Stop narration"}><Square className="w-3.5 h-3.5" /></Button>}
           <div className="flex items-center gap-2">
             <Label htmlFor="tts-toggle" className="text-xs text-muted-foreground">{t.tts}</Label>
             <Switch id="tts-toggle" checked={s.ttsEnabled} onCheckedChange={s.setTtsEnabled} aria-label={t.tts} />
