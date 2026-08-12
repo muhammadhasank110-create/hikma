@@ -1,171 +1,80 @@
 /**
- * Hikma Sound Effects — Web Audio API
- * A minor pentatonic scale. OFF by default.
- * Toggle: localStorage 'hikma:sound' === 'on'
- * Volume: localStorage 'hikma:volume' (0–1, default 0.7)
+ * Hikma sound cues. Playback is deliberately optional, quiet, and resilient in
+ * privacy-restricted browsers where Web Audio or localStorage are unavailable.
  */
-
 let ctx: AudioContext | null = null;
 
-function getCtx(): AudioContext {
+function readStorage(key: string): string | null {
+  try { return window.localStorage.getItem(key); } catch { return null; }
+}
+
+function writeStorage(key: string, value: string) {
+  try { window.localStorage.setItem(key, value); } catch { /* preference storage is optional */ }
+}
+
+function getContext(): AudioContext | null {
+  if (typeof window === "undefined") return null;
   if (!ctx || ctx.state === "closed") {
-    ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const constructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!constructor) return null;
+    ctx = new constructor();
   }
   return ctx;
 }
 
-// A minor pentatonic scale — all cues live in this family so they feel cohesive
-const NOTES = {
-  A3: 220,
-  C4: 261.63,
-  D4: 293.66,
-  E4: 329.63,
-  G4: 392,
-  A4: 440,
-  C5: 523.25,
-  E5: 659.25,
+const NOTES = { A3: 220, C4: 261.63, D4: 293.66, E4: 329.63, G4: 392, A4: 440, C5: 523.25, E5: 659.25 };
+
+function tone(freq: number, start: number, duration: number, volume: number, type: OscillatorType = "sine") {
+  try {
+    const audio = getContext();
+    if (!audio) return;
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = type;
+    oscillator.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, audio.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(volume, audio.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + start + duration);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start(audio.currentTime + start);
+    oscillator.stop(audio.currentTime + start + duration + 0.05);
+  } catch { /* never interrupt a learner action for an optional cue */ }
+}
+
+function announce(label: string) {
+  const liveRegion = document.getElementById("sound-announcer");
+  if (!liveRegion) return;
+  liveRegion.textContent = label;
+  window.setTimeout(() => { liveRegion.textContent = ""; }, 800);
+}
+
+const CUES: Record<string, (volume: number) => void> = {
+  tap: volume => tone(NOTES.A4, 0, 0.06, 0.04 * volume),
+  correct: volume => { tone(NOTES.E4, 0, 0.12, 0.1 * volume); tone(NOTES.A4, 0.08, 0.22, 0.1 * volume); announce("Correct"); },
+  incorrect: volume => { tone(NOTES.D4, 0, 0.14, 0.07 * volume, "triangle"); announce("Try again"); },
+  complete: volume => { [NOTES.A4, NOTES.C5, NOTES.E5].forEach((frequency, index) => tone(frequency, index * 0.09, 0.28, 0.08 * volume)); announce("Complete"); },
+  achievement: volume => { [NOTES.A4, NOTES.C5, NOTES.E5].forEach((frequency, index) => tone(frequency, index * 0.08, 0.3, 0.08 * volume)); announce("Achievement"); },
+  error: volume => { tone(NOTES.A3, 0, 0.22, 0.07 * volume, "triangle"); announce("Error"); },
+  open: volume => tone(NOTES.C4, 0, 0.08, 0.04 * volume),
+  close: volume => tone(NOTES.A3, 0, 0.08, 0.04 * volume),
+  navigate: volume => { tone(NOTES.G4, 0, 0.06, 0.04 * volume); tone(NOTES.A4, 0.05, 0.08, 0.03 * volume); },
+  questionAppear: volume => tone(NOTES.C5, 0, 0.07, 0.07 * volume),
+  partiallyCorrect: volume => { tone(NOTES.E4, 0, 0.12, 0.08 * volume); announce("Partially correct"); },
 };
 
-function tone(
-  freq: number,
-  start: number,
-  dur: number,
-  vol: number,
-  type: OscillatorType = "sine"
-) {
+function playCue(name: string, allowWhenDisabled = false) {
+  if (!allowWhenDisabled && readStorage("hikma:sound") !== "on") return;
+  const volume = Number(readStorage("hikma:volume") ?? 0.7);
   try {
-    const c = getCtx();
-    const osc = c.createOscillator();
-    const gain = c.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    // Soft attack + exponential release — no clicks, nothing startling
-    gain.gain.setValueAtTime(0.0001, c.currentTime + start);
-    gain.gain.exponentialRampToValueAtTime(vol, c.currentTime + start + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + start + dur);
-    osc.connect(gain).connect(c.destination);
-    osc.start(c.currentTime + start);
-    osc.stop(c.currentTime + start + dur + 0.05);
-  } catch {
-    // silent — audio context may not be available
-  }
+    const audio = getContext();
+    if (!audio) return;
+    void audio.resume().then(() => CUES[name]?.(Number.isFinite(volume) ? volume : 0.7)).catch(() => undefined);
+  } catch { /* optional cue */ }
 }
 
-/** Visual twin — brief border flash for deaf/HoH users */
-function visualFlash(color: string, label: string) {
-  // Announce to screen reader
-  const live = document.getElementById("sound-announcer");
-  if (live) {
-    live.textContent = label;
-    setTimeout(() => { live.textContent = ""; }, 1000);
-  }
-  // Brief border flash
-  const el = document.createElement("div");
-  el.className = "sound-flash earcon-pulse";
-  el.style.border = `3px solid ${color}`;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 450);
-}
-
-const CUES: Record<string, (vol: number) => void> = {
-  tap: (v) => tone(NOTES.A4, 0, 0.06, 0.05 * v, "sine"),
-
-  correct: (v) => {
-    tone(NOTES.E4, 0, 0.14, 0.12 * v);
-    tone(NOTES.A4, 0.09, 0.28, 0.12 * v);
-    visualFlash("#22c55e", "Correct!");
-  },
-
-  incorrect: (v) => {
-    // Soft and neutral — never punitive
-    tone(NOTES.D4, 0, 0.16, 0.09 * v, "triangle");
-    tone(NOTES.A3, 0.1, 0.3, 0.08 * v, "triangle");
-    visualFlash("#f59e0b", "Try again");
-  },
-
-  complete: (v) => {
-    [NOTES.A4, NOTES.C5, NOTES.E5].forEach((f, i) =>
-      tone(f, i * 0.1, 0.4, 0.1 * v)
-    );
-    visualFlash("#22c55e", "Complete!");
-  },
-
-  achievement: (v) => {
-    [NOTES.A4, NOTES.C5, NOTES.E5, NOTES.A4 * 2].forEach((f, i) =>
-      tone(f, i * 0.08, 0.5, 0.1 * v)
-    );
-    visualFlash("#f59e0b", "Achievement!");
-  },
-
-  error: (v) => {
-    tone(NOTES.A3, 0, 0.3, 0.1 * v, "triangle");
-    visualFlash("#ef4444", "Error");
-  },
-
-  open: (v) => tone(NOTES.C4, 0, 0.1, 0.05 * v),
-
-  close: (v) => tone(NOTES.A3, 0, 0.1, 0.05 * v),
-
-  navigate: (v) => {
-    tone(NOTES.G4, 0, 0.08, 0.06 * v);
-    tone(NOTES.A4, 0.06, 0.1, 0.05 * v);
-  },
-
-  questionAppear: (v) => {
-    tone(NOTES.A4, 0, 0.06, 0.1 * v);
-    tone(NOTES.C5, 0.05, 0.06, 0.08 * v);
-    tone(NOTES.E5, 0.1, 0.08, 0.1 * v);
-  },
-
-  // Warm amber two-note for partially correct answers
-  partiallyCorrect: (v) => {
-    tone(NOTES.E4, 0, 0.14, 0.1 * v);
-    tone(NOTES.G4, 0.1, 0.2, 0.09 * v);
-    visualFlash("#f59e0b", "Partially correct");
-  },
-};
-
-export function playSound(name: keyof typeof CUES | string) {
-  // OFF by default — only plays if user explicitly turned it on
-  const enabled = localStorage.getItem("hikma:sound") === "on";
-  if (!enabled) return;
-  const vol = Number(localStorage.getItem("hikma:volume") ?? 0.7);
-  try {
-    const c = getCtx();
-    c.resume().then(() => {
-      CUES[name]?.(vol);
-    });
-  } catch {
-    // silent
-  }
-}
-
-/**
- * playTestSound — plays a sound even if sounds are "off".
- * Used to give immediate feedback when the user turns sounds ON.
- */
-export function playTestSound() {
-  const vol = Number(localStorage.getItem("hikma:volume") ?? 0.7);
-  try {
-    const c = getCtx();
-    c.resume().then(() => {
-      CUES["navigate"]?.(vol);
-    });
-  } catch {}
-}
-
-export function isSoundEnabled(): boolean {
-  return localStorage.getItem("hikma:sound") === "on";
-}
-
-export function setSoundEnabled(on: boolean) {
-  localStorage.setItem("hikma:sound", on ? "on" : "off");
-}
-
-export function getSoundVolume(): number {
-  return Number(localStorage.getItem("hikma:volume") ?? 0.7);
-}
-
-export function setSoundVolume(vol: number) {
-  localStorage.setItem("hikma:volume", String(Math.max(0, Math.min(1, vol))));
-}
+export function playSound(name: keyof typeof CUES | string) { playCue(name); }
+export function playTestSound() { playCue("navigate", true); }
+export function isSoundEnabled() { return readStorage("hikma:sound") === "on"; }
+export function setSoundEnabled(enabled: boolean) { writeStorage("hikma:sound", enabled ? "on" : "off"); }
+export function getSoundVolume() { return Number(readStorage("hikma:volume") ?? 0.7); }
+export function setSoundVolume(volume: number) { writeStorage("hikma:volume", String(Math.max(0, Math.min(1, volume)))); }

@@ -243,7 +243,7 @@ export default function LessonPage() {
             </div>
           )}
           {/* Primary: Read Aloud */}
-          <Button variant={s.isNarrating ? "default" : "outline"} size="sm" onClick={s.readAloud} aria-label={s.isNarrating ? t("Stop narration", "إيقاف السرد") : t("Read aloud", "قراءة بصوت")} aria-pressed={s.isNarrating}>
+          <Button variant={s.isNarrating ? "default" : "outline"} size="sm" onClick={() => { if (s.isNarrating) s.tts.stop(); else s.readAloud(); }} aria-label={s.isNarrating ? t("Stop narration", "إيقاف السرد") : t("Read aloud", "قراءة بصوت")} aria-pressed={s.isNarrating}>
             {s.isNarrating ? <VolumeX className="w-3.5 h-3.5 mr-1.5" /> : <Volume2 className="w-3.5 h-3.5 mr-1.5" />}
             {s.isNarrating ? t("Stop", "إيقاف") : t("Listen", "استمع")}
           </Button>

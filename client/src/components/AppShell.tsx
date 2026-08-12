@@ -387,7 +387,7 @@ function CommandPalette({ open, onOpenChange, visibleItems }: { open: boolean; o
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <motion.div initial={motionConfig.item.initial} animate={motionConfig.item.animate} transition={motionConfig.transition}>
+      <motion.div className="rounded-2xl bg-popover text-popover-foreground" initial={motionConfig.item.initial} animate={motionConfig.item.animate} transition={motionConfig.transition}>
         <CommandInput placeholder={locale === "ar" ? "ابحث عن أي شيء…" : "Search anything…"} />
         <CommandList>
           <CommandEmpty>{locale === "ar" ? "لا توجد نتائج." : "No results found."}</CommandEmpty>
@@ -422,6 +422,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     window.dispatchEvent(new CustomEvent(mobileMenuOpen ? "hikma:mobile-menu-open" : "hikma:mobile-menu-close"));
   }, [mobileMenuOpen]);
+  useEffect(() => {
+    const openSearch = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setCommandOpen(true);
+      }
+    };
+    window.addEventListener("keydown", openSearch);
+    return () => window.removeEventListener("keydown", openSearch);
+  }, []);
   const { locale } = useProfile();
   const [location] = useLocation();
   const visibleItems = getVisibleNavItems(user as { role?: string } | null);
@@ -475,8 +485,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {!isLanding && (
-        <div className="sticky top-0 z-40 shadow-lg">
-          <AccessibilityBar />
+        <div className="sticky top-0 z-40 border-b border-border bg-[rgb(var(--nav-bg))]">
           <TopNav onMenuOpen={() => setMobileMenuOpen(true)} onSearchOpen={() => setCommandOpen(true)} visibleItems={visibleItems} />
         </div>
       )}
@@ -529,9 +538,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Sound announcer — required by sound.ts visualFlash() for screen reader announcements */}
       <div id="sound-announcer" aria-live="polite" aria-atomic="true" className="sr-only" />
       {/* Main content */}
-      <main id="main-content" className="flex-1 page-enter" tabIndex={-1}>
+      <main id="main-content" className={`flex-1 page-enter ${isLanding ? "" : "pb-20 md:pb-0"}`} tabIndex={-1}>
         {children}
       </main>
+
+      {!isLanding && (
+        <nav className="fixed inset-x-3 bottom-3 z-50 grid grid-cols-5 rounded-2xl border border-border bg-card/95 p-1 shadow-xl backdrop-blur md:hidden" aria-label={locale === "ar" ? "التنقل السفلي" : "Bottom navigation"}>
+          {visibleItems.slice(0, 4).map(item => {
+            const Icon = item.icon;
+            const isActive = location === item.href || location.startsWith(`${item.href}/`);
+            return <Link key={item.href} href={item.href} className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-semibold ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`} aria-current={isActive ? "page" : undefined}><Icon className="size-4" aria-hidden="true"/><span>{locale === "ar" ? item.labelAr : item.labelEn}</span></Link>;
+          })}
+          <button type="button" onClick={() => setMobileMenuOpen(true)} className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-semibold text-muted-foreground hover:bg-muted" aria-label={locale === "ar" ? "المزيد" : "More"}><MoreHorizontal className="size-4" aria-hidden="true"/><span>{locale === "ar" ? "المزيد" : "More"}</span></button>
+        </nav>
+      )}
 
       {/* Footer */}
       {!isLanding && (

@@ -39,11 +39,20 @@ export default function SettingsPage() {
 
   return (
     <PageTransition>
-    <div className="settings-page container py-8 max-w-2xl space-y-6">
+    <div className="settings-page container max-w-4xl space-y-6 py-8">
       <div>
         <h1 className="text-2xl font-bold">{t("Settings", "الإعدادات")}</h1>
         <p className="text-muted-foreground mt-1">{t("Personalise your learning experience", "خصّص تجربتك التعليمية")}</p>
       </div>
+
+      <section className="rounded-2xl border border-border bg-card p-3" aria-label={t("Quick settings", "الإعدادات السريعة")}>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => setLocale(locale === "ar" ? "en" : "ar")} className="min-h-10 rounded-full border border-border px-3 text-sm font-medium hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">{locale === "ar" ? "English" : "العربية"}</button>
+          <button type="button" onClick={() => updateProfile({ theme: profile.theme === "high_contrast" ? "light" : "high_contrast" })} className={`min-h-10 rounded-full border px-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${profile.theme === "high_contrast" ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted"}`}>{t("High contrast", "تباين عالٍ")}</button>
+          <button type="button" onClick={() => updateProfile({ reduceMotion: !profile.reduceMotion })} className={`min-h-10 rounded-full border px-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${profile.reduceMotion ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted"}`}>{t("Reduce motion", "تقليل الحركة")}</button>
+          <button type="button" onClick={() => updateProfile({ autoNarrate: !profile.autoNarrate })} className={`min-h-10 rounded-full border px-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${profile.autoNarrate ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-muted"}`}>{t("Lesson audio", "صوت الدرس")}</button>
+        </div>
+      </section>
 
       {/* Language */}
       <Section icon={Globe} title={t("Language & Direction", "اللغة والاتجاه")}>

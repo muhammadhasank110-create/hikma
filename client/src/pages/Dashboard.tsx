@@ -74,7 +74,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <main id="main-content" className="min-h-screen p-6 sm:p-8 max-w-5xl mx-auto space-y-10" tabIndex={-1}>
+    <main id="main-content" className="min-h-screen max-w-5xl mx-auto space-y-7 px-4 pb-24 pt-5 sm:space-y-10 sm:p-8" tabIndex={-1}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <motion.div
@@ -97,24 +97,28 @@ export default function Dashboard() {
                 {modeLabel[profileMode]}
               </span>
             </div>
+            <button type="button" onClick={() => navigate("/subjects/1")} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.01] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+              <BookOpen className="size-4" aria-hidden="true" />{t("Continue learning", "تابع التعلّم")}
+              <ChevronRight className="size-4" aria-hidden="true" />
+            </button>
           </div>
           <HikmaLogo surface="auto" size={40} decorative />
         </div>
       </motion.div>
 
       {/* ── Stats ──────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {stats.map((s, i) => {
           const Icon = s.icon;
           return (
             <motion.div key={s.label}
-              className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 text-card-foreground"
+              className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 text-card-foreground sm:p-5"
               initial={motionConfig.item.initial}
               animate={motionConfig.item.animate}
               transition={{ ...motionConfig.transition, delay: motionConfig.reduceMotion ? 0 : i * 0.06 }}
               whileHover={motionConfig.hover}
             >
-              <div className={`w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center mb-4 ${s.iconColor}`}>
+              <div className={`mb-3 flex size-10 items-center justify-center rounded-xl bg-muted/50 sm:mb-4 ${s.iconColor}`}>
                 <Icon className="w-5 h-5" aria-hidden="true" />
               </div>
               <p className="text-xs text-muted-foreground font-medium mb-1">{s.label}</p>

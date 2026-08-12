@@ -18,6 +18,19 @@ export interface Message {
 }
 export type TutorModality = "read" | "listen" | "map";
 const TUTOR_SESSION_STORAGE_KEY = "hikma:tutor-session:v1";
+const TUTOR_SESSION_ID_STORAGE_KEY = "hikma:tutor-session-id:v1";
+
+function restoreSessionId() {
+  try {
+    const existing = window.sessionStorage.getItem(TUTOR_SESSION_ID_STORAGE_KEY);
+    if (existing) return existing;
+    const next = nanoid();
+    window.sessionStorage.setItem(TUTOR_SESSION_ID_STORAGE_KEY, next);
+    return next;
+  } catch {
+    return nanoid();
+  }
+}
 
 function restoreMessages(): Message[] {
   if (typeof window === "undefined") return [];
@@ -40,7 +53,7 @@ export function useTutorState() {
   const [, params] = useRoute("/tutor/:lessonId");
   const sounds = useSounds();
 
-  const [sessionId] = useState(() => nanoid());
+  const [sessionId] = useState(restoreSessionId);
   const [messages, setMessages] = useState<Message[]>(restoreMessages);
   const [input, setInput] = useState("");
   const [isRecording, setIsRecording] = useState(false);

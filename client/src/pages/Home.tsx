@@ -1,614 +1,113 @@
-/**
- * Home — Hikma landing page.
- * Premium design: full-screen hero with animated gradient orbs,
- * massive typography, visible particle field, dramatic scroll reveals.
- */
-import { useLocation } from "wouter";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "wouter";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowUpRight, BookOpen, Brain, Keyboard, Volume2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useProfile } from "@/contexts/ProfileContext";
 import { HikmaLogo } from "@/components/HikmaLogo";
-import {
-  motion, useInView,
-  useMotionValue, useSpring, useTransform,
-  useScroll, AnimatePresence,
-} from "framer-motion";
-import { useRef, useEffect, useState } from "react";
-import {
-  ArrowRight, Globe, Sparkles, Contrast,
-  Volume2, ChevronDown, Mic,
-  CheckCircle2, Headphones, Brain, Keyboard,
-} from "lucide-react";
-import { playSound } from "@/lib/sound";
-import { useDocumentVisibility, useHikmaMotion } from "@/hooks/useHikmaMotion";
+import { useHikmaMotion } from "@/hooks/useHikmaMotion";
 
 const LANDING_PAGE_TITLE = "Hikma | Accessible AI Learning for Every Learner";
 
-// ── Animated gradient background ─────────────────────────────────────────────
-function GradientBackground({ highContrast = false }: { highContrast?: boolean }) {
-  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
-  const isDocumentVisible = useDocumentVisibility();
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-      {/* Base */}
-      <div className={`absolute inset-0 ${highContrast ? "bg-black" : "bg-[#0d1f10]"}`} />
-      {/* Animated orbs */}
-      {!prefersReducedMotion && isDocumentVisible && (
-        <>
-          <motion.div
-            className="absolute w-[900px] h-[900px] rounded-full"
-            style={{
-              background: "radial-gradient(circle, rgba(45,100,55,0.35) 0%, transparent 70%)",
-              top: "-20%", left: "50%", translateX: "-50%",
-            }}
-            animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute w-[600px] h-[600px] rounded-full"
-            style={{
-              background: "radial-gradient(circle, rgba(136,90,68,0.2) 0%, transparent 70%)",
-              bottom: "10%", right: "-10%",
-            }}
-            animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.8, 0.4] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          />
-          <motion.div
-            className="absolute w-[400px] h-[400px] rounded-full"
-            style={{
-              background: "radial-gradient(circle, rgba(28,70,32,0.4) 0%, transparent 70%)",
-              top: "40%", left: "-5%",
-            }}
-            animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.7, 0.3] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-          />
-        </>
-      )}
-      {/* Noise texture overlay */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-      }} />
-    </div>
-  );
-}
+const features = [
+  { icon: Volume2, title: "Listen as you learn", text: "Narration and voice support stay close to every lesson." },
+  { icon: Keyboard, title: "Move with confidence", text: "Keyboard-first navigation supports an uninterrupted flow." },
+  { icon: Brain, title: "Learn with Hikma AI", text: "Guidance that works from your pace, not against it." },
+];
 
-// ── Particle canvas ───────────────────────────────────────────────────────────
-function ParticleCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: -9999, y: -9999 });
-  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
+function BrandEntry({ onEnter }: { onEnter: () => void }) {
+  const motionConfig = useHikmaMotion();
 
-  useEffect(() => {
-    if (prefersReducedMotion) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animId: number;
-    const particles: { x: number; y: number; vx: number; vy: number; r: number; alpha: number; hue: number }[] = [];
-    const COUNT = 120;
-
-    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
-    resize();
-    window.addEventListener("resize", resize);
-
-    for (let i = 0; i < COUNT; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        r: Math.random() * 2 + 0.5,
-        alpha: Math.random() * 0.5 + 0.15,
-        hue: Math.random() > 0.7 ? 30 : 130, // mix clay and green
-      });
-    }
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const mx = mouseRef.current.x, my = mouseRef.current.y;
-      for (const p of particles) {
-        const dx = p.x - mx, dy = p.y - my;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 150) {
-          const force = (150 - dist) / 150;
-          p.vx += (dx / dist) * force * 0.06;
-          p.vy += (dy / dist) * force * 0.06;
-        }
-        p.vx *= 0.97; p.vy *= 0.97;
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.hue === 130
-          ? `rgba(134,239,172,${p.alpha})`
-          : `rgba(201,153,126,${p.alpha})`;
-        ctx.fill();
-      }
-      // Connection lines
-      for (let i = 0; i < particles.length; i++) {
-        for (let j = i + 1; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 90) {
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(134,239,172,${0.12 * (1 - d / 90)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-      animId = requestAnimationFrame(draw);
-    };
-    draw();
-
-    const onMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    };
-    canvas.addEventListener("mousemove", onMove);
-    return () => { cancelAnimationFrame(animId); window.removeEventListener("resize", resize); canvas.removeEventListener("mousemove", onMove); };
-  }, [prefersReducedMotion]);
-
-  return (
-    <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" aria-hidden="true" style={{ pointerEvents: "none" }} />
-  );
-}
-
-// ── Mouse glow ────────────────────────────────────────────────────────────────
-function GlowOrb() {
-  const x = useMotionValue(-400), y = useMotionValue(-400);
-  const sx = useSpring(x, { stiffness: 60, damping: 20 });
-  const sy = useSpring(y, { stiffness: 60, damping: 20 });
-  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
-  useEffect(() => {
-    if (prefersReducedMotion) return;
-    const move = (e: MouseEvent) => { x.set(e.clientX); y.set(e.clientY); };
-    window.addEventListener("mousemove", move);
-    return () => window.removeEventListener("mousemove", move);
-  }, [prefersReducedMotion, x, y]);
-  if (prefersReducedMotion) return null;
   return (
     <motion.div
-      className="pointer-events-none fixed z-0 w-[700px] h-[700px] rounded-full"
-      style={{ x: sx, y: sy, translateX: "-50%", translateY: "-50%",
-        background: "radial-gradient(circle, rgba(45,100,55,0.08) 0%, transparent 65%)" }}
-      aria-hidden="true"
-    />
-  );
-}
-
-// ── Morphing headline ─────────────────────────────────────────────────────────
-const PHRASES = ["meets you", "adapts to you", "listens to you", "grows with you"];
-function MorphingWord() {
-  const [idx, setIdx] = useState(0);
-  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
-  const isDocumentVisible = useDocumentVisibility();
-  useEffect(() => {
-    if (prefersReducedMotion || !isDocumentVisible) return;
-    const id = setInterval(() => setIdx(i => (i + 1) % PHRASES.length), 3000);
-    return () => clearInterval(id);
-  }, [isDocumentVisible, prefersReducedMotion]);
-  return (
-    <span className="relative inline-block overflow-hidden" style={{ color: "rgb(201,153,126)" }}>
-      <AnimatePresence mode="wait">
-        <motion.span key={idx} className="block"
-          initial={prefersReducedMotion ? false : { y: "110%", opacity: 0 }}
-          animate={{ y: "0%", opacity: 1 }}
-          exit={prefersReducedMotion ? { opacity: 0 } : { y: "-110%", opacity: 0 }}
-          transition={prefersReducedMotion ? { duration: 0.01 } : { duration: 0.5, ease: [0.23, 1, 0.32, 1] as any }}>
-          {PHRASES[idx]}
-        </motion.span>
-      </AnimatePresence>
-    </span>
-  );
-}
-
-// ── Scroll progress ───────────────────────────────────────────────────────────
-function ScrollProgress() {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
-  const { reduceMotion } = useHikmaMotion();
-  if (reduceMotion) return null;
-  return (
-    <motion.div className="fixed top-0 left-0 right-0 h-[3px] z-[100] origin-left"
-      style={{ scaleX, background: "linear-gradient(90deg, rgb(45,100,55), rgb(201,153,126))" }}
-      aria-hidden="true" />
-  );
-}
-
-// ── Animated counter ──────────────────────────────────────────────────────────
-function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
-  const mv = useMotionValue(0);
-  const spring = useSpring(mv, { stiffness: 50, damping: 15 });
-  const display = useTransform(spring, v => `${Math.round(v)}${suffix}`);
-  useEffect(() => { if (inView) mv.set(to); }, [inView, to, mv]);
-  return <motion.span ref={ref}>{display}</motion.span>;
-}
-
-// ── Feature card ──────────────────────────────────────────────────────────────
-function FeatureCard({ icon, title, desc, gradient, delay }: {
-  icon: React.ReactNode; title: string; desc: string; gradient: string; delay: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref as any, { once: true, margin: "-60px" });
-  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
-  return (
-    <motion.div ref={ref}
-      className={`relative overflow-hidden rounded-3xl p-6 border border-white/8 ${gradient} group cursor-default`}
-      initial={prefersReducedMotion ? {} : { opacity: 0, y: 32, scale: 0.95 }}
-      animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
-      transition={{ duration: 0.6, delay, ease: [0.23, 1, 0.32, 1] as any }}
-      whileHover={prefersReducedMotion ? {} : { y: -4, scale: 1.01 }}
+      className="fixed inset-0 z-[100] grid place-items-center bg-[#0c1710] px-6 text-white"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={motionConfig.transition}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="intro-title"
     >
-      <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-        {icon}
+      <div className="w-full max-w-sm text-center">
+        <motion.div
+          className="mx-auto mb-8 grid size-32 place-items-center rounded-[2rem] border border-white/10 bg-white/[0.04] shadow-[0_24px_80px_rgba(0,0,0,0.28)]"
+          initial={motionConfig.reduceMotion ? false : { opacity: 0, rotateX: -18, rotateY: 18, y: 12 }}
+          animate={{ opacity: 1, rotateX: 0, rotateY: 0, y: 0 }}
+          transition={motionConfig.spring}
+          style={{ transformPerspective: 900 }}
+        >
+          <HikmaLogo surface="dark" size={84} alt="Hikma logo" />
+        </motion.div>
+        <p className="mb-3 text-[0.7rem] font-bold uppercase tracking-[0.24em] text-emerald-200/80">Hikma — حكمة</p>
+        <h1 id="intro-title" className="text-3xl font-semibold tracking-tight">A calmer way to learn.</h1>
+        <p className="mt-3 text-sm leading-6 text-white/60">Built around your access needs, attention, and next small step.</p>
+        <button
+          type="button"
+          onClick={onEnter}
+          className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#102116] transition-transform hover:scale-[1.02] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+        >
+          Enter Hikma <ArrowUpRight className="size-4" aria-hidden="true" />
+        </button>
       </div>
-      <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-      <p className="text-sm text-white/55 leading-relaxed">{desc}</p>
     </motion.div>
   );
 }
 
-// ── CSS marquee ───────────────────────────────────────────────────────────────
-const MARQUEE_ITEMS = [
-  "Voice-first learning", "IGCSE Edexcel", "Qatar MoEHE", "Dyslexia support",
-  "ADHD focus mode", "Screen reader ready", "Arabic + English", "Socratic AI",
-  "WCAG 2.2 AA", "Keyboard navigation", "Free to use", "Blind learner support",
-];
-function Marquee() {
-  const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
-  return (
-    <div className="overflow-hidden py-5 border-y border-white/8 bg-white/[0.02]" aria-hidden="true">
-      <div className="marquee-track">
-        {doubled.map((item, i) => (
-          <span key={i} className="text-[11px] font-bold tracking-[0.2em] uppercase text-white/30 flex items-center gap-5 px-5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[rgb(45,100,55)] inline-block flex-shrink-0" />
-            {item}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Main ──────────────────────────────────────────────────────────────────────
 export default function Home() {
-  const { reduceMotion: prefersReducedMotion } = useHikmaMotion();
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAuth();
-  const { profile, locale, setLocale, updateProfile } = useProfile();
-  const t = (en: string, ar: string) => locale === "ar" ? ar : en;
-  const dir = locale === "ar" ? "rtl" : "ltr";
-  const isHighContrast = profile.theme === "high_contrast";
+  const motionConfig = useHikmaMotion();
+  const [showEntry, setShowEntry] = useState(true);
 
   useEffect(() => {
     document.title = LANDING_PAGE_TITLE;
   }, []);
 
-  const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const falconY = useTransform(scrollYProgress, [0, 1], ["0px", "80px"]);
-  const falconOpacity = useTransform(scrollYProgress, [0, 0.6], [0.15, 0]);
+  const destination = isAuthenticated ? "/dashboard" : "/signup";
 
   return (
-    <div className="min-h-screen text-white overflow-x-hidden" dir={dir} style={{ background: isHighContrast ? "#000" : "#0d1f10" }}>
-      <ScrollProgress />
+    <div className="min-h-screen bg-[#f7f8f4] text-[#152119]">
+      <AnimatePresence mode="wait">
+        {showEntry && <BrandEntry onEnter={() => setShowEntry(false)} />}
+      </AnimatePresence>
 
-      {/* ── Sticky nav ─────────────────────────────────────────────────── */}
-      <nav className="w-full flex items-center justify-between px-4 sm:px-8 py-4 sticky top-0 z-50 border-b border-white/[0.06] min-w-0"
-        style={{ background: "rgba(13,31,16,0.85)", backdropFilter: "blur(20px)" }}>
-        <motion.a href={isAuthenticated ? "/dashboard" : "/"} aria-label={isAuthenticated ? t("Go to dashboard", "الذهاب إلى لوحة التحكم") : t("Hikma home", "الصفحة الرئيسية لحكمة")} className="flex items-center gap-3 group flex-shrink-0"
-          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-          <HikmaLogo
-            surface="dark"
-            size={52}
-            alt={t("Hikma adaptive learning platform logo", "شعار منصة حكمة للتعلم التكيفي")}
-          />
-          <span className="flex flex-col leading-none select-none">
-            <span className="text-white font-bold text-sm" style={{ letterSpacing: "0.2em" }}>HIKMA</span>
-            <span className="text-white/60 font-light text-xs" style={{ letterSpacing: "0.08em" }}>حكمة</span>
-          </span>
-        </motion.a>
-        <motion.div className="flex items-center gap-1 sm:gap-3 flex-shrink-0"
-          initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-          <button onClick={() => setLocale(locale === "ar" ? "en" : "ar")}
-            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-xs font-semibold px-2 py-2 rounded-lg hover:bg-white/8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
-            aria-label={t("Switch to Arabic", "التبديل إلى الإنجليزية")}>
-            <Globe className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{locale === "ar" ? "EN" : "عربي"}</span>
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
+        <Link href="/" className="flex items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2c5c3a]" aria-label="Hikma home">
+          <HikmaLogo surface="light" size={38} alt="Hikma logo" />
+          <span className="leading-tight"><strong className="block text-sm tracking-[0.18em]">HIKMA</strong><span className="text-xs text-[#627066]">حكمة</span></span>
+        </Link>
+        <div className="flex items-center gap-3">
+          {!isAuthenticated && <button type="button" onClick={() => navigate("/signin")} className="min-h-11 rounded-full px-4 text-sm font-medium text-[#344438] hover:bg-[#e8ebe4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#2c5c3a]">Sign in</button>}
+          <button type="button" onClick={() => navigate(destination)} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#173a25] px-4 text-sm font-semibold text-white hover:bg-[#0d2919] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2c5c3a]">
+            {isAuthenticated ? "Open dashboard" : "Start learning"}<ArrowUpRight className="size-4" aria-hidden="true" />
           </button>
-          <button
-            onClick={() => updateProfile({ theme: isHighContrast ? "light" : "high_contrast" })}
-            className="flex items-center justify-center rounded-lg px-2 py-2 text-white/70 transition-colors hover:bg-white/8 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
-            aria-label={t("Toggle high contrast", "تبديل التباين العالي")}
-            aria-pressed={isHighContrast}
-          >
-            <Contrast className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={() => updateProfile({ fontScale: Math.max(0.8, profile.fontScale - 0.1) })}
-            className="hidden sm:flex items-center justify-center rounded-lg px-2 py-2 text-xs font-bold text-white/70 transition-colors hover:bg-white/8 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
-            aria-label={t("Decrease text size", "تصغير النص")}
-          >A−</button>
-          <button
-            onClick={() => updateProfile({ fontScale: Math.min(2.5, profile.fontScale + 0.1) })}
-            className="flex items-center justify-center rounded-lg px-2 py-2 text-xs font-bold text-white/70 transition-colors hover:bg-white/8 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300"
-            aria-label={t("Increase text size", "تكبير النص")}
-          >A+</button>
-          {!isAuthenticated && (
-            <>
-              <button onClick={() => navigate("/signin")}
-                className="hidden sm:block text-xs font-semibold text-white/60 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/8 whitespace-nowrap">
-                {t("Sign In", "دخول")}
-              </button>
-              <button onClick={() => { playSound("tap"); navigate("/signup"); }}
-                className="text-xs font-bold px-3 sm:px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-                style={{ background: "linear-gradient(135deg, rgb(45,100,55), rgb(28,70,32))", boxShadow: "0 0 20px rgba(45,100,55,0.4)" }}>
-                {t("Get Started", "ابدأ الآن")}
-              </button>
-            </>
-          )}
-          {isAuthenticated && (
-            <button onClick={() => { playSound("tap"); navigate("/dashboard"); }}
-              className="text-xs font-bold px-3 sm:px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95 whitespace-nowrap"
-              style={{ background: "linear-gradient(135deg, rgb(45,100,55), rgb(28,70,32))", boxShadow: "0 0 20px rgba(45,100,55,0.4)" }}>
-              {t("Dashboard →", "لوحة التحكم ←")}
-            </button>
-          )}
-        </motion.div>
-      </nav>
+        </div>
+      </header>
 
-      {/* ── HERO ──────────────────────────────────────────────────────── */}
-      <section ref={heroRef} className="relative min-h-[100vh] flex flex-col items-center justify-center overflow-hidden"
-        aria-label={t("Hikma — adaptive learning platform", "حكمة — منصة التعلم التكيفي")}>
-        <GradientBackground highContrast={isHighContrast} />
-
-        {/* Falcon watermark */}
-        <motion.img
-          src="/img/hikma-wordmark.png"
-          alt={t("Hikma falcon calligraphy watermark", "علامة الصقر الخطية لحكمة")}
-          className="absolute right-0 bottom-0 w-[55vw] max-w-[700px] object-contain select-none pointer-events-none"
-          style={{ opacity: falconOpacity, y: falconY, filter: "brightness(0.4) saturate(0.5)" }}
-          onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-        />
-
-        {/* Content */}
-        <div className="container max-w-5xl relative z-10 text-center px-4 py-24 space-y-8">
-          {/* Eyebrow badge */}
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <span className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.2em] uppercase px-4 py-2 rounded-full border"
-              style={{ color: "rgb(134,239,172)", background: "rgba(45,100,55,0.15)", borderColor: "rgba(45,100,55,0.4)" }}>
-              <Sparkles className="w-3 h-3" aria-hidden="true" />
-              {t("AI-powered · IGCSE Edexcel + Qatar MoEHE", "مدعوم بالذكاء الاصطناعي · إيدكسيل + وزارة التعليم القطرية")}
-            </span>
+      <main>
+        <section className="mx-auto grid max-w-6xl gap-12 px-5 pb-16 pt-12 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:pb-24 lg:pt-20">
+          <motion.div initial={motionConfig.page.initial} animate={motionConfig.page.animate} transition={motionConfig.enterTransition}>
+            <p className="mb-5 text-xs font-bold uppercase tracking-[0.2em] text-[#4a7b5a]">Adaptive learning for real people</p>
+            <h1 className="max-w-2xl text-5xl font-semibold leading-[1.04] tracking-[-0.055em] text-[#122119] sm:text-6xl">The learning space that makes room for you.</h1>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-[#526056]">Hikma pairs accessible learning tools with guided AI support for IGCSE Edexcel and Qatar MoEHE learners.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button type="button" onClick={() => navigate(destination)} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-[#173a25] px-5 text-sm font-semibold text-white hover:bg-[#0d2919] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2c5c3a]">Begin your path <ArrowUpRight className="size-4" aria-hidden="true" /></button>
+              <Link href="/signin" className="inline-flex min-h-12 items-center rounded-full border border-[#ccd4c9] px-5 text-sm font-semibold text-[#243129] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2c5c3a]">Explore with an account</Link>
+            </div>
           </motion.div>
 
-          {/* Headline */}
-          <h1 className="space-y-2" aria-label={t("Learning that meets you where you are", "تعلّم يلاقيك أينما كنت")}>
-            {[
-              { text: t("Learning that", "تعلّم"), delay: 0.1, class: "text-white" },
-              { text: null, delay: 0.2, class: "" }, // morphing word
-              { text: t("where you are.", "أينما كنت."), delay: 0.3, class: "text-white/40" },
-            ].map((line, i) => (
-              <motion.span key={i}
-                className="block overflow-hidden"
-                initial={prefersReducedMotion ? {} : { opacity: 0, y: 60 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: line.delay, ease: [0.23, 1, 0.32, 1] as any }}>
-                <span className={`block text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-[1.0] tracking-tight ${line.class}`}>
-                  {line.text ?? <MorphingWord />}
-                </span>
-              </motion.span>
-            ))}
-          </h1>
-
-          {/* Subheadline */}
-          <motion.p className="text-white/50 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.6 }}>
-            {t(
-              "The adaptive companion built for blind, dyslexic, and ADHD learners. Voice-first. Keyboard-first. Curiosity-first.",
-              "رفيق التعلم التكيفي للمكفوفين وذوي عسر القراءة واضطراب ADHD. الصوت أولاً. لوحة المفاتيح أولاً. الفضول أولاً."
-            )}
-          </motion.p>
-
-          {/* CTA buttons */}
-          <motion.div className="flex flex-col sm:flex-row gap-4 justify-center items-center"
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.8 }}>
-            <button
-              onClick={() => { playSound("tap"); navigate(isAuthenticated ? "/onboarding" : "/signup"); }}
-              className="group inline-flex items-center gap-3 font-bold text-lg px-10 py-4 rounded-2xl transition-all hover:scale-105 active:scale-95 shadow-2xl"
-              style={{ background: "linear-gradient(135deg, rgb(45,100,55) 0%, rgb(28,70,32) 100%)", boxShadow: "0 0 40px rgba(45,100,55,0.5), 0 20px 40px rgba(0,0,0,0.3)" }}
-              aria-label={t("Create free account", "إنشاء حساب مجاني")}>
-              {t(isAuthenticated ? "Go to Dashboard" : "Start Learning Free", isAuthenticated ? "لوحة التحكم" : "ابدأ التعلم مجاناً")}
-              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            </button>
-            {!isAuthenticated && (
-              <button onClick={() => navigate("/signin")}
-                className="inline-flex items-center gap-2 font-medium text-base px-8 py-4 rounded-2xl border border-white/15 text-white/70 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all">
-                {t("Sign In", "تسجيل الدخول")}
-              </button>
-            )}
+          <motion.div className="relative rounded-[2rem] border border-[#dce3d9] bg-[#e9efe8] p-6 sm:p-9" initial={motionConfig.reduceMotion ? false : { opacity: 0, y: 16, rotateX: 2 }} animate={{ opacity: 1, y: 0, rotateX: 0 }} transition={motionConfig.enterTransition} style={{ transformPerspective: 1000 }}>
+            <div className="flex items-center justify-between border-b border-[#cdd8ce] pb-5"><span className="text-sm font-semibold">Today&apos;s learning</span><span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#477054]">In your rhythm</span></div>
+            <div className="py-7"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#60806a]">Next lesson</p><h2 className="mt-3 text-2xl font-semibold tracking-tight">Patterns of energy</h2><p className="mt-2 text-sm leading-6 text-[#607066]">Continue from the idea you paused on, with audio, focus, and text controls ready when you need them.</p></div>
+            <div className="grid grid-cols-3 gap-3"><div className="rounded-2xl bg-white p-3"><BookOpen className="size-4 text-[#2e6940]" /><p className="mt-5 text-xl font-semibold">12</p><p className="text-xs text-[#68766d]">minutes</p></div><div className="rounded-2xl bg-white p-3"><Brain className="size-4 text-[#2e6940]" /><p className="mt-5 text-xl font-semibold">1</p><p className="text-xs text-[#68766d]">concept</p></div><div className="rounded-2xl bg-[#173a25] p-3 text-white"><Keyboard className="size-4 text-emerald-200" /><p className="mt-5 text-xl font-semibold">⌘</p><p className="text-xs text-white/65">keyboard-ready</p></div></div>
           </motion.div>
+        </section>
 
-          {/* Trust line */}
-          <motion.p className="text-white/20 text-xs tracking-wide"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}>
-            {t("Built to MADA Qatar & WCAG 2.2 AA · Free forever · No credit card", "مبني وفق معايير مادا قطر و WCAG 2.2 AA · مجاني للأبد")}
-          </motion.p>
-        </div>
+        <section className="border-y border-[#dce3d9] bg-white"><div className="mx-auto grid max-w-6xl gap-px px-5 py-5 sm:grid-cols-3 sm:px-8"><div className="py-4 text-sm text-[#607066]">Designed for focus, not noise.</div><div className="py-4 text-sm text-[#607066]">Arabic and English learning paths.</div><div className="py-4 text-sm text-[#607066]">Tools that adapt without getting in the way.</div></div></section>
 
-        {/* Scroll cue */}
-        <motion.div className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          animate={prefersReducedMotion ? {} : { y: [0, 12, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} aria-hidden="true">
-          <ChevronDown className="w-6 h-6 text-white/25" />
-        </motion.div>
-      </section>
+        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8"><div className="mb-9 flex items-end justify-between gap-5"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#4a7b5a]">How Hikma helps</p><h2 className="mt-3 text-3xl font-semibold tracking-tight">Stay close to the work.</h2></div><Link href="/signup" className="hidden text-sm font-semibold text-[#2d6540] sm:block">Create a learner profile →</Link></div><div className="grid gap-4 md:grid-cols-3">{features.map(({ icon: Icon, title, text }) => <article key={title} className="rounded-3xl border border-[#dce3d9] bg-white p-6"><Icon className="size-5 text-[#2e6940]" aria-hidden="true"/><h3 className="mt-10 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-[#627066]">{text}</p></article>)}</div></section>
+      </main>
 
-      {/* ── Marquee ─────────────────────────────────────────────────────── */}
-      <Marquee />
-
-      {/* ── Stats ───────────────────────────────────────────────────────── */}
-      <section className="py-20 border-b border-white/8">
-        <div className="container max-w-4xl">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
-            {[
-              { value: 9, suffix: "", label: t("ECC skill areas", "مجالات مهارية") },
-              { value: 100, suffix: "%", label: t("Free to use", "مجاني تماماً") },
-              { value: 5, suffix: "", label: t("Accessibility profiles", "ملفات إمكانية الوصول") },
-              { value: 2, suffix: "", label: t("Supported curricula", "المناهج المدعومة") },
-            ].map((s, i) => (
-              <motion.div key={s.label} className="space-y-2"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}>
-                <p className="text-5xl font-black text-white tabular-nums" style={{ textShadow: "0 0 40px rgba(45,100,55,0.6)" }}>
-                  <Counter to={s.value} suffix={s.suffix} />
-                </p>
-                <p className="text-sm text-white/40 font-medium">{s.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Feature grid ────────────────────────────────────────────────── */}
-      <section className="py-24 border-b border-white/8">
-        <div className="container max-w-5xl">
-          <motion.div className="text-center mb-16"
-            initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-            <p className="text-[11px] font-bold tracking-[0.25em] uppercase mb-4" style={{ color: "rgb(134,239,172)" }}>Built different</p>
-            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">Every learner, every need</h2>
-            <p className="text-white/40 mt-4 text-lg max-w-xl mx-auto">Not a one-size-fits-all platform. Hikma adapts to how your brain works.</p>
-          </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              {
-                icon: <Volume2 className="w-6 h-6 text-emerald-300" />,
-                title: t("Voice-first narration", "السرد الصوتي"),
-                desc: t("Every lesson read aloud with word-by-word highlighting. No reading required.", "كل درس يُقرأ بصوت مع تمييز كلمة بكلمة."),
-                gradient: "bg-gradient-to-br from-emerald-500/15 to-emerald-500/5",
-                delay: 0,
-              },
-              {
-                icon: <Keyboard className="w-6 h-6 text-blue-300" />,
-                title: t("Full keyboard navigation", "التنقل بلوحة المفاتيح"),
-                desc: t("WASD + arrow keys. Navigate every part of Hikma without a mouse.", "WASD + مفاتيح الأسهم. تنقّل في كل شيء بدون ماوس."),
-                gradient: "bg-gradient-to-br from-blue-500/15 to-blue-500/5",
-                delay: 0.1,
-              },
-              {
-                icon: <Brain className="w-6 h-6 text-purple-300" />,
-                title: t("Socratic AI tutor", "المعلم الذكي السقراطي"),
-                desc: t("Hikma AI never just gives the answer. It asks questions and guides your thinking.", "حكمة AI لا يعطيك الإجابة مباشرة — يرشد تفكيرك."),
-                gradient: "bg-gradient-to-br from-purple-500/15 to-purple-500/5",
-                delay: 0.2,
-              },
-              {
-                icon: <Mic className="w-6 h-6 text-rose-300" />,
-                title: t("Voice commands", "الأوامر الصوتية"),
-                desc: t("Say 'next section', 'focus mode', or ask any question. Hikma listens.", "قل 'القسم التالي' أو اطرح أي سؤال. حكمة تستمع."),
-                gradient: "bg-gradient-to-br from-rose-500/15 to-rose-500/5",
-                delay: 0.3,
-              },
-              {
-                icon: <Headphones className="w-6 h-6 text-amber-300" />,
-                title: t("5 accessibility profiles", "5 ملفات إمكانية الوصول"),
-                desc: t("Blind, dyslexia, ADHD, low vision, standard. Personalised in 2 minutes.", "مكفوف، عسر قراءة، ADHD، ضعف بصر، عادي."),
-                gradient: "bg-gradient-to-br from-amber-500/15 to-amber-500/5",
-                delay: 0.4,
-              },
-              {
-                icon: <CheckCircle2 className="w-6 h-6 text-teal-300" />,
-                title: t("Adaptive quizzes", "الاختبارات التكيفية"),
-                desc: t("5 questions per topic, AI-graded, with instant feedback and explanations.", "5 أسئلة لكل موضوع، مُقيَّمة بالذكاء الاصطناعي."),
-                gradient: "bg-gradient-to-br from-teal-500/15 to-teal-500/5",
-                delay: 0.5,
-              },
-            ].map((f, i) => (
-              <FeatureCard key={i} {...f} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── How it works ────────────────────────────────────────────────── */}
-      <section className="py-24 border-b border-white/8">
-        <div className="container max-w-4xl">
-          <motion.div className="text-center mb-16"
-            initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
-            <p className="text-[11px] font-bold tracking-[0.25em] uppercase mb-4" style={{ color: "rgb(201,153,126)" }}>How it works</p>
-            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight">Four steps to your best learning</h2>
-          </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {[
-              { n: "01", title: t("Tell Hikma how you learn", "أخبر حكمة كيف تتعلم"), desc: t("Blind? Dyslexic? Prefer Arabic? Hikma adapts to you in 2 minutes.", "مكفوف؟ عسر قراءة؟ تفضّل العربية؟ حكمة يتكيف معك."), color: "rgb(45,100,55)" },
-              { n: "02", title: t("Navigate with your voice", "تنقّل بصوتك"), desc: t("Say 'next section' to navigate, 'read aloud' to listen, or ask a question.", "قل 'القسم التالي' للتنقل أو 'اقرأ بصوت' للاستماع."), color: "rgb(136,90,68)" },
-              { n: "03", title: t("Ask Hikma AI anything", "اسأل حكمة AI أي شيء"), desc: t("Hikma AI guides you like a teacher — asks questions, never just gives answers.", "حكمة AI يرشدك كمعلم — يسأل ولا يعطي الإجابة مباشرة."), color: "rgb(80,140,85)" },
-              { n: "04", title: t("Test yourself after every topic", "اختبر نفسك بعد كل موضوع"), desc: t("Personalised questions after each unit. See what you know and what to revisit.", "أسئلة مخصصة بعد كل وحدة. اعرف ما تعرفه وما تحتاج مراجعته."), color: "rgb(160,55,75)" },
-            ].map((step, i) => (
-              <motion.div key={i}
-                className="flex gap-5 p-6 rounded-2xl border border-white/8 bg-white/[0.03] hover:bg-white/[0.05] transition-colors"
-                initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}>
-                <span className="text-4xl font-black flex-shrink-0 tabular-nums" style={{ color: step.color, opacity: 0.6 }}>{step.n}</span>
-                <div>
-                  <h3 className="font-bold text-white text-lg mb-1">{step.title}</h3>
-                  <p className="text-sm text-white/45 leading-relaxed">{step.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Final CTA ───────────────────────────────────────────────────── */}
-      <section className="py-32 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
-            style={{ background: "radial-gradient(circle, rgba(45,100,55,0.2) 0%, transparent 70%)" }} />
-        </div>
-        <div className="container max-w-3xl text-center relative z-10">
-          <motion.div initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
-            <h2 className="text-5xl sm:text-6xl md:text-7xl font-black text-white tracking-tight mb-6">
-              {t("Ready to learn", "مستعد للتعلم")}<br />
-              <span style={{ color: "rgb(134,239,172)" }}>{t("your way?", "بطريقتك؟")}</span>
-            </h2>
-            <p className="text-white/40 text-lg mb-10">{t("Free. Accessible. Built for Qatar.", "مجاني. متاح للجميع. مبني لقطر.")}</p>
-            <button
-              onClick={() => { playSound("tap"); navigate(isAuthenticated ? "/dashboard" : "/signup"); }}
-              className="inline-flex items-center gap-3 font-bold text-xl px-12 py-5 rounded-2xl transition-all hover:scale-105 active:scale-95"
-              style={{ background: "linear-gradient(135deg, rgb(45,100,55), rgb(28,70,32))", boxShadow: "0 0 60px rgba(45,100,55,0.5)" }}>
-              {t(isAuthenticated ? "Go to Dashboard →" : "Start Learning Free →", isAuthenticated ? "لوحة التحكم ←" : "ابدأ التعلم مجاناً ←")}
-            </button>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── Footer ──────────────────────────────────────────────────────── */}
-      <footer className="py-8 border-t border-white/8 text-center">
-        <div className="flex items-center justify-center gap-3 mb-3">
-          <HikmaLogo
-            surface="dark"
-            size={28}
-            alt={t("Hikma adaptive learning platform logo", "شعار منصة حكمة للتعلم التكيفي")}
-          />
-          <span className="font-bold text-white/60 text-sm">Hikma — حكمة</span>
-        </div>
-        <p className="text-white/25 text-xs">{t("Built to MADA Qatar & WCAG 2.2 AA accessibility standards", "مبني وفق معايير مادا قطر و WCAG 2.2 AA")}</p>
-      </footer>
+      <footer className="mx-auto flex max-w-6xl flex-col gap-2 border-t border-[#dce3d9] px-5 py-8 text-xs text-[#68766d] sm:flex-row sm:items-center sm:justify-between sm:px-8"><span>Hikma — حكمة</span><span>Accessible learning for IGCSE Edexcel and Qatar MoEHE.</span></footer>
     </div>
   );
 }

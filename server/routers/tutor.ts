@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { tutorConversations } from "../../drizzle/schema";
+import { mastery, progress, tutorConversations } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -84,6 +84,14 @@ export const tutorRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       const { message, sessionId, lessonId, profile, conversationHistory = [] } = input;
+      const learnerProgress = db
+        ? await Promise.all([
+            db.select().from(mastery).where(eq(mastery.userId, ctx.user.id)),
+            db.select({ status: progress.status }).from(progress).where(eq(progress.userId, ctx.user.id)),
+          ])
+        : [[], []] as const;
+      const [masteryRecords, lessonProgress] = learnerProgress;
+      const completedLessons = lessonProgress.filter(item => item.status === "complete").length;
 
       const profileContext = `
 Learner profile:
@@ -95,6 +103,11 @@ Learner profile:
 - Tier: ${profile.tier ?? "standard"}
 - Tashkeel: ${profile.tashkeel}
 - Numerals: ${profile.numerals}
+
+Actual learner progress (use gently; never invent gaps or claim a score):
+- Completed lessons recorded: ${completedLessons}
+- Mastery records available: ${masteryRecords.length}
+- If the data is limited, ask one diagnostic question before adapting difficulty.
 `;
 
       const messages = [

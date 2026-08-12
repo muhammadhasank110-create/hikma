@@ -14,3 +14,20 @@
 - [x] Restore readable dashboard card text and progress values when the active dark or high-contrast profile is applied.
 - [x] Verify the dashboard card correction through the high-contrast semantic token mapping and record the exact evidence in AUDIT.md.
 - [x] Create the required checkpoint after final verification so the completed UI and SEO update is published.
+- [x] Audit the current homepage, navigation, dashboard, settings, tutor, sound, search, analytics, and file inventory before redesign work.
+- [x] Replace the existing landing page with a minimal branded animated entry experience using the existing HIKMA logo asset, without glow-heavy decorative effects.
+- [x] Establish a calmer typography and color system for the public route and mobile dashboard surface; Arabic/RTL validation remains a manual follow-up.
+- [x] Rebuild the website navigation around clean section-level desktop navigation, a rounded More menu, and a bottom mobile app navigation for learner routes.
+- [x] Rework the dashboard into a mobile-first learner home with readable statistics and practical learning shortcuts.
+- [x] Move language and accessibility controls from the public top bar into a compact settings control surface while preserving keyboard access.
+- [x] Repair the click-time sound error, stop narration when an audio control is toggled off or a route changes, and remove the analytics console failure without degrading page loading.
+- [x] Replace the non-working search path with a custom animated, keyboard-accessible search interface that navigates to learner sections.
+- [x] Improve settings layout and preserve the existing Markdown emphasis normalizer for complete `**text**` delimiters rather than partial markers.
+- [x] Preserve AI tutor conversation history and introduce a student-performance-aware tutor context using existing learner data only.
+- [x] Remove only files confirmed unused by import and route analysis; preserve project, audit, migration, and operational records.
+- [x] Add or update focused tests; verify desktop/mobile visual behavior and document evidence in AUDIT.md. Arabic/RTL, reduced-motion interaction, keyboard search activation, and browser-console checks remain manual follow-ups.
+- [ ] Save a checkpoint that publishes the verified full redesign.
+- [x] Implement and verify a substantive mobile-first dashboard layout update beyond the shared mobile navigation shell.
+- [x] Add a focused automated sound-storage safety regression test; tutor-session restoration and keyboard search activation remain manual follow-ups.
+- [x] Document the outstanding manual search-flow check; Ctrl/Cmd+K and route selection are wired, while open/filter/navigate behavior requires an interactive learner session.
+- [x] Document the outstanding manual Arabic/RTL and reduced-motion interaction checks; neither is claimed as completed in AUDIT.md.
