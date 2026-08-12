@@ -26,7 +26,7 @@
 - [x] Preserve AI tutor conversation history and introduce a student-performance-aware tutor context using existing learner data only.
 - [x] Remove only files confirmed unused by import and route analysis; preserve project, audit, migration, and operational records.
 - [x] Add or update focused tests; verify desktop/mobile visual behavior and document evidence in AUDIT.md. Arabic/RTL, reduced-motion interaction, keyboard search activation, and browser-console checks remain manual follow-ups.
-- [ ] Save a checkpoint that publishes the verified full redesign.
+- [x] Save a checkpoint that publishes the verified full redesign.
 - [x] Implement and verify a substantive mobile-first dashboard layout update beyond the shared mobile navigation shell.
 - [x] Add a focused automated sound-storage safety regression test; tutor-session restoration and keyboard search activation remain manual follow-ups.
 - [x] Document the outstanding manual search-flow check; Ctrl/Cmd+K and route selection are wired, while open/filter/navigate behavior requires an interactive learner session.
