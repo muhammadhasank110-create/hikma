@@ -86,4 +86,4 @@
 - [x] Use real browser speech boundaries where available and eliminate cadence-based word advancement that cannot match audible speech.
 - [x] Improve streamed-audio synchronization using only timing data that is actually aligned to the generated audio.
 - [x] Add timing-alignment regression coverage for browser speech and streamed audio and document observed results in AUDIT.md.
-- [ ] Save the required checkpoint that publishes the actual-audio synchronization correction.
+- [x] Save the required checkpoint that publishes the actual-audio synchronization correction.
