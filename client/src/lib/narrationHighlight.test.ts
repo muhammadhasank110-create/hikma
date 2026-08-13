@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getNarrationHighlightState } from "./narrationHighlight";
+import { findSpokenWordIndex, getNarrationHighlightState } from "./narrationHighlight";
 
 describe("getNarrationHighlightState", () => {
   it("uses the standard active treatment while narration is progressing", () => {
@@ -16,5 +16,13 @@ describe("getNarrationHighlightState", () => {
 
   it("does not highlight text after narration stops", () => {
     expect(getNarrationHighlightState({ isNarrating: false, isFocused: true, highlightIndex: 5, reduceMotion: false }).shouldHighlight).toBe(false);
+  });
+
+  it("maps each TTS boundary to the exact current word", () => {
+    const offsets = [0, 6, 11]; // "Learn one word"
+    expect(findSpokenWordIndex(offsets, 0)).toBe(0);
+    expect(findSpokenWordIndex(offsets, 6)).toBe(1);
+    expect(findSpokenWordIndex(offsets, 9)).toBe(1);
+    expect(findSpokenWordIndex(offsets, 11)).toBe(2);
   });
 });

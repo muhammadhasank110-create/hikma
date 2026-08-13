@@ -9,6 +9,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useSounds } from "@/hooks/useSounds";
 import { useTTS, cleanText, buildWordOffsets } from "@/hooks/useTTS";
 import { toast } from "sonner";
+import { findSpokenWordIndex } from "@/lib/narrationHighlight";
 
 /** Keep streamed Markdown readable when an emphasis token arrives incomplete. */
 export function normaliseSimplifiedMarkdown(raw: string): string {
@@ -39,14 +40,8 @@ export function useLessonState(lessonId: number) {
   const handleBoundary = useCallback((charIndex: number) => {
     const offsets = highlightOffsetsRef.current;
     if (!offsets.length) return;
-    let lo = 0;
-    let hi = offsets.length - 1;
-    let found = 0;
-    while (lo <= hi) {
-      const mid = (lo + hi) >> 1;
-      if (offsets[mid] <= charIndex) { found = mid; lo = mid + 1; } else { hi = mid - 1; }
-    }
-    setHighlightIndex(found);
+    const wordIndex = findSpokenWordIndex(offsets, charIndex);
+    if (wordIndex >= 0) setHighlightIndex(wordIndex);
   }, []);
   const tts = useTTS({
     rate: profile.speechRate,
@@ -156,6 +151,7 @@ export function useLessonState(lessonId: number) {
   const lessonTitle = locale === "ar" ? (lesson?.titleAr ?? lesson?.titleEn ?? "") : (lesson?.titleEn ?? "");
 
   const stopWordHighlight = useCallback(() => {
+    highlightOffsetsRef.current = [];
     setHighlightIndex(-1);
     setHighlightedWords([]);
     setHighlightOffsets([]);
@@ -167,6 +163,10 @@ export function useLessonState(lessonId: number) {
     const clean = cleanText(text);
     const { words, offsets } = buildWordOffsets(clean);
     speakingTextRef.current = clean;
+    // Browser Speech API can emit its first boundary synchronously after speak().
+    // Keep the ref in sync before state effects flush so the first spoken word
+    // is never missed.
+    highlightOffsetsRef.current = offsets;
     setHighlightedWords(words);
     setHighlightOffsets(offsets);
     setHighlightIndex(0);
@@ -188,6 +188,10 @@ export function useLessonState(lessonId: number) {
     startWordHighlight(text);
     tts.speak(text);
   }, [currentSection, isNarrating, tts, locale, startWordHighlight, stopWordHighlight]);
+  const stopNarration = useCallback(() => {
+    tts.stop();
+    stopWordHighlight();
+  }, [tts, stopWordHighlight]);
 
   const advanceSection = useCallback(() => {
     tts.stop();
@@ -401,7 +405,7 @@ export function useLessonState(lessonId: number) {
     highlightedWords, highlightIndex, selectedWord, setSelectedWord,
     handleWordClick, contentRef,
     // TTS
-    isNarrating, readAloud, tts,
+    isNarrating, readAloud, stopNarration, tts,
     // Pomodoro
     pomodoroActive, setPomodoroActive, pomodoroDisplay, pomodoroPhase,
     // Utilities

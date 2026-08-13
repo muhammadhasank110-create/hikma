@@ -142,6 +142,19 @@ export default function LessonPage() {
     domWordListRef.current = words;
   }, []);
 
+  const clearNarrationMarks = useCallback(() => {
+    const root = contentElRef.current;
+    const marks = root?.querySelectorAll<HTMLElement>('mark[data-current-spoken-word="true"]') ?? [];
+    marks.forEach((mark) => {
+      const parent = mark.parentNode;
+      if (!parent) return;
+      while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+      parent.removeChild(mark);
+      parent.normalize();
+    });
+    activeMarkRef.current = null;
+  }, []);
+
   useEffect(() => {
     activeMarkRef.current = null;
     buildDomWordList();
@@ -150,16 +163,7 @@ export default function LessonPage() {
   // Apply/remove the highlight mark when highlightIndex changes
   useEffect(() => {
     // Remove previous mark
-    if (activeMarkRef.current) {
-      const mark = activeMarkRef.current;
-      const parent = mark.parentNode;
-      if (parent) {
-        while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
-        parent.removeChild(mark);
-        parent.normalize();
-      }
-      activeMarkRef.current = null;
-    }
+    clearNarrationMarks();
     const highlightState = getNarrationHighlightState({
       isNarrating: s.isNarrating,
       isFocused: s.isFocused,
@@ -178,13 +182,14 @@ export default function LessonPage() {
       const mark = document.createElement("mark");
       mark.className = highlightState.className;
       mark.setAttribute("data-narration-word", "true");
+      mark.setAttribute("data-current-spoken-word", "true");
       range.surroundContents(mark);
       activeMarkRef.current = mark;
       mark.scrollIntoView({ block: "nearest", behavior: highlightState.scrollBehavior });
     } catch {
       // surroundContents can fail if range crosses element boundaries — ignore
     }
-  }, [buildDomWordList, profile.reduceMotion, prefersReducedMotion, s.highlightIndex, s.isNarrating, s.isFocused]);
+  }, [buildDomWordList, clearNarrationMarks, profile.reduceMotion, prefersReducedMotion, s.highlightIndex, s.isNarrating, s.isFocused]);
 
   if (!lessonId) return <div className="container py-16 text-center text-muted-foreground">{t("Invalid lesson.", "درس غير صالح.")}</div>;
 
@@ -255,7 +260,7 @@ export default function LessonPage() {
             </div>
           )}
           {/* Primary: Read Aloud */}
-          <Button variant={s.isNarrating ? "default" : "outline"} size="sm" onClick={() => { if (s.isNarrating) s.tts.stop(); else s.readAloud(); }} aria-label={s.isNarrating ? t("Stop narration", "إيقاف السرد") : t("Read aloud", "قراءة بصوت")} aria-pressed={s.isNarrating}>
+          <Button variant={s.isNarrating ? "default" : "outline"} size="sm" onClick={() => { if (s.isNarrating) s.stopNarration(); else s.readAloud(); }} aria-label={s.isNarrating ? t("Stop narration", "إيقاف السرد") : t("Read aloud", "قراءة بصوت")} aria-pressed={s.isNarrating}>
             {s.isNarrating ? <VolumeX className="w-3.5 h-3.5 mr-1.5" /> : <Volume2 className="w-3.5 h-3.5 mr-1.5" />}
             {s.isNarrating ? t("Stop", "إيقاف") : t("Listen", "استمع")}
           </Button>

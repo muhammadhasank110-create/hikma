@@ -72,3 +72,8 @@
 - [x] Respect learner reduced-motion, contrast, Arabic/RTL, and speech-stop states when highlighting narration text.
 - [x] Add focused regression coverage and document observed evidence in AUDIT.md.
 - [x] Save the required checkpoint that publishes the verified narration-highlighting update.
+- [x] Reproduce the user-reported listening highlight gap and inspect exact browser TTS boundary-to-DOM word mapping.
+- [x] Guarantee that the currently narrated word is visibly highlighted only while lesson listening is active in standard and Focus modes.
+- [x] Add a targeted regression test that drives speech boundary events and verifies active-word advance and cleanup on stop.
+- [x] Validate the correction in the browser and document the evidence in AUDIT.md.
+- [ ] Save the required checkpoint that publishes the verified exact listening-word correction.
