@@ -71,4 +71,4 @@
 - [x] Extend the same current-text highlight to focus mode with readable contrast and no layout shift.
 - [x] Respect learner reduced-motion, contrast, Arabic/RTL, and speech-stop states when highlighting narration text.
 - [x] Add focused regression coverage and document observed evidence in AUDIT.md.
-- [ ] Save the required checkpoint that publishes the verified narration-highlighting update.
+- [x] Save the required checkpoint that publishes the verified narration-highlighting update.
