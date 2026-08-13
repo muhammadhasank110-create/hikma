@@ -23,6 +23,7 @@ import { normaliseSimplifiedMarkdown, useLessonState } from "@/hooks/useLessonSt
 import ConceptMapSVG from "@/components/lesson/ConceptMapSVG";
 import WordDefinitionPopup from "@/components/lesson/WordDefinitionPopup";
 import BodyDoublePanel from "@/components/lesson/BodyDoublePanel";
+import { getNarrationHighlightState } from "@/lib/narrationHighlight";
 
 export default function LessonPage() {
   const [, params] = useRoute("/lesson/:lessonId");
@@ -112,10 +113,10 @@ export default function LessonPage() {
   const domWordListRef = useRef<{ node: Text; start: number; end: number }[]>([]);
   const activeMarkRef = useRef<HTMLElement | null>(null);
 
-  // Rebuild the flat word list from DOM text nodes whenever section changes
-  useEffect(() => {
+  // Build a flat word list from the current rendered DOM. It must be rebuilt
+  // after each mark removal because Range.surroundContents splits text nodes.
+  const buildDomWordList = useCallback(() => {
     domWordListRef.current = [];
-    activeMarkRef.current = null;
     const root = contentElRef.current;
     if (!root) return;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
@@ -139,8 +140,12 @@ export default function LessonPage() {
       }
     }
     domWordListRef.current = words;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [s.sectionIndex, s.isNarrating]);
+  }, []);
+
+  useEffect(() => {
+    activeMarkRef.current = null;
+    buildDomWordList();
+  }, [buildDomWordList, s.sectionIndex, s.isNarrating, s.simplifiedView, locale]);
 
   // Apply/remove the highlight mark when highlightIndex changes
   useEffect(() => {
@@ -155,7 +160,14 @@ export default function LessonPage() {
       }
       activeMarkRef.current = null;
     }
-    if (s.highlightIndex < 0 || !s.isNarrating) return;
+    const highlightState = getNarrationHighlightState({
+      isNarrating: s.isNarrating,
+      isFocused: s.isFocused,
+      highlightIndex: s.highlightIndex,
+      reduceMotion: profile.reduceMotion || Boolean(prefersReducedMotion),
+    });
+    if (!highlightState.shouldHighlight) return;
+    buildDomWordList();
     const wordEntry = domWordListRef.current[s.highlightIndex];
     if (!wordEntry) return;
     try {
@@ -164,15 +176,15 @@ export default function LessonPage() {
       range.setStart(node, start);
       range.setEnd(node, end);
       const mark = document.createElement("mark");
-      mark.className = s.isFocused ? "tts-word-active tts-word-focus" : "tts-word-active";
-      mark.setAttribute("aria-current", "true");
+      mark.className = highlightState.className;
+      mark.setAttribute("data-narration-word", "true");
       range.surroundContents(mark);
       activeMarkRef.current = mark;
-      mark.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      mark.scrollIntoView({ block: "nearest", behavior: highlightState.scrollBehavior });
     } catch {
       // surroundContents can fail if range crosses element boundaries — ignore
     }
-  }, [s.highlightIndex, s.isNarrating, s.isFocused]);
+  }, [buildDomWordList, profile.reduceMotion, prefersReducedMotion, s.highlightIndex, s.isNarrating, s.isFocused]);
 
   if (!lessonId) return <div className="container py-16 text-center text-muted-foreground">{t("Invalid lesson.", "درس غير صالح.")}</div>;
 
@@ -318,6 +330,7 @@ export default function LessonPage() {
                 <div
                   data-lesson-content
                   ref={contentElRef}
+                  data-narration-active={s.isNarrating || undefined}
                   className={`max-w-none relative ${s.isFocused ? "text-[1.125rem] leading-[1.95] tracking-[0.01em] text-[#111411] [&_p]:mb-4 [&_p]:text-[1.125rem] [&_p]:leading-[1.95] [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#111411] [&_strong]:font-bold [&_strong]:text-[#111411] [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:text-[1.125rem] [&_li]:leading-[1.9]" : "prose prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`}
                   onClick={(e: React.MouseEvent) => {
                     // Extract word from DOM text node at click point — works with Streamdown markdown

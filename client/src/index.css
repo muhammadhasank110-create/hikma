@@ -407,6 +407,26 @@
   .voice-wave-bar--listening { animation-duration: 610ms; }
   @media (prefers-reduced-motion: reduce) { .voice-wave-bar { animation: none; height: 0.45rem; } }
 
+  /* ── NARRATION-SYNCHRONIZED READING HIGHLIGHT ──
+     Marking uses no padding or border so each spoken word remains in flow. */
+  mark.tts-word-active {
+    color: inherit;
+    background: linear-gradient(transparent 38%, rgb(var(--primary) / 0.22) 38%);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+    border-radius: 0.18em;
+    box-shadow: inset 0 -0.14em 0 rgb(var(--primary) / 0.52);
+    transition: background-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+  }
+  mark.tts-word-focus {
+    background: linear-gradient(transparent 28%, rgb(70 135 78 / 0.28) 28%);
+    box-shadow: inset 0 -0.18em 0 rgb(45 100 55 / 0.7);
+  }
+  [data-theme="dark"] mark.tts-word-active { background: linear-gradient(transparent 38%, rgb(120 190 125 / 0.34) 38%); box-shadow: inset 0 -0.14em 0 rgb(150 220 155 / 0.78); }
+  [data-theme="high_contrast"] mark.tts-word-active { background: rgb(255 255 0); color: rgb(0 0 0); box-shadow: none; outline: 2px solid rgb(255 255 255); outline-offset: 1px; }
+  [data-narration-active="true"] { scroll-margin-block: 5rem; }
+  @media (prefers-reduced-motion: reduce) { mark.tts-word-active { transition: none; } }
+
   /* Arabic is a first-class surface: use an Arabic-optimized fallback stack,
      remove Latin display tracking, and preserve comfortable line height. */
   [dir="rtl"] {

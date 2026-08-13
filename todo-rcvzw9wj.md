@@ -66,3 +66,9 @@
 - [x] Add authenticated browser coverage for tutor voice controls, including start, speaking feedback, and stop interaction, without embedding privileged credentials in tests.
 - [x] Create and validate a reusable skill that captures HIKMA’s accessible motion, voice, bilingual, SEO, and browser-test workflow.
 - [x] Run the full validation suite and update AUDIT.md with actual evidence; publish the application improvements.
+- [x] Audit existing lesson narration offsets and focus-mode rendering so highlight state can be shared safely.
+- [x] Add narration-synchronized word or phrase highlighting to standard lesson reading without changing inactive text treatment.
+- [x] Extend the same current-text highlight to focus mode with readable contrast and no layout shift.
+- [x] Respect learner reduced-motion, contrast, Arabic/RTL, and speech-stop states when highlighting narration text.
+- [x] Add focused regression coverage and document observed evidence in AUDIT.md.
+- [ ] Save the required checkpoint that publishes the verified narration-highlighting update.
