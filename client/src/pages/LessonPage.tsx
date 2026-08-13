@@ -336,6 +336,7 @@ export default function LessonPage() {
                   data-lesson-content
                   ref={contentElRef}
                   data-narration-active={s.isNarrating || undefined}
+                  data-narration-sync={s.tts.syncSource}
                   className={`max-w-none relative ${s.isFocused ? "text-[1.125rem] leading-[1.95] tracking-[0.01em] text-[#111411] [&_p]:mb-4 [&_p]:text-[1.125rem] [&_p]:leading-[1.95] [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-[#111411] [&_strong]:font-bold [&_strong]:text-[#111411] [&_ul]:pl-6 [&_ul]:space-y-2 [&_li]:text-[1.125rem] [&_li]:leading-[1.9]" : "prose prose-sm"} ${s.simplifiedView ? "text-base leading-relaxed" : ""}`}
                   onClick={(e: React.MouseEvent) => {
                     // Extract word from DOM text node at click point — works with Streamdown markdown

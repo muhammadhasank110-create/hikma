@@ -56,6 +56,8 @@ interface UseTTSOptions {
   lang?: string;
   voiceHint?: string;
   onBoundary?: (charIndex: number, text: string) => void;
+  /** Use sequential word utterances when browser speech does not expose reliable boundaries. */
+  syncWords?: boolean;
 }
 
 /**
@@ -129,8 +131,9 @@ function pickVoice(lang: string, hint?: string): SpeechSynthesisVoice | null {
   return base ?? voices[0] ?? null;
 }
 
-export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseTTSOptions = {}) {
+export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary, syncWords = false }: UseTTSOptions = {}) {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [syncSource, setSyncSource] = useState<"idle" | "browser-segmented" | "browser-boundary" | "timestamped-audio">("idle");
   // hasElevenLabs is driven by the server config endpoint — never by a client-side key
   const [hasElevenLabs, setHasElevenLabs] = useState(false);
   useEffect(() => {
@@ -140,6 +143,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const browserRunRef = useRef(0);
   const cleanedTextRef = useRef<string>("");
   const rafRef = useRef<number | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -156,6 +160,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   }, []);
 
   const stopBrowser = useCallback(() => {
+    browserRunRef.current += 1;
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     utteranceRef.current = null;
   }, []);
@@ -185,6 +190,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     stopBrowser();
     stopElevenLabs();
     setIsSpeaking(false);
+    setSyncSource("idle");
   }, [stopBrowser, stopElevenLabs]);
   const stopRef = useRef(stop);
   useEffect(() => { stopRef.current = stop; }, [stop]);
@@ -193,33 +199,62 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     if (!("speechSynthesis" in window)) return;
     stopBrowser();
     const { offsets } = buildWordOffsets(text);
+    const words = text.split(" ").filter(Boolean);
+    const runId = browserRunRef.current + 1;
+    browserRunRef.current = runId;
     const reportWord = (wordIndex: number) => {
       if (!offsets.length || wordIndex < 0 || wordIndex >= offsets.length) return;
       onBoundaryRef.current?.(offsets[wordIndex], cleanedTextRef.current);
     };
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.rate = Math.max(0.5, Math.min(2, rate));
-    utt.lang = lang;
-    const voice = pickVoice(lang, voiceHint);
-    if (voice) utt.voice = voice;
-    utt.onstart = () => {
+    const createUtterance = (spokenText: string) => {
+      const utterance = new SpeechSynthesisUtterance(spokenText);
+      utterance.rate = Math.max(0.5, Math.min(2, rate));
+      utterance.lang = lang;
+      const voice = pickVoice(lang, voiceHint);
+      if (voice) utterance.voice = voice;
+      return utterance;
+    };
+
+    if (syncWords && words.length) {
+      setSyncSource("browser-segmented");
+      const speakNextWord = (wordIndex: number) => {
+        if (browserRunRef.current !== runId) return;
+        if (wordIndex >= words.length) { setIsSpeaking(false); setSyncSource("idle"); return; }
+        const utterance = createUtterance(words[wordIndex]);
+        utterance.onstart = () => {
+          if (browserRunRef.current !== runId) return;
+          setIsSpeaking(true);
+          reportWord(wordIndex);
+        };
+        utterance.onend = () => {
+          if (browserRunRef.current === runId) speakNextWord(wordIndex + 1);
+        };
+        utterance.onerror = () => { if (browserRunRef.current === runId) { setIsSpeaking(false); setSyncSource("idle"); } };
+        utteranceRef.current = utterance;
+        window.speechSynthesis.speak(utterance);
+      };
+      speakNextWord(0);
+      return;
+    }
+
+    const utterance = createUtterance(text);
+    setSyncSource("browser-boundary");
+    utterance.onstart = () => {
       setIsSpeaking(true);
-      // Begin at the first word. Subsequent positions are updated exclusively
-      // by browser-provided boundaries, never by estimated timing.
       reportWord(0);
     };
-    utt.onend = () => setIsSpeaking(false);
-    utt.onerror = () => setIsSpeaking(false);
-    utt.onboundary = (event) => {
+    utterance.onend = () => { setIsSpeaking(false); setSyncSource("idle"); };
+    utterance.onerror = () => { setIsSpeaking(false); setSyncSource("idle"); };
+    utterance.onboundary = (event) => {
       if (event.name === "word" && onBoundaryRef.current) {
         let wordIndex = 0;
         while (wordIndex + 1 < offsets.length && offsets[wordIndex + 1] <= event.charIndex) wordIndex += 1;
         reportWord(wordIndex);
       }
     };
-    utteranceRef.current = utt;
-    window.speechSynthesis.speak(utt);
-  }, [rate, lang, voiceHint, stopBrowser]);
+    utteranceRef.current = utterance;
+    window.speechSynthesis.speak(utterance);
+  }, [rate, lang, voiceHint, stopBrowser, syncWords]);
 
   const speakWithElevenLabs = useCallback(async (text: string) => {
     stopElevenLabs();
@@ -288,6 +323,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       const finish = () => {
         stopHighlightLoop();
         setIsSpeaking(false);
+        setSyncSource("idle");
         if (objectUrlRef.current) {
           URL.revokeObjectURL(objectUrlRef.current);
           objectUrlRef.current = null;
@@ -295,6 +331,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       };
 
       audio.onplay = () => {
+        setSyncSource("timestamped-audio");
         stopHighlightLoop();
         rafRef.current = requestAnimationFrame(tick);
       };
@@ -349,5 +386,5 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     };
   }, []);
 
-  return { speak, stop, isSpeaking, getCleanedText, hasElevenLabs };
+  return { speak, stop, isSpeaking, syncSource, getCleanedText, hasElevenLabs };
 }

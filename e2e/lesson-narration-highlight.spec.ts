@@ -25,10 +25,7 @@ test.describe("lesson narration highlighting", () => {
         speak: (utterance: SpeechSynthesisUtterance) => {
           active = utterance;
           setTimeout(() => utterance.onstart?.(new Event("start") as SpeechSynthesisEvent), 0);
-          // Simulate native browser word-boundary events from actual speech.
-          setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 0 } as SpeechSynthesisEvent), 25);
-          setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 6 } as SpeechSynthesisEvent), 520);
-          setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 11 } as SpeechSynthesisEvent), 1_020);
+          setTimeout(() => utterance.onend?.(new Event("end") as SpeechSynthesisEvent), 900);
         },
         cancel: () => { active?.onend?.(new Event("end") as SpeechSynthesisEvent); active = null; },
       }});
@@ -45,6 +42,7 @@ test.describe("lesson narration highlighting", () => {
 
     await page.getByRole("button", { name: /read aloud/i }).click();
     const spokenWord = page.locator('mark[data-current-spoken-word="true"]');
+    await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "browser-segmented");
     await expect(spokenWord).toHaveText("Alpha");
     await expect(spokenWord).toHaveClass(/tts-word-active/);
     await expect(spokenWord).toHaveCount(1);
@@ -60,5 +58,6 @@ test.describe("lesson narration highlighting", () => {
 
     await page.getByRole("button", { name: /stop narration/i }).click();
     await expect(spokenWord).toHaveCount(0);
+    await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "idle");
   });
 });

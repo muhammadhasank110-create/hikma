@@ -63,6 +63,7 @@ test.describe("streamed lesson narration highlighting", () => {
     await page.getByRole("button", { name: /read aloud/i }).click();
 
     const spokenWord = page.locator('mark[data-current-spoken-word="true"]');
+    await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "timestamped-audio");
     await expect(spokenWord).toHaveText("Alpha");
     await expect(spokenWord).toHaveText("beta", { timeout: 3_000 });
     await expect(spokenWord).toHaveText("gamma.", { timeout: 3_000 });
@@ -70,5 +71,6 @@ test.describe("streamed lesson narration highlighting", () => {
 
     await page.getByRole("button", { name: /stop narration/i }).click();
     await expect(spokenWord).toHaveCount(0);
+    await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "idle");
   });
 });

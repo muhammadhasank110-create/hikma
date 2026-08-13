@@ -87,3 +87,9 @@
 - [x] Improve streamed-audio synchronization using only timing data that is actually aligned to the generated audio.
 - [x] Add timing-alignment regression coverage for browser speech and streamed audio and document observed results in AUDIT.md.
 - [x] Save the required checkpoint that publishes the actual-audio synchronization correction.
+- [x] Instrument the live lesson narration flow to identify the actual selected provider, received word-boundary/timestamp events, and highlight state transitions.
+- [x] Reproduce the non-moving highlight through the same provider-selection path used by the deployed lesson experience.
+- [x] Implement and expose a robust highlight progression path for the active provider, with a truthful fallback state when timing data is unavailable.
+- [x] Add repeated end-to-end playback tests that verify multiple word changes over time for the live provider path, standard mode, and Focus mode.
+- [x] Review console/network diagnostics, run complete validation, and document evidence in AUDIT.md.
+- [ ] Save the required checkpoint that publishes the confirmed live-highlight movement correction.

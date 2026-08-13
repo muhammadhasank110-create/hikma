@@ -48,6 +48,7 @@ export function useLessonState(lessonId: number) {
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     voiceHint: profile.voice,
     onBoundary: handleBoundary,
+    syncWords: true,
   });
   const isNarrating = tts.isSpeaking;
   const speakingTextRef = useRef<string>("");
