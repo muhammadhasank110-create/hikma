@@ -92,4 +92,4 @@
 - [x] Implement and expose a robust highlight progression path for the active provider, with a truthful fallback state when timing data is unavailable.
 - [x] Add repeated end-to-end playback tests that verify multiple word changes over time for the live provider path, standard mode, and Focus mode.
 - [x] Review console/network diagnostics, run complete validation, and document evidence in AUDIT.md.
-- [ ] Save the required checkpoint that publishes the confirmed live-highlight movement correction.
+- [x] Save the required checkpoint that publishes the confirmed live-highlight movement correction.
