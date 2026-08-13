@@ -81,4 +81,4 @@
 - [x] Trace and correct browser TTS timing, refs, DOM mutation, and cleanup paths; verify the streamed-audio progression path independently.
 - [x] Add end-to-end regression coverage that validates automatic multi-word advancement without manually invoking test-only boundary helpers.
 - [x] Run complete playback, type, unit, and browser validation and document the actual results in AUDIT.md.
-- [ ] Save the required checkpoint that publishes the confirmed multi-word browser TTS fix.
+- [x] Save the required checkpoint that publishes the confirmed multi-word browser TTS fix.
