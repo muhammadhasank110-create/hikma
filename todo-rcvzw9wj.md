@@ -101,4 +101,4 @@
 - [x] Verify English/Arabic RTL public navigation, device light/dark behavior, keyboard navigation, desktop/mobile layout, and browser console behavior.
 - [x] Add or update automated coverage and record real evidence in AUDIT.md.
 - [x] Capture authenticated cream/calm/high-contrast dashboard browser evidence to confirm premium surface inheritance under each learner profile.
-- [ ] Save the required checkpoint that publishes the verified reference-inspired redesign.
+- [x] Save the required checkpoint that publishes the verified reference-inspired redesign.
