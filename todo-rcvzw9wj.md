@@ -82,3 +82,8 @@
 - [x] Add end-to-end regression coverage that validates automatic multi-word advancement without manually invoking test-only boundary helpers.
 - [x] Run complete playback, type, unit, and browser validation and document the actual results in AUDIT.md.
 - [x] Save the required checkpoint that publishes the confirmed multi-word browser TTS fix.
+- [x] Reproduce and measure the reported drift between audible narration and the highlighted word across active playback providers.
+- [x] Use real browser speech boundaries where available and eliminate cadence-based word advancement that cannot match audible speech.
+- [x] Improve streamed-audio synchronization using only timing data that is actually aligned to the generated audio.
+- [x] Add timing-alignment regression coverage for browser speech and streamed audio and document observed results in AUDIT.md.
+- [ ] Save the required checkpoint that publishes the actual-audio synchronization correction.

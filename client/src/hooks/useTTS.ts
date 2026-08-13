@@ -19,8 +19,8 @@ const ELEVEN_MODEL = "eleven_multilingual_v2";
 // Module-level flag: set for the current browser session when the proxy reports
 // invalid credentials or an exhausted quota. Reset on page reload.
 let elevenLabsFailedThisSession = false;
-// Server proxy URL — the ONLY path to ElevenLabs. API key stays server-side.
-const TTS_PROXY_URL = "/api/tts/speak";
+// Server proxy URL — returns audio plus provider timing, while the API key stays server-side.
+const TTS_ALIGNED_PROXY_URL = "/api/tts/speak-with-timestamps";
 // Config endpoint — tells us if the server has ELEVENLABS_API_KEY set.
 const TTS_CONFIG_URL = "/api/tts/config";
 
@@ -82,6 +82,32 @@ export function buildWordOffsets(cleaned: string): { words: string[]; offsets: n
   return { words, offsets };
 }
 
+type CharacterAlignment = {
+  characters: string[];
+  character_start_times_seconds: number[];
+};
+
+export function buildWordStartTimes(text: string, alignment: CharacterAlignment): number[] | null {
+  const { offsets } = buildWordOffsets(text);
+  if (!offsets.length || alignment.characters.length !== alignment.character_start_times_seconds.length) return null;
+  const starts = offsets.map((offset) => alignment.character_start_times_seconds[offset]);
+  return starts.every((time) => Number.isFinite(time)) ? starts : null;
+}
+
+export function getAlignedWordIndex(wordStartTimes: number[], currentTime: number) {
+  if (!wordStartTimes.length) return -1;
+  let index = 0;
+  while (index + 1 < wordStartTimes.length && wordStartTimes[index + 1] <= currentTime) index += 1;
+  return index;
+}
+
+function base64ToBlob(base64: string) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return new Blob([bytes], { type: "audio/mpeg" });
+}
+
 function pickVoice(lang: string, hint?: string): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
   if (!voices.length) return null;
@@ -118,7 +144,6 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   const rafRef = useRef<number | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const onBoundaryRef = useRef(onBoundary);
-  const browserBoundaryTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // AbortController to cancel in-flight ElevenLabs fetch when speak() is called again
   const abortRef = useRef<AbortController | null>(null);
   useEffect(() => { onBoundaryRef.current = onBoundary; }, [onBoundary]);
@@ -130,18 +155,10 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     }
   }, []);
 
-  const stopBrowserBoundaryFallback = useCallback(() => {
-    if (browserBoundaryTimerRef.current !== null) {
-      clearInterval(browserBoundaryTimerRef.current);
-      browserBoundaryTimerRef.current = null;
-    }
-  }, []);
-
   const stopBrowser = useCallback(() => {
-    stopBrowserBoundaryFallback();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     utteranceRef.current = null;
-  }, [stopBrowserBoundaryFallback]);
+  }, []);
 
   const stopElevenLabs = useCallback(() => {
     stopHighlightLoop();
@@ -175,15 +192,9 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   const speakWithBrowser = useCallback((text: string) => {
     if (!("speechSynthesis" in window)) return;
     stopBrowser();
-    const { words, offsets } = buildWordOffsets(text);
-    const wordDelay = Math.min(800, Math.max(280, 480 / Math.max(0.5, Math.min(2, rate))));
-    const silenceThreshold = Math.max(700, Math.round(wordDelay * 1.7));
-    let nextWordIndex = 0;
-    let lastBoundaryAt = 0;
+    const { offsets } = buildWordOffsets(text);
     const reportWord = (wordIndex: number) => {
       if (!offsets.length || wordIndex < 0 || wordIndex >= offsets.length) return;
-      nextWordIndex = Math.max(nextWordIndex, wordIndex + 1);
-      lastBoundaryAt = Date.now();
       onBoundaryRef.current?.(offsets[wordIndex], cleanedTextRef.current);
     };
     const utt = new SpeechSynthesisUtterance(text);
@@ -193,20 +204,12 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     if (voice) utt.voice = voice;
     utt.onstart = () => {
       setIsSpeaking(true);
-      // Some browser engines never issue the first boundary. Start at the
-      // first spoken word and advance only if native events fall silent.
+      // Begin at the first word. Subsequent positions are updated exclusively
+      // by browser-provided boundaries, never by estimated timing.
       reportWord(0);
-      stopBrowserBoundaryFallback();
-      browserBoundaryTimerRef.current = setInterval(() => {
-        if (!words.length || nextWordIndex >= offsets.length) {
-          stopBrowserBoundaryFallback();
-          return;
-        }
-        if (Date.now() - lastBoundaryAt >= silenceThreshold) reportWord(nextWordIndex);
-      }, wordDelay);
     };
-    utt.onend = () => { stopBrowserBoundaryFallback(); setIsSpeaking(false); };
-    utt.onerror = () => { stopBrowserBoundaryFallback(); setIsSpeaking(false); };
+    utt.onend = () => setIsSpeaking(false);
+    utt.onerror = () => setIsSpeaking(false);
     utt.onboundary = (event) => {
       if (event.name === "word" && onBoundaryRef.current) {
         let wordIndex = 0;
@@ -216,7 +219,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     };
     utteranceRef.current = utt;
     window.speechSynthesis.speak(utt);
-  }, [rate, lang, voiceHint, stopBrowser, stopBrowserBoundaryFallback]);
+  }, [rate, lang, voiceHint, stopBrowser]);
 
   const speakWithElevenLabs = useCallback(async (text: string) => {
     stopElevenLabs();
@@ -228,8 +231,9 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       const isArabic = lang.startsWith("ar");
       const voiceId = isArabic ? ELEVEN_VOICE_AR : ELEVEN_VOICE_EN;
 
-      // Server proxy is the ONLY path — API key never leaves the server
-      const res = await fetch(TTS_PROXY_URL, {
+      // Server proxy returns generated audio together with provider timestamps.
+      // Both remain server-side until this safe response reaches the learner.
+      const res = await fetch(TTS_ALIGNED_PROXY_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, locale: isArabic ? "ar" : "en", voiceId }),
@@ -237,7 +241,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       });
 
       const contentType = res.headers.get("content-type") ?? "";
-      if (!res.ok || !contentType.includes("audio")) {
+      if (!res.ok || !contentType.includes("application/json")) {
         const errorText = await res.text().catch(() => "");
         const quotaExceeded = /quota_exceeded|quota of|credits remaining/i.test(errorText);
         console.warn("[useTTS] ElevenLabs proxy unavailable — falling back to browser", { status: res.status, quotaExceeded });
@@ -249,7 +253,14 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
         return;
       }
 
-      const blob = await res.blob();
+      const payload = await res.json() as { audioBase64?: string; alignment?: CharacterAlignment };
+      const wordStartTimes = payload.audioBase64 && payload.alignment ? buildWordStartTimes(text, payload.alignment) : null;
+      if (!payload.audioBase64 || !wordStartTimes) {
+        console.warn("[useTTS] Timed audio alignment unavailable — falling back to browser speech boundaries");
+        speakWithBrowser(text);
+        return;
+      }
+      const blob = base64ToBlob(payload.audioBase64);
       // Check if this request was aborted while we were downloading
       if (controller.signal.aborted) { setIsSpeaking(false); return; }
       const url = URL.createObjectURL(blob);
@@ -257,16 +268,15 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
       const audio = new Audio(url);
       audioRef.current = audio;
 
-      const { words, offsets } = buildWordOffsets(text);
+      const { offsets } = buildWordOffsets(text);
       let lastIdx = -1;
 
       const tick = () => {
         const a = audioRef.current;
         if (!a || a.paused || a.ended) { rafRef.current = null; return; }
         const dur = a.duration;
-        if (dur && isFinite(dur) && words.length && onBoundaryRef.current) {
-          const ratio = Math.min(1, Math.max(0, a.currentTime / dur));
-          const idx = Math.min(words.length - 1, Math.floor(ratio * words.length));
+        if (dur && isFinite(dur) && wordStartTimes.length && onBoundaryRef.current) {
+          const idx = getAlignedWordIndex(wordStartTimes, a.currentTime);
           if (idx !== lastIdx) {
             lastIdx = idx;
             onBoundaryRef.current(offsets[idx], text);

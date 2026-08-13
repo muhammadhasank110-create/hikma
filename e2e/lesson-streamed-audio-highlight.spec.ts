@@ -50,7 +50,10 @@ test.describe("streamed lesson narration highlighting", () => {
     await page.route(/\/api\/trpc\/profile\.(get|update)/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: {} } } }]) }));
     await page.route(/\/api\/trpc\/curriculum\.lesson/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: mockLesson } } }]) }));
     await page.route("**/api/tts/config", route => route.fulfill({ contentType: "application/json", body: JSON.stringify({ hasElevenLabs: true }) }));
-    await page.route("**/api/tts/speak", route => route.fulfill({ contentType: "audio/mpeg", body: Buffer.from([0, 1, 2, 3]) }));
+    await page.route("**/api/tts/speak-with-timestamps", route => route.fulfill({ contentType: "application/json", body: JSON.stringify({
+      audioBase64: "AAECAw==",
+      alignment: { characters: Array.from("Alpha beta gamma."), character_start_times_seconds: Array.from("Alpha beta gamma.", (_, index) => index * 0.06) },
+    }) }));
   });
 
   test("advances the exact marked word through streamed audio and clears it on stop", async ({ page }) => {

@@ -25,8 +25,10 @@ test.describe("lesson narration highlighting", () => {
         speak: (utterance: SpeechSynthesisUtterance) => {
           active = utterance;
           setTimeout(() => utterance.onstart?.(new Event("start") as SpeechSynthesisEvent), 0);
-          // Reproduce engines that announce only the first word boundary.
+          // Simulate native browser word-boundary events from actual speech.
           setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 0 } as SpeechSynthesisEvent), 25);
+          setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 6 } as SpeechSynthesisEvent), 520);
+          setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 11 } as SpeechSynthesisEvent), 1_020);
         },
         cancel: () => { active?.onend?.(new Event("end") as SpeechSynthesisEvent); active = null; },
       }});

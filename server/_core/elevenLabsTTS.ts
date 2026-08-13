@@ -37,6 +37,56 @@ function releaseSlot() {
 }
 
 export function registerElevenLabsTTSRoute(app: Express) {
+  app.post("/api/tts/speak-with-timestamps", async (req: Request, res: Response) => {
+    const { text, locale = "en", voiceId } = req.body as { text?: string; locale?: string; voiceId?: string };
+    if (!text || typeof text !== "string") {
+      res.status(400).json({ error: "text is required" });
+      return;
+    }
+    if (!ENV.elevenLabsApiKey) {
+      res.status(503).json({ error: "ElevenLabs not configured", fallback: true });
+      return;
+    }
+
+    const selectedVoiceId = voiceId || VOICE_IDS[locale] || VOICE_IDS.en;
+    const cleanText = text.replace(/[#*_`~\[\]]/g, "").slice(0, 2500);
+    await acquireSlot();
+    try {
+      const elevenRes = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${selectedVoiceId}/with-timestamps`,
+        {
+          method: "POST",
+          headers: { "xi-api-key": ENV.elevenLabsApiKey, "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            text: cleanText,
+            model_id: "eleven_multilingual_v2",
+            // Keep alignment offsets compatible with the text sent by the client.
+            apply_text_normalization: "off",
+            voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.3, use_speaker_boost: true },
+          }),
+        },
+      );
+      if (!elevenRes.ok) {
+        const errText = await elevenRes.text();
+        console.error(`ElevenLabs aligned TTS error ${elevenRes.status}:`, errText);
+        res.status(502).json({ error: "ElevenLabs alignment error", fallback: true });
+        return;
+      }
+      const payload = await elevenRes.json();
+      if (!payload?.audio_base64 || !payload?.alignment?.characters?.length) {
+        res.status(502).json({ error: "ElevenLabs alignment unavailable", fallback: true });
+        return;
+      }
+      res.setHeader("Cache-Control", "no-store");
+      res.json({ audioBase64: payload.audio_base64, alignment: payload.alignment });
+    } catch (err: any) {
+      console.error("ElevenLabs aligned TTS fetch error:", err?.message);
+      res.status(502).json({ error: err?.message ?? "Unknown error", fallback: true });
+    } finally {
+      releaseSlot();
+    }
+  });
+
   app.post("/api/tts/speak", async (req: Request, res: Response) => {
     const { text, locale = "en", voiceId } = req.body as {
       text?: string;
@@ -133,13 +183,13 @@ export function registerElevenLabsTTSRoute(app: Express) {
     // Probe with a minimal request (1 char) to check if the API actually works
     try {
       const probe = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_IDS.en}`,
+        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_IDS.en}/with-timestamps`,
         {
           method: "POST",
           headers: {
             "xi-api-key": ENV.elevenLabsApiKey,
             "Content-Type": "application/json",
-            Accept: "audio/mpeg",
+            Accept: "application/json",
           },
           body: JSON.stringify({
             text: "Hi",
@@ -150,7 +200,7 @@ export function registerElevenLabsTTSRoute(app: Express) {
         }
       );
       const ct = probe.headers.get("content-type") ?? "";
-      const works = probe.ok && ct.includes("audio");
+      const works = probe.ok && ct.includes("application/json");
       cachedConfig = { hasElevenLabs: works, ts: Date.now() };
       res.json({ hasElevenLabs: works, voices: VOICE_IDS });
     } catch {
