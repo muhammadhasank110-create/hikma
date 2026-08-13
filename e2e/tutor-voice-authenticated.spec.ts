@@ -18,6 +18,7 @@ test.describe("authenticated tutor narration", () => {
     });
     await page.route(/\/api\/trpc\/auth\.me/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: mockUser } } }]) }));
     await page.route("**/api/tts/config", route => route.fulfill({ contentType: "application/json", body: JSON.stringify({ hasElevenLabs: false }) }));
+    await page.route(/\/api\/trpc\/curriculum\.list/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: [] } } }]) }));
   });
 
   test("shows the speaking wave and stops authenticated tutor narration", async ({ page }) => {
@@ -30,5 +31,14 @@ test.describe("authenticated tutor narration", () => {
     await expect(page.getByRole("button", { name: "Stop narration" })).toBeVisible();
     await page.getByRole("button", { name: "Stop narration" }).click();
     await expect(page.getByRole("status", { name: "Voice is idle" })).toBeVisible();
+  });
+
+  test("keeps learner dashboard surface tokens profile-aware for cream, calm, and high contrast", async ({ page }) => {
+    await page.goto("/dashboard");
+    await expect(page.getByRole("heading", { name: "Playwright" })).toBeVisible();
+    for (const [theme, expectedCard] of [["cream", "255 253 248"], ["calm", "248 250 248"], ["high_contrast", "0 0 0"]] as const) {
+      await page.evaluate(({ nextTheme }) => { document.documentElement.dataset.theme = nextTheme; }, { nextTheme: theme });
+      await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--card").trim())).toBe(expectedCard);
+    }
   });
 });

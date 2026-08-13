@@ -227,10 +227,10 @@ function TopNav({ onMenuOpen, onSearchOpen, visibleItems }: { onMenuOpen: () => 
 
   return (
     <nav
-      className="w-full bg-[rgb(var(--nav-bg))] text-white"
+      className="sticky top-0 z-40 w-full border-b border-white/8 bg-[rgb(var(--nav-bg))]/95 text-white backdrop-blur-xl"
       aria-label={t("Main navigation", "التنقل الرئيسي")}
     >
-      <div className="container flex items-center justify-between h-16 gap-4">
+      <div className="container flex items-center justify-between h-[4.5rem] gap-4">
         {/* Logo */}
         <Link href="/dashboard" aria-label="Go to dashboard" className="flex items-center gap-3 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
           {/* Logo — white icon on dark nav */}
@@ -251,7 +251,7 @@ function TopNav({ onMenuOpen, onSearchOpen, visibleItems }: { onMenuOpen: () => 
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative isolate flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 ${
+                className={`relative isolate flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 ${
                   isActive
                     ? "text-white font-semibold"
                     : "text-white/80 hover:text-white hover:bg-muted/50"

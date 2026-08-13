@@ -24,3 +24,17 @@ export function useDocumentVisibility() {
 
   return isVisible;
 }
+
+/** Conservative client-only signal for disabling non-essential ambient animation. */
+export function useLowCapabilityDevice() {
+  const [isLowCapability, setIsLowCapability] = useState(false);
+
+  useEffect(() => {
+    const navigatorWithHints = navigator as Navigator & { deviceMemory?: number };
+    const lowMemory = typeof navigatorWithHints.deviceMemory === "number" && navigatorWithHints.deviceMemory <= 2;
+    const lowCpuWithoutMemoryHint = navigatorWithHints.deviceMemory === undefined && navigator.hardwareConcurrency <= 4;
+    setIsLowCapability(lowMemory || lowCpuWithoutMemoryHint);
+  }, []);
+
+  return isLowCapability;
+}

@@ -1060,3 +1060,55 @@ button[disabled], button[aria-disabled="true"],
 
 /* ── Section slide perspective ─────────────────────────────────────────────── */
 .section-slide-container { perspective: 1000px; }
+
+/* ── Premium public ambient depth ──────────────────────────────────────────── */
+.ambient-grid {
+  background-image: linear-gradient(rgba(17, 65, 39, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(17, 65, 39, 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ambient-grid { opacity: 0.28; }
+}
+
+/* ── Premium public design tokens ─────────────────────────────────────────── */
+:root {
+  --premium-canvas: rgb(var(--background));
+  --premium-ink: rgb(var(--foreground));
+  --premium-muted: rgb(var(--muted-foreground));
+  --premium-surface: rgb(var(--card));
+  --premium-border: rgb(var(--border));
+  --premium-strong: rgb(var(--nav-bg));
+  --premium-shadow: 0 22px 55px rgba(17, 55, 32, 0.11);
+  --premium-radius: 2rem;
+  --premium-measure: min(100% - 2.5rem, 80rem);
+}
+
+.premium-public {
+  background: var(--premium-canvas);
+  color: var(--premium-ink);
+}
+
+.premium-public .premium-surface {
+  background: var(--premium-surface);
+  border-color: var(--premium-border);
+  box-shadow: var(--premium-shadow);
+}
+
+.premium-public .premium-ink { color: var(--premium-ink); }
+.premium-public .premium-muted { color: var(--premium-muted); }
+
+[data-theme="high_contrast"] .premium-public {
+  background: rgb(var(--background)) !important;
+  color: rgb(var(--foreground)) !important;
+}
+[data-theme="high_contrast"] .premium-public [data-ambient-backdrop] {
+  display: none;
+}
+[data-theme="high_contrast"] .premium-public :is(h1, h2, h3, p, span, label, a, button) {
+  color: inherit;
+}
+[data-theme="high_contrast"] .premium-public :is(article, form, input, textarea, nav, section, header, footer) {
+  border-color: rgb(var(--border)) !important;
+  box-shadow: none !important;
+}

@@ -93,3 +93,12 @@
 - [x] Add repeated end-to-end playback tests that verify multiple word changes over time for the live provider path, standard mode, and Focus mode.
 - [x] Review console/network diagnostics, run complete validation, and document evidence in AUDIT.md.
 - [x] Save the required checkpoint that publishes the confirmed live-highlight movement correction.
+- [x] Consolidate HIKMA’s shared visual tokens, typography, surface hierarchy, and reduced-motion-safe ambient depth system without overriding accessibility profiles.
+- [x] Create reusable premium public-layout and ambient-background components that pause non-essential movement when hidden or reduced-motion is active.
+- [x] Rebuild the public Home, About, and Contact pages into a cohesive editorial product experience with responsive section navigation and existing bilingual content.
+- [x] Refine the authenticated AppShell and Dashboard hierarchy with a premium desktop shell, clear mobile bottom navigation, and role-filtered source-of-truth navigation.
+- [x] Apply governed transform/opacity-only interactions, shared route continuity, and static fallbacks for reduced-motion and low-end devices.
+- [x] Verify English/Arabic RTL public navigation, device light/dark behavior, keyboard navigation, desktop/mobile layout, and browser console behavior.
+- [x] Add or update automated coverage and record real evidence in AUDIT.md.
+- [x] Capture authenticated cream/calm/high-contrast dashboard browser evidence to confirm premium surface inheritance under each learner profile.
+- [ ] Save the required checkpoint that publishes the verified reference-inspired redesign.

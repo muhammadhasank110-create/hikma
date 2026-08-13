@@ -4,7 +4,7 @@ test.describe("public entry and protected tutor", () => {
   test("automatically exits the branded entry into the landing experience", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("status")).toBeVisible();
-    await expect(page.getByRole("heading", { name: /learning space/i })).toBeVisible({ timeout: 4_000 });
+    await expect(page.getByRole("heading", { name: /learning system that respects your attention/i })).toBeVisible({ timeout: 4_000 });
     await expect(page.getByRole("status")).toHaveCount(0);
   });
 
@@ -12,7 +12,7 @@ test.describe("public entry and protected tutor", () => {
     await page.goto("/");
     await page.waitForTimeout(1_800);
     await expect(page.locator("h1")).toHaveCount(1);
-    await expect(page.locator("h1")).toContainText(/learning space/i);
+    await expect(page.locator("h1")).toContainText(/learning system that respects your attention/i);
   });
 
   test("exposes a keyboard skip link after the automatic entry", async ({ page }) => {
@@ -33,7 +33,7 @@ test.describe("public entry and protected tutor", () => {
   test("keeps the landing hero inside a narrow viewport", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile", "This assertion targets the narrow viewport project.");
     await page.goto("/");
-    const heading = page.getByRole("heading", { name: /learning space/i });
+    const heading = page.getByRole("heading", { name: /learning system that respects your attention/i });
     await expect(heading).toBeVisible({ timeout: 4_000 });
     const box = await heading.boundingBox();
     expect(box).not.toBeNull();
@@ -49,7 +49,7 @@ test.describe("public entry and protected tutor", () => {
 
   test("opens the About page from public navigation", async ({ page }) => {
     await page.goto("/about");
-    await expect(page.getByRole("heading", { name: /learning support/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /learning support should feel considered/i })).toBeVisible();
     await expect(page.getByRole("link", { name: "Contact" })).toBeVisible();
   });
 
@@ -58,21 +58,21 @@ test.describe("public entry and protected tutor", () => {
     await expect(page.locator("html")).toHaveAttribute("lang", "ar");
     await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
     await expect(page.getByRole("link", { name: "تواصل" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /دعم تعليمي/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /ينبغي أن يبدو الدعم التعليمي/i })).toBeVisible();
   });
 
   test("completes the Arabic entry transition and keeps Arabic navigation stable across a public route change", async ({ page }) => {
     await page.goto("/?lang=ar");
-    await expect(page.getByRole("heading", { name: /مساحة تعلّم تمنحك/i })).toBeVisible({ timeout: 4_000 });
+    await expect(page.getByRole("heading", { name: /نظام تعلّم يحترم انتباهك/i })).toBeVisible({ timeout: 4_000 });
     await page.getByRole("link", { name: "من نحن" }).click();
     await expect(page).toHaveURL(/\/about/);
-    await expect(page.getByRole("heading", { name: /دعم تعليمي/i })).toBeVisible();
-    await expect(page.locator("main")).toHaveAttribute("dir", "rtl");
+    await expect(page.getByRole("heading", { name: /ينبغي أن يبدو الدعم التعليمي/i })).toBeVisible();
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
   });
 
   test("renders a complete and labelled contact form", async ({ page }) => {
     await page.goto("/contact");
-    await expect(page.getByRole("heading", { name: /tell us what would help/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /tell us what would make learning easier/i })).toBeVisible();
     await expect(page.getByLabel("Name")).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByLabel("Subject")).toBeVisible();
@@ -86,7 +86,7 @@ test.describe("public entry and protected tutor", () => {
     await page.getByLabel("Email").fill("learner@example.com");
     await page.getByLabel("Subject").fill("Learning support");
     await page.getByLabel("Message").fill("Please help me with a study question.");
-    await page.getByRole("button", { name: /email your message/i }).click();
+    await page.getByRole("button", { name: /open your email app/i }).click();
     const status = page.getByRole("status").filter({ hasText: /email application/i });
     await expect(status).toBeVisible();
     await expect(status).toBeFocused();

@@ -74,7 +74,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <main id="main-content" className="min-h-screen max-w-5xl mx-auto space-y-7 px-4 pb-24 pt-5 sm:space-y-10 sm:p-8" tabIndex={-1}>
+    <main id="main-content" className="relative min-h-screen max-w-6xl mx-auto space-y-8 px-4 pb-28 pt-5 sm:space-y-10 sm:p-8" tabIndex={-1}>
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <motion.div
@@ -82,27 +82,30 @@ export default function Dashboard() {
         animate={motionConfig.page.animate}
         transition={motionConfig.enterTransition}
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="relative overflow-hidden rounded-[2rem] border border-primary/15 bg-[linear-gradient(135deg,rgb(var(--nav-bg)),rgb(var(--primary)))] p-6 text-primary-foreground shadow-[0_22px_55px_rgba(17,55,32,0.16)] sm:p-8">
+          <div aria-hidden="true" className="absolute -right-20 -top-24 size-72 rounded-full bg-white/8 blur-3xl" />
+          <div className="relative flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-muted-foreground font-medium mb-1">{greeting}</p>
-            <h1 className="text-4xl sm:text-5xl font-black text-foreground tracking-tight">{user?.name?.split(" ")[0]}</h1>
+            <p className="text-sm text-white/65 font-medium mb-1">{greeting}</p>
+            <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">{user?.name?.split(" ")[0]}</h1>
             <div className="flex flex-wrap items-center gap-2 mt-3">
               {profile?.curriculum && (
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-emerald-600/40 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20 text-white bg-white/10">
                   <BookOpen className="w-3 h-3" aria-hidden="true" />
                   {profile.curriculum === "igcse_edexcel" ? "IGCSE Edexcel" : "Qatar MoEHE"}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-border text-foreground/50 bg-muted/30">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border border-white/15 text-white/70 bg-white/8">
                 {modeLabel[profileMode]}
               </span>
             </div>
-            <button type="button" onClick={() => navigate("/subjects/1")} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.01] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            <button type="button" onClick={() => navigate("/subjects/1")} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-emerald-950 transition-transform hover:-translate-y-0.5 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
               <BookOpen className="size-4" aria-hidden="true" />{t("Continue learning", "تابع التعلّم")}
               <ChevronRight className="size-4" aria-hidden="true" />
             </button>
           </div>
-          <HikmaLogo surface="auto" size={40} decorative />
+          <div className="grid size-14 place-items-center rounded-2xl border border-white/15 bg-white/8"><HikmaLogo surface="dark" size={38} decorative /></div>
+          </div>
         </div>
       </motion.div>
 
@@ -112,7 +115,7 @@ export default function Dashboard() {
           const Icon = s.icon;
           return (
             <motion.div key={s.label}
-              className="relative overflow-hidden rounded-2xl border border-border bg-card p-4 text-card-foreground sm:p-5"
+              className="relative overflow-hidden rounded-[1.5rem] border border-border bg-card/85 p-4 text-card-foreground shadow-[0_12px_28px_rgba(21,47,30,0.05)] backdrop-blur-sm sm:p-5"
               initial={motionConfig.item.initial}
               animate={motionConfig.item.animate}
               transition={{ ...motionConfig.transition, delay: motionConfig.reduceMotion ? 0 : i * 0.06 }}
@@ -144,7 +147,7 @@ export default function Dashboard() {
             const Icon = a.icon;
             return (
               <motion.button key={a.href}
-                className="group rounded-2xl border border-border bg-card p-5 text-left text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="group rounded-[1.5rem] border border-border bg-card/85 p-5 text-left text-card-foreground shadow-[0_12px_28px_rgba(21,47,30,0.05)] transition-all hover:-translate-y-0.5 hover:bg-accent hover:text-accent-foreground"
                 onClick={() => navigate(a.href)}
                 initial={motionConfig.item.initial}
                 animate={motionConfig.item.animate}
@@ -195,7 +198,7 @@ export default function Dashboard() {
           <div className="space-y-3">
             {curricula.map((c, i) => (
               <motion.button key={c.id}
-                className="w-full text-left flex items-center gap-4 p-5 rounded-2xl border border-border bg-card hover:bg-muted/50 hover:border-primary/30 transition-all group shadow-sm"
+                className="w-full text-left flex items-center gap-4 p-5 rounded-[1.5rem] border border-border bg-card/85 hover:-translate-y-0.5 hover:bg-muted/50 hover:border-primary/30 transition-all group shadow-[0_10px_24px_rgba(21,47,30,0.04)]"
                 onClick={() => navigate(`/subjects/${c.id}`)}
                 initial={motionConfig.item.initial}
                 animate={motionConfig.item.animate}

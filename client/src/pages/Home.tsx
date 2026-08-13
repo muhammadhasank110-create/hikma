@@ -1,50 +1,29 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpRight, BookOpen, Brain, Keyboard, Volume2 } from "lucide-react";
+import { ArrowUpRight, BookOpen, Brain, Check, Keyboard, Sparkles, Volume2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { HikmaLogo } from "@/components/HikmaLogo";
+import { PublicLayout } from "@/components/PublicLayout";
 import { useHikmaMotion } from "@/hooks/useHikmaMotion";
 import { useProfile } from "@/contexts/ProfileContext";
 import { usePageMetadata } from "@/hooks/usePageMetadata";
 
-const LANDING_PAGE_TITLE = "Hikma | Accessible AI Learning for Every Learner";
-
-const features = (t: (english: string, arabic: string) => string) => [
-  { icon: Volume2, title: t("Listen as you learn", "استمع أثناء التعلّم"), text: t("Narration and voice support stay close to every lesson.", "يبقى السرد الصوتي ودعم الأوامر قريبَين من كل درس.") },
-  { icon: Keyboard, title: t("Move with confidence", "تنقّل بثقة"), text: t("Keyboard-first navigation supports an uninterrupted flow.", "يدعم التنقّل بلوحة المفاتيح مساراً دراسياً بلا انقطاع.") },
-  { icon: Brain, title: t("Learn with Hikma AI", "تعلّم مع حكمة AI"), text: t("Guidance that works from your pace, not against it.", "توجيه يراعي وتيرتك ولا يفرض عليك إيقاعاً مختلفاً.") },
-];
+const LANDING_PAGE_TITLE = "HIKMA | Adaptive Learning, Designed Around You";
 
 function BrandEntry({ locale }: { locale: "en" | "ar" }) {
   const motionConfig = useHikmaMotion();
-
-  return (
-    <motion.div
-      className="fixed inset-0 z-[100] grid place-items-center bg-[#0c1710] px-6 text-white"
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={motionConfig.transition}
-      role="status"
-      aria-live="polite"
-    >
-      <div className="w-full max-w-sm text-center">
-        <motion.div
-          className="mx-auto mb-8 grid size-32 place-items-center rounded-[2rem] border border-white/10 bg-white/[0.04] shadow-[0_24px_80px_rgba(0,0,0,0.28)]"
-          initial={motionConfig.reduceMotion ? false : { opacity: 0, rotateX: -18, rotateY: 18, y: 12 }}
-          animate={{ opacity: 1, rotateX: 0, rotateY: 0, y: 0 }}
-          transition={motionConfig.spring}
-          style={{ transformPerspective: 900 }}
-        >
-          <HikmaLogo surface="dark" size={84} alt={locale === "ar" ? "شعار حكمة" : "Hikma logo"} />
-        </motion.div>
-        <p className="mb-3 text-[0.7rem] font-bold uppercase tracking-[0.24em] text-emerald-200/80">Hikma — حكمة</p>
-        <h1 id="intro-title" className="text-3xl font-semibold tracking-tight">{locale === "ar" ? "طريقة أهدأ للتعلّم." : "A calmer way to learn."}</h1>
-        <p className="mt-3 text-sm leading-6 text-white/60">{locale === "ar" ? "مصممة لاحتياجاتك في الإتاحة والتركيز وخطوتك التالية الصغيرة." : "Built around your access needs, attention, and next small step."}</p>
-      </div>
-    </motion.div>
-  );
+  return <motion.div className="fixed inset-0 z-[100] grid place-items-center overflow-hidden bg-[#08150d] px-6 text-white" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={motionConfig.transition} role="status" aria-live="polite">
+    <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(73,130,90,0.24),transparent_38%)]" />
+    <div className="relative w-full max-w-sm text-center"><motion.div className="mx-auto mb-8 grid size-28 place-items-center rounded-[2rem] border border-white/10 bg-white/[0.05] shadow-[0_28px_90px_rgba(0,0,0,0.35)]" initial={motionConfig.reduceMotion ? false : { opacity: 0, rotateX: -14, rotateY: 14, y: 18 }} animate={{ opacity: 1, rotateX: 0, rotateY: 0, y: 0 }} transition={motionConfig.spring} style={{ transformPerspective: 900 }}><HikmaLogo surface="dark" size={70} alt={locale === "ar" ? "شعار حكمة" : "Hikma logo"} /></motion.div><p className="mb-3 text-[0.7rem] font-bold uppercase tracking-[0.28em] text-emerald-200/75">Hikma — حكمة</p><h1 id="intro-title" className="text-3xl font-semibold tracking-tight">{locale === "ar" ? "تعلّم مصمم لخطوتك التالية." : "Learning, shaped around your next step."}</h1><p className="mt-3 text-sm leading-6 text-white/60">{locale === "ar" ? "أدوات هادئة وواضحة تساعدك على الاستمرار." : "Calm, clear tools that help you keep moving."}</p></div>
+  </motion.div>;
 }
+
+const features = (t: (english: string, arabic: string) => string) => [
+  { icon: Volume2, number: "01", title: t("Follow the learning", "تابع التعلّم"), text: t("Narration, word focus, and reading controls remain connected to the lesson.", "يبقى السرد والتركيز على الكلمات وأدوات القراءة متصلة بالدرس.") },
+  { icon: Keyboard, number: "02", title: t("Control your route", "تحكّم في مسارك"), text: t("Keyboard, focus, contrast, and language choices work as one system.", "تعمل خيارات لوحة المفاتيح والتركيز والتباين واللغة كنظام واحد.") },
+  { icon: Brain, number: "03", title: t("Get thoughtful guidance", "احصل على توجيه مدروس"), text: t("Hikma AI adapts its support to your real study context.", "تكيّف حكمة AI دعمها مع سياق دراستك الحقيقي.") },
+];
 
 export default function Home() {
   const [, navigate] = useLocation();
@@ -53,64 +32,31 @@ export default function Home() {
   const motionConfig = useHikmaMotion();
   const [showEntry, setShowEntry] = useState(true);
   const t = (english: string, arabic: string) => locale === "ar" ? arabic : english;
-  usePageMetadata({ title: LANDING_PAGE_TITLE, description: "HIKMA is an accessible adaptive learning platform with bilingual guidance, AI tutoring, and study support.", path: "/" });
-
-  useEffect(() => {
-    document.title = LANDING_PAGE_TITLE;
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setShowEntry(false), motionConfig.reduceMotion ? 80 : 1600);
-    return () => window.clearTimeout(timer);
-  }, [motionConfig.reduceMotion]);
-
   const destination = isAuthenticated ? "/dashboard" : "/signup";
+  usePageMetadata({ title: LANDING_PAGE_TITLE, description: "HIKMA is an accessible adaptive learning platform with bilingual guidance, AI tutoring, and study support.", path: "/" });
+  useEffect(() => { const timer = window.setTimeout(() => setShowEntry(false), motionConfig.reduceMotion ? 80 : 1450); return () => window.clearTimeout(timer); }, [motionConfig.reduceMotion]);
 
-  return (
-    <div className="min-h-screen bg-[#f7f8f4] text-[#152119]" dir={locale === "ar" ? "rtl" : "ltr"}>
-      <AnimatePresence mode="wait">
-        {showEntry && <BrandEntry locale={locale} />}
-      </AnimatePresence>
-
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-        <Link href="/" className="flex items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2c5c3a]" aria-label="Hikma home">
-          <HikmaLogo surface="light" size={38} alt="Hikma logo" />
-          <span className="leading-tight"><strong className="block text-sm tracking-[0.18em]">HIKMA</strong><span className="text-xs text-[#627066]">حكمة</span></span>
-        </Link>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <nav className="flex items-center gap-1 text-xs font-medium text-[#344438] sm:text-sm" aria-label={t("Public navigation", "التنقّل العام")}><Link href="/about" className="rounded-full px-2 py-2 hover:bg-[#e8ebe4] sm:px-3">{t("About", "من نحن")}</Link><Link href="/contact" className="rounded-full px-2 py-2 hover:bg-[#e8ebe4] sm:px-3">{t("Contact", "تواصل")}</Link></nav>
-          {!isAuthenticated && <button type="button" onClick={() => navigate("/signin")} className="min-h-11 rounded-full px-4 text-sm font-medium text-[#344438] hover:bg-[#e8ebe4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#2c5c3a]">{t("Sign in", "تسجيل الدخول")}</button>}
-          <button type="button" onClick={() => navigate(destination)} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#173a25] px-4 text-sm font-semibold text-white hover:bg-[#0d2919] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2c5c3a]">
-            {isAuthenticated ? t("Open dashboard", "فتح لوحة التحكم") : t("Start learning", "ابدأ التعلّم")}<ArrowUpRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-          </button>
+  return <PublicLayout active="home" backdrop="forest">
+    <AnimatePresence mode="wait">{showEntry && <BrandEntry locale={locale} />}</AnimatePresence>
+    <section className="mx-auto grid max-w-7xl gap-12 px-5 pb-20 pt-12 sm:px-8 lg:grid-cols-[1.03fr_0.97fr] lg:items-center lg:px-10 lg:pb-28 lg:pt-24">
+      <motion.div className="text-start" initial={motionConfig.page.initial} animate={motionConfig.page.animate} transition={motionConfig.enterTransition}>
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-950/10 bg-white/60 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-emerald-800 shadow-sm"><span className="size-1.5 rounded-full bg-emerald-600" />{t("Adaptive learning platform", "منصة تعلّم تكيّفية")}</div>
+        <h1 className="max-w-3xl text-5xl font-semibold leading-[0.98] tracking-[-0.065em] text-emerald-950 sm:text-6xl lg:text-7xl">{t("A learning system that respects your attention.", "نظام تعلّم يحترم انتباهك.")}</h1>
+        <p className="mt-7 max-w-xl text-lg leading-8 text-emerald-950/65">{t("HIKMA brings together accessible lesson tools, bilingual structure, and guided AI so each learner can build momentum without fighting the interface.", "تجمع حكمة بين أدوات دروس ميسّرة وبنية ثنائية اللغة وذكاء موجّه حتى يبني كل متعلم تقدمه دون أن يصارع الواجهة.")}</p>
+        <div className="mt-9 flex flex-wrap gap-3"><button type="button" onClick={() => navigate(destination)} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-emerald-950 px-5 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(20,65,39,0.22)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-emerald-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800">{isAuthenticated ? t("Open your workspace", "افتح مساحة عملك") : t("Start learning", "ابدأ التعلّم")}<ArrowUpRight className="size-4 rtl:rotate-180" aria-hidden="true" /></button><a href="#approach" className="inline-flex min-h-12 items-center rounded-full border border-emerald-950/12 bg-white/65 px-5 text-sm font-semibold text-emerald-950 transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800">{t("Explore the approach", "استكشف المنهجية")}</a></div>
+        <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-emerald-950/65">{[t("Arabic + English", "العربية والإنجليزية"), t("Profile-aware", "مراعية للملف الشخصي"), t("Keyboard-ready", "جاهزة للوحة المفاتيح")].map((item) => <span key={item} className="inline-flex items-center gap-2"><Check className="size-4 text-emerald-700" aria-hidden="true" />{item}</span>)}</div>
+      </motion.div>
+      <motion.div className="relative" initial={motionConfig.reduceMotion ? false : { opacity: 0, y: 22, rotateX: 3, rotateY: -3 }} animate={{ opacity: 1, y: 0, rotateX: 0, rotateY: 0 }} transition={motionConfig.spring} style={{ transformPerspective: 1200 }}>
+        <div className="absolute -inset-5 rounded-[2.8rem] bg-gradient-to-br from-white/60 via-emerald-100/35 to-amber-100/60 blur-2xl" />
+        <div className="relative overflow-hidden rounded-[2rem] border border-emerald-950/10 bg-[linear-gradient(145deg,rgba(255,255,255,0.93),rgba(229,239,229,0.9))] p-4 shadow-[0_28px_80px_rgba(25,65,40,0.13)] sm:p-6">
+          <div className="flex items-center justify-between border-b border-emerald-950/10 pb-5"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-emerald-800/70">{t("Learning workspace", "مساحة التعلّم")}</p><p className="mt-1 text-lg font-semibold text-emerald-950">{t("Today, at your pace", "اليوم، وفق وتيرتك")}</p></div><span className="grid size-10 place-items-center rounded-2xl bg-emerald-950 text-white"><Sparkles className="size-4" /></span></div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-[1.2fr_0.8fr]"><div className="rounded-2xl bg-emerald-950 p-5 text-white"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-200">{t("Continue learning", "تابع التعلّم")}</p><h2 className="mt-6 text-2xl font-semibold tracking-tight">{t("Patterns of energy", "أنماط الطاقة")}</h2><p className="mt-2 text-sm leading-6 text-white/65">{t("A focused lesson with audio, reading, and quick support close by.", "درس مركز مع أدوات الصوت والقراءة والدعم السريع قريباً منك.")}</p><div className="mt-7 flex items-center justify-between"><span className="text-xs text-white/55">{t("12 min", "12 دقيقة")}</span><span className="rounded-full bg-white/12 px-3 py-1 text-xs font-semibold">{t("Resume", "استئناف")}</span></div></div><div className="grid gap-4"><div className="rounded-2xl border border-emerald-950/10 bg-white/80 p-4"><Volume2 className="size-4 text-emerald-700" /><p className="mt-6 text-xl font-semibold text-emerald-950">{t("Listen", "استمع")}</p><p className="mt-1 text-xs leading-5 text-emerald-950/55">{t("Word-synced reading", "قراءة متزامنة مع الكلمات")}</p></div><div className="rounded-2xl border border-emerald-950/10 bg-white/80 p-4"><Keyboard className="size-4 text-emerald-700" /><p className="mt-6 text-xl font-semibold text-emerald-950">⌘</p><p className="mt-1 text-xs leading-5 text-emerald-950/55">{t("Keyboard-ready", "جاهزة للوحة المفاتيح")}</p></div></div></div>
+          <div className="mt-4 grid grid-cols-3 gap-3"><div className="rounded-2xl border border-emerald-950/8 bg-white/65 p-3"><p className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-emerald-950/45">{t("Focus", "تركيز")}</p><p className="mt-2 text-sm font-semibold text-emerald-950">{t("One step", "خطوة واحدة")}</p></div><div className="rounded-2xl border border-emerald-950/8 bg-white/65 p-3"><p className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-emerald-950/45">{t("Language", "اللغة")}</p><p className="mt-2 text-sm font-semibold text-emerald-950">EN / ع</p></div><div className="rounded-2xl border border-emerald-950/8 bg-white/65 p-3"><p className="text-[0.62rem] font-bold uppercase tracking-[0.12em] text-emerald-950/45">{t("Support", "الدعم")}</p><p className="mt-2 text-sm font-semibold text-emerald-950">Hikma AI</p></div></div>
         </div>
-      </header>
-
-      <main id="main-content" tabIndex={-1}>
-        <section className="mx-auto grid max-w-6xl gap-12 px-5 pb-16 pt-12 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:pb-24 lg:pt-20">
-          <motion.div className="text-start" initial={motionConfig.page.initial} animate={motionConfig.page.animate} transition={motionConfig.enterTransition}>
-            <p className="mb-5 text-xs font-bold uppercase tracking-[0.2em] text-[#4a7b5a]">{t("Adaptive learning for real people", "تعلّم تكيّفي لأشخاص حقيقيين")}</p>
-            <h1 className="max-w-2xl text-5xl font-semibold leading-[1.15] tracking-[-0.055em] text-[#122119] sm:text-6xl">{t("The learning space that makes room for you.", "مساحة تعلّم تمنحك متّسعاً لتتعلّم بطريقتك.")}</h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-[#526056]">{t("Hikma pairs accessible learning tools with guided AI support for IGCSE Edexcel and Qatar MoEHE learners.", "تجمع حكمة أدوات تعلّم ميسّرة مع دعم ذكي موجّه لدارسي إيدكسل IGCSE ووزارة التربية والتعليم القطرية.")}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <button type="button" onClick={() => navigate(destination)} className="inline-flex min-h-12 items-center gap-2 rounded-full bg-[#173a25] px-5 text-sm font-semibold text-white hover:bg-[#0d2919] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2c5c3a]">{t("Begin your path", "ابدأ مسارك")} <ArrowUpRight className="size-4 rtl:rotate-180" aria-hidden="true" /></button>
-              <Link href="/signin" className="inline-flex min-h-12 items-center rounded-full border border-[#ccd4c9] px-5 text-sm font-semibold text-[#243129] hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2c5c3a]">{t("Explore with an account", "استكشف بحسابك")}</Link>
-            </div>
-          </motion.div>
-
-          <motion.div className="relative text-start rounded-[2rem] border border-[#dce3d9] bg-[#e9efe8] p-6 sm:p-9" initial={motionConfig.reduceMotion ? false : { opacity: 0, y: 16, rotateX: 2 }} animate={{ opacity: 1, y: 0, rotateX: 0 }} transition={motionConfig.enterTransition} style={{ transformPerspective: 1000 }}>
-            <div className="flex items-center justify-between border-b border-[#cdd8ce] pb-5"><span className="text-sm font-semibold">{t("Today’s learning", "تعلّم اليوم")}</span><span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#477054]">{t("In your rhythm", "وفق إيقاعك")}</span></div>
-            <div className="py-7"><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#60806a]">{t("Next lesson", "الدرس التالي")}</p><h2 className="mt-3 text-2xl font-semibold tracking-tight">{t("Patterns of energy", "أنماط الطاقة")}</h2><p className="mt-2 text-sm leading-6 text-[#607066]">{t("Continue from the idea you paused on, with audio, focus, and text controls ready when you need them.", "تابع من الفكرة التي توقفت عندها، مع الصوت والتركيز وأدوات النص حين تحتاج إليها.")}</p></div>
-            <div className="grid grid-cols-3 gap-3"><div className="rounded-2xl bg-white p-3"><BookOpen className="size-4 text-[#2e6940]" /><p className="mt-5 text-xl font-semibold">12</p><p className="text-xs text-[#68766d]">{t("minutes", "دقيقة")}</p></div><div className="rounded-2xl bg-white p-3"><Brain className="size-4 text-[#2e6940]" /><p className="mt-5 text-xl font-semibold">1</p><p className="text-xs text-[#68766d]">{t("concept", "مفهوم")}</p></div><div className="rounded-2xl bg-[#173a25] p-3 text-white"><Keyboard className="size-4 text-emerald-200" /><p className="mt-5 text-xl font-semibold">⌘</p><p className="text-xs text-white/65">{t("keyboard-ready", "جاهز للوحة المفاتيح")}</p></div></div>
-          </motion.div>
-        </section>
-
-        <section className="border-y border-[#dce3d9] bg-white"><div className="mx-auto grid max-w-6xl gap-px px-5 py-5 sm:grid-cols-3 sm:px-8"><div className="py-4 text-sm text-[#607066]">{t("Designed for focus, not noise.", "مصممة للتركيز لا للتشتيت.")}</div><div className="py-4 text-sm text-[#607066]">{t("Arabic and English learning paths.", "مسارات تعلّم بالعربية والإنجليزية.")}</div><div className="py-4 text-sm text-[#607066]">{t("Tools that adapt without getting in the way.", "أدوات تتكيّف من دون أن تعيقك.")}</div></div></section>
-
-        <section className="mx-auto max-w-6xl px-5 py-16 sm:px-8"><div className="mb-9 flex items-end justify-between gap-5"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-[#4a7b5a]">{t("How Hikma helps", "كيف تساعدك حكمة")}</p><h2 className="mt-3 text-3xl font-semibold tracking-tight">{t("Stay close to the work.", "ابقَ قريباً من التعلّم.")}</h2></div><Link href="/signup" className="hidden text-sm font-semibold text-[#2d6540] sm:block">{t("Create a learner profile →", "أنشئ ملفاً للمتعلّم ←")}</Link></div><div className="grid gap-4 md:grid-cols-3">{features(t).map(({ icon: Icon, title, text }) => <article key={title} className="rounded-3xl border border-[#dce3d9] bg-white p-6 text-start"><Icon className="size-5 text-[#2e6940]" aria-hidden="true"/><h3 className="mt-10 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-[#627066]">{text}</p></article>)}</div></section>
-      </main>
-
-      <footer className="mx-auto flex max-w-6xl flex-col gap-2 border-t border-[#dce3d9] px-5 py-8 text-xs text-[#68766d] sm:flex-row sm:items-center sm:justify-between sm:px-8"><span>Hikma — حكمة</span><span>Accessible learning for IGCSE Edexcel and Qatar MoEHE.</span></footer>
-    </div>
-  );
+      </motion.div>
+    </section>
+    <section className="relative border-y border-emerald-950/10 bg-white/55"><div className="mx-auto grid max-w-7xl gap-px px-5 py-4 sm:grid-cols-3 sm:px-8 lg:px-10">{[t("Designed for focus, not noise.", "مصممة للتركيز لا للتشتيت."), t("Built for Arabic and English learning.", "مصممة للتعلّم بالعربية والإنجليزية."), t("Guidance that stays out of the way.", "توجيه يبقى بعيداً عن طريقك.")].map((item) => <p key={item} className="border-emerald-950/8 px-4 py-3 text-center text-sm font-medium text-emerald-950/65 sm:border-s first:sm:border-s-0">{item}</p>)}</div></section>
+    <section id="approach" className="mx-auto max-w-7xl px-5 py-20 sm:px-8 lg:px-10"><div className="max-w-2xl"><p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-800">{t("The HIKMA approach", "منهجية حكمة")}</p><h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em] text-emerald-950 sm:text-5xl">{t("Less interface friction. More room to understand.", "احتكاك أقل مع الواجهة. مساحة أكبر للفهم.")}</h2></div><div className="mt-10 grid gap-4 md:grid-cols-3">{features(t).map(({ icon: Icon, number, title, text }) => <motion.article key={number} whileHover={motionConfig.reduceMotion ? undefined : { y: -5 }} transition={motionConfig.enterTransition} className="group rounded-[1.75rem] border border-emerald-950/10 bg-white/70 p-6 shadow-[0_12px_30px_rgba(30,70,44,0.05)]"><div className="flex items-center justify-between"><span className="text-xs font-bold tracking-[0.16em] text-emerald-800/55">{number}</span><span className="grid size-10 place-items-center rounded-2xl bg-emerald-950/6 text-emerald-800 transition-colors group-hover:bg-emerald-950 group-hover:text-white"><Icon className="size-4" /></span></div><h3 className="mt-12 text-xl font-semibold tracking-tight text-emerald-950">{title}</h3><p className="mt-3 text-sm leading-6 text-emerald-950/60">{text}</p></motion.article>)}</div></section>
+    <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8 lg:px-10"><div className="overflow-hidden rounded-[2rem] bg-emerald-950 px-6 py-12 text-white sm:px-10 lg:flex lg:items-end lg:justify-between lg:gap-10"><div className="max-w-2xl"><p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">{t("Ready when you are", "جاهزة عندما تكون")}</p><h2 className="mt-4 text-4xl font-semibold tracking-[-0.045em] sm:text-5xl">{t("Build a study space that works with you.", "ابنِ مساحة دراسة تعمل معك.")}</h2></div><Link href={destination} className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-emerald-950 transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:mt-0">{t("Enter HIKMA", "ادخل حكمة")}<ArrowUpRight className="size-4 rtl:rotate-180" /></Link></div></section>
+  </PublicLayout>;
 }
