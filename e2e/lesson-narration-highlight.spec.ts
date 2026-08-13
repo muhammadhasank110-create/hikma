@@ -20,14 +20,13 @@ test.describe("lesson narration highlighting", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       let active: SpeechSynthesisUtterance | null = null;
-      (window as typeof window & { __emitSpeechBoundary?: (charIndex: number) => void }).__emitSpeechBoundary = (charIndex) => {
-        active?.onboundary?.({ name: "word", charIndex } as SpeechSynthesisEvent);
-      };
       Object.defineProperty(window, "speechSynthesis", { configurable: true, value: {
         getVoices: () => [], addEventListener: () => {}, removeEventListener: () => {},
         speak: (utterance: SpeechSynthesisUtterance) => {
           active = utterance;
           setTimeout(() => utterance.onstart?.(new Event("start") as SpeechSynthesisEvent), 0);
+          // Reproduce engines that announce only the first word boundary.
+          setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 0 } as SpeechSynthesisEvent), 25);
         },
         cancel: () => { active?.onend?.(new Event("end") as SpeechSynthesisEvent); active = null; },
       }});
@@ -44,17 +43,14 @@ test.describe("lesson narration highlighting", () => {
 
     await page.getByRole("button", { name: /read aloud/i }).click();
     const spokenWord = page.locator('mark[data-current-spoken-word="true"]');
-    await page.evaluate(() => (window as typeof window & { __emitSpeechBoundary?: (charIndex: number) => void }).__emitSpeechBoundary?.(0));
     await expect(spokenWord).toHaveText("Alpha");
     await expect(spokenWord).toHaveClass(/tts-word-active/);
     await expect(spokenWord).toHaveCount(1);
 
-    await page.evaluate(() => (window as typeof window & { __emitSpeechBoundary?: (charIndex: number) => void }).__emitSpeechBoundary?.(6));
-    await expect(spokenWord).toHaveText("beta");
+    await expect(spokenWord).toHaveText("beta", { timeout: 3_000 });
     await expect(spokenWord).toHaveCount(1);
 
-    await page.evaluate(() => (window as typeof window & { __emitSpeechBoundary?: (charIndex: number) => void }).__emitSpeechBoundary?.(11));
-    await expect(spokenWord).toHaveText("gamma.");
+    await expect(spokenWord).toHaveText("gamma.", { timeout: 3_000 });
     await expect(spokenWord).toHaveCount(1);
 
     await page.getByRole("button", { name: /toggle focus mode/i }).click();

@@ -77,3 +77,8 @@
 - [x] Add a targeted regression test that drives speech boundary events and verifies active-word advance and cleanup on stop.
 - [x] Validate the correction in the browser and document the evidence in AUDIT.md.
 - [x] Save the required checkpoint that publishes the verified exact listening-word correction.
+- [x] Reproduce the reported first-word-only highlight behavior using a browser speech implementation that emits only the initial boundary event.
+- [x] Trace and correct browser TTS timing, refs, DOM mutation, and cleanup paths; verify the streamed-audio progression path independently.
+- [x] Add end-to-end regression coverage that validates automatic multi-word advancement without manually invoking test-only boundary helpers.
+- [x] Run complete playback, type, unit, and browser validation and document the actual results in AUDIT.md.
+- [ ] Save the required checkpoint that publishes the confirmed multi-word browser TTS fix.

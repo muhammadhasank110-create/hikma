@@ -118,6 +118,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   const rafRef = useRef<number | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const onBoundaryRef = useRef(onBoundary);
+  const browserBoundaryTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // AbortController to cancel in-flight ElevenLabs fetch when speak() is called again
   const abortRef = useRef<AbortController | null>(null);
   useEffect(() => { onBoundaryRef.current = onBoundary; }, [onBoundary]);
@@ -129,10 +130,18 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
     }
   }, []);
 
+  const stopBrowserBoundaryFallback = useCallback(() => {
+    if (browserBoundaryTimerRef.current !== null) {
+      clearInterval(browserBoundaryTimerRef.current);
+      browserBoundaryTimerRef.current = null;
+    }
+  }, []);
+
   const stopBrowser = useCallback(() => {
+    stopBrowserBoundaryFallback();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     utteranceRef.current = null;
-  }, []);
+  }, [stopBrowserBoundaryFallback]);
 
   const stopElevenLabs = useCallback(() => {
     stopHighlightLoop();
@@ -166,22 +175,48 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary }: UseT
   const speakWithBrowser = useCallback((text: string) => {
     if (!("speechSynthesis" in window)) return;
     stopBrowser();
+    const { words, offsets } = buildWordOffsets(text);
+    const wordDelay = Math.min(800, Math.max(280, 480 / Math.max(0.5, Math.min(2, rate))));
+    const silenceThreshold = Math.max(700, Math.round(wordDelay * 1.7));
+    let nextWordIndex = 0;
+    let lastBoundaryAt = 0;
+    const reportWord = (wordIndex: number) => {
+      if (!offsets.length || wordIndex < 0 || wordIndex >= offsets.length) return;
+      nextWordIndex = Math.max(nextWordIndex, wordIndex + 1);
+      lastBoundaryAt = Date.now();
+      onBoundaryRef.current?.(offsets[wordIndex], cleanedTextRef.current);
+    };
     const utt = new SpeechSynthesisUtterance(text);
     utt.rate = Math.max(0.5, Math.min(2, rate));
     utt.lang = lang;
     const voice = pickVoice(lang, voiceHint);
     if (voice) utt.voice = voice;
-    utt.onstart = () => setIsSpeaking(true);
-    utt.onend = () => setIsSpeaking(false);
-    utt.onerror = () => setIsSpeaking(false);
+    utt.onstart = () => {
+      setIsSpeaking(true);
+      // Some browser engines never issue the first boundary. Start at the
+      // first spoken word and advance only if native events fall silent.
+      reportWord(0);
+      stopBrowserBoundaryFallback();
+      browserBoundaryTimerRef.current = setInterval(() => {
+        if (!words.length || nextWordIndex >= offsets.length) {
+          stopBrowserBoundaryFallback();
+          return;
+        }
+        if (Date.now() - lastBoundaryAt >= silenceThreshold) reportWord(nextWordIndex);
+      }, wordDelay);
+    };
+    utt.onend = () => { stopBrowserBoundaryFallback(); setIsSpeaking(false); };
+    utt.onerror = () => { stopBrowserBoundaryFallback(); setIsSpeaking(false); };
     utt.onboundary = (event) => {
       if (event.name === "word" && onBoundaryRef.current) {
-        onBoundaryRef.current(event.charIndex, cleanedTextRef.current);
+        let wordIndex = 0;
+        while (wordIndex + 1 < offsets.length && offsets[wordIndex + 1] <= event.charIndex) wordIndex += 1;
+        reportWord(wordIndex);
       }
     };
     utteranceRef.current = utt;
     window.speechSynthesis.speak(utt);
-  }, [rate, lang, voiceHint, stopBrowser]);
+  }, [rate, lang, voiceHint, stopBrowser, stopBrowserBoundaryFallback]);
 
   const speakWithElevenLabs = useCallback(async (text: string) => {
     stopElevenLabs();
