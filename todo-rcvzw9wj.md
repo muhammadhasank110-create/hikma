@@ -102,3 +102,10 @@
 - [x] Add or update automated coverage and record real evidence in AUDIT.md.
 - [x] Capture authenticated cream/calm/high-contrast dashboard browser evidence to confirm premium surface inheritance under each learner profile.
 - [x] Save the required checkpoint that publishes the verified reference-inspired redesign.
+- [x] Analyze the attached recording, both provided design references, and the live application’s performance/audio telemetry before changing behavior.
+- [x] Reproduce and repair the first-question audio failure across browser speech and streamed provider fallback paths, including initial user-gesture and voice-loading conditions.
+- [x] Identify and reduce avoidable initial-load, animation, and narration latency without disabling required accessibility behavior.
+- [x] Implement a more lively but accessible interaction system inspired by the provided reference patterns, with clear status feedback and reduced-motion/static alternatives.
+- [x] Add focused browser coverage for first-question audio, loading readiness, interactive feedback, and repeated playback sessions.
+- [x] Run performance, type, unit, browser, responsive, and console validation and document real evidence in AUDIT.md.
+- [ ] Save the required checkpoint that publishes the verified performance and interaction update.

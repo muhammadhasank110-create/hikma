@@ -21,11 +21,14 @@ test.describe("lesson narration highlighting", () => {
     await page.addInitScript(() => {
       let active: SpeechSynthesisUtterance | null = null;
       Object.defineProperty(window, "speechSynthesis", { configurable: true, value: {
-        getVoices: () => [], addEventListener: () => {}, removeEventListener: () => {},
+        getVoices: () => [], addEventListener: () => {}, removeEventListener: () => {}, resume: () => {},
         speak: (utterance: SpeechSynthesisUtterance) => {
           active = utterance;
           setTimeout(() => utterance.onstart?.(new Event("start") as SpeechSynthesisEvent), 0);
-          setTimeout(() => utterance.onend?.(new Event("end") as SpeechSynthesisEvent), 900);
+          setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 0 } as SpeechSynthesisEvent), 90);
+          setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 6 } as SpeechSynthesisEvent), 280);
+          setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 11 } as SpeechSynthesisEvent), 470);
+          setTimeout(() => utterance.onend?.(new Event("end") as SpeechSynthesisEvent), 2_500);
         },
         cancel: () => { active?.onend?.(new Event("end") as SpeechSynthesisEvent); active = null; },
       }});
@@ -36,13 +39,13 @@ test.describe("lesson narration highlighting", () => {
     await page.route("**/api/tts/config", route => route.fulfill({ contentType: "application/json", body: JSON.stringify({ hasElevenLabs: false }) }));
   });
 
-  test("highlights only the current narrated word in standard and Focus modes, then clears it on stop", async ({ page }) => {
+  test("starts natural sentence narration on the first Listen request, advances exact native boundaries, and clears on stop", async ({ page }) => {
     await page.goto("/lesson/901");
     await expect(page.getByRole("heading", { name: "Narration test" })).toBeVisible();
 
     await page.getByRole("button", { name: /read aloud/i }).click();
     const spokenWord = page.locator('mark[data-current-spoken-word="true"]');
-    await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "browser-segmented");
+    await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "browser-boundary");
     await expect(spokenWord).toHaveText("Alpha");
     await expect(spokenWord).toHaveClass(/tts-word-active/);
     await expect(spokenWord).toHaveCount(1);
@@ -59,5 +62,23 @@ test.describe("lesson narration highlighting", () => {
     await page.getByRole("button", { name: /stop narration/i }).click();
     await expect(spokenWord).toHaveCount(0);
     await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "idle");
+  });
+
+  test("is ready on the first Listen request and can start a second natural narration session after stop", async ({ page }) => {
+    await page.goto("/lesson/901");
+    const listen = page.getByRole("button", { name: /read aloud/i });
+    const stop = page.getByRole("button", { name: /stop narration/i });
+    const spokenWord = page.locator('mark[data-current-spoken-word="true"]');
+
+    await listen.click();
+    await expect(stop).toBeVisible();
+    await expect(spokenWord).toHaveText("Alpha");
+    await stop.click();
+    await expect(spokenWord).toHaveCount(0);
+
+    await listen.click();
+    await expect(stop).toBeVisible();
+    await expect(spokenWord).toHaveText("Alpha");
+    await expect(spokenWord).toHaveText("beta", { timeout: 3_000 });
   });
 });

@@ -24,19 +24,19 @@ export function AmbientBackdrop({ variant = "forest" }: AmbientBackdropProps) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_12%,rgba(255,255,255,0.9),transparent_30%),linear-gradient(145deg,rgba(255,255,255,0.7),rgba(246,248,243,0.94)_55%,rgba(235,242,234,0.88))]" />
       <div className="ambient-grid absolute inset-0 opacity-50" />
       <motion.div
-        className={`absolute -right-32 top-16 size-[32rem] rounded-full blur-3xl ${first}`}
+        className={`absolute -right-20 top-14 size-[22rem] rounded-full blur-2xl will-change-transform ${first}`}
         initial={false}
         animate={animate ? { x: [0, -34, 12, 0], y: [0, 18, -20, 0], scale: [1, 1.06, 0.98, 1] } : { x: 0, y: 0, scale: 1 }}
         transition={{ duration: 20, repeat: animate ? Infinity : 0, ease: "easeInOut" }}
       />
       <motion.div
-        className={`absolute -left-28 top-[30rem] size-[26rem] rounded-full blur-3xl ${second}`}
+        className={`absolute -left-20 top-[30rem] hidden size-[20rem] rounded-full blur-2xl will-change-transform md:block ${second}`}
         initial={false}
         animate={animate ? { x: [0, 28, -14, 0], y: [0, -20, 14, 0], scale: [1, 0.96, 1.05, 1] } : { x: 0, y: 0, scale: 1 }}
         transition={{ duration: 24, repeat: animate ? Infinity : 0, ease: "easeInOut" }}
       />
       <motion.div
-        className={`absolute bottom-[-14rem] right-[22%] size-[24rem] rounded-full blur-3xl ${third}`}
+        className={`absolute bottom-[-12rem] right-[22%] hidden size-[18rem] rounded-full blur-2xl will-change-transform lg:block ${third}`}
         initial={false}
         animate={animate ? { x: [0, 18, -8, 0], y: [0, -14, 8, 0] } : { x: 0, y: 0 }}
         transition={{ duration: 18, repeat: animate ? Infinity : 0, ease: "easeInOut" }}

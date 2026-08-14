@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
 import {
-  Volume2, VolumeX, ChevronRight, ChevronLeft, Bot,
+  Volume2, Square, ChevronRight, ChevronLeft, Bot,
   AlignLeft, Maximize2, Minimize2, ParkingSquare, Timer, Map, X,
   AlertTriangle, UserCheck, BookOpen, HelpCircle, Send, MoreVertical
 } from "lucide-react";
@@ -24,6 +24,7 @@ import ConceptMapSVG from "@/components/lesson/ConceptMapSVG";
 import WordDefinitionPopup from "@/components/lesson/WordDefinitionPopup";
 import BodyDoublePanel from "@/components/lesson/BodyDoublePanel";
 import { getNarrationHighlightState } from "@/lib/narrationHighlight";
+import { VoiceActivityIndicator } from "@/components/VoiceActivityIndicator";
 
 export default function LessonPage() {
   const [, params] = useRoute("/lesson/:lessonId");
@@ -261,9 +262,17 @@ export default function LessonPage() {
           )}
           {/* Primary: Read Aloud */}
           <Button variant={s.isNarrating ? "default" : "outline"} size="sm" onClick={() => { if (s.isNarrating) s.stopNarration(); else s.readAloud(); }} aria-label={s.isNarrating ? t("Stop narration", "إيقاف السرد") : t("Read aloud", "قراءة بصوت")} aria-pressed={s.isNarrating}>
-            {s.isNarrating ? <VolumeX className="w-3.5 h-3.5 mr-1.5" /> : <Volume2 className="w-3.5 h-3.5 mr-1.5" />}
+            {s.isNarrating ? <Square className="w-3.5 h-3.5 mr-1.5 fill-current" /> : <Volume2 className="w-3.5 h-3.5 mr-1.5" />}
             {s.isNarrating ? t("Stop", "إيقاف") : t("Listen", "استمع")}
           </Button>
+          {s.isNarrating && (
+            <div className="flex items-center gap-2">
+              <VoiceActivityIndicator state="speaking" locale={locale} />
+              <span className="text-xs text-muted-foreground" role="status" aria-live="polite">
+                {s.tts.syncSource === "idle" ? t("Preparing narration…", "جارٍ تحضير السرد…") : t("Word tracking active", "تتبّع الكلمات نشط")}
+              </span>
+            </div>
+          )}
           {/* Primary: Focus mode toggle */}
           <Button variant={s.isFocused ? "default" : "outline"} size="sm" onClick={() => setLessonFocusMode(!s.isFocused)} aria-label={t("Toggle focus mode", "وضع التركيز")} aria-pressed={s.isFocused}>
             {s.isFocused ? <Minimize2 className="w-3.5 h-3.5 mr-1.5" /> : <Maximize2 className="w-3.5 h-3.5 mr-1.5" />}

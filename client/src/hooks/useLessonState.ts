@@ -48,7 +48,10 @@ export function useLessonState(lessonId: number) {
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     voiceHint: profile.voice,
     onBoundary: handleBoundary,
-    syncWords: true,
+    // One natural utterance keeps pacing and prosody intact. Highlighting is
+    // driven by browser word-boundary events, or provider timestamps when
+    // streamed audio is available — never by artificial per-word speech.
+    syncWords: false,
   });
   const isNarrating = tts.isSpeaking;
   const speakingTextRef = useRef<string>("");
@@ -170,7 +173,9 @@ export function useLessonState(lessonId: number) {
     highlightOffsetsRef.current = offsets;
     setHighlightedWords(words);
     setHighlightOffsets(offsets);
-    setHighlightIndex(0);
+    // Do not claim that the first word is audible until a real browser
+    // boundary or aligned audio position reports it.
+    setHighlightIndex(-1);
   }, []);
   // Clear the highlight when speech finishes on its own.
   useEffect(() => {

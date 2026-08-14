@@ -56,7 +56,7 @@ interface UseTTSOptions {
   lang?: string;
   voiceHint?: string;
   onBoundary?: (charIndex: number, text: string) => void;
-  /** Use sequential word utterances when browser speech does not expose reliable boundaries. */
+  /** Reserved for specialized callers; lessons use natural sentence narration with native boundaries. */
   syncWords?: boolean;
 }
 
@@ -239,10 +239,11 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary, syncWo
 
     const utterance = createUtterance(text);
     setSyncSource("browser-boundary");
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      reportWord(0);
-    };
+    // Set the active state before queueing speech. A lesson can render once
+    // between speak() and the browser's onstart event; without this, the
+    // cleanup effect erases its prepared boundary map on the first request.
+    setIsSpeaking(true);
+    utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => { setIsSpeaking(false); setSyncSource("idle"); };
     utterance.onerror = () => { setIsSpeaking(false); setSyncSource("idle"); };
     utterance.onboundary = (event) => {
@@ -253,7 +254,15 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary, syncWo
       }
     };
     utteranceRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
+    // Chromium can drop an utterance that is queued in the same task as a
+    // preceding cancel(). Deferring one macrotask keeps the first Listen
+    // request reliable while the run id makes a stopped request a no-op.
+    window.setTimeout(() => {
+      if (browserRunRef.current !== runId || utteranceRef.current !== utterance) return;
+      const synthWithOptionalResume = window.speechSynthesis as SpeechSynthesis & { resume?: () => void };
+      if (typeof synthWithOptionalResume.resume === "function") synthWithOptionalResume.resume();
+      window.speechSynthesis.speak(utterance);
+    }, 0);
   }, [rate, lang, voiceHint, stopBrowser, syncWords]);
 
   const speakWithElevenLabs = useCallback(async (text: string) => {
