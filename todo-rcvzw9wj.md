@@ -108,4 +108,4 @@
 - [x] Implement a more lively but accessible interaction system inspired by the provided reference patterns, with clear status feedback and reduced-motion/static alternatives.
 - [x] Add focused browser coverage for first-question audio, loading readiness, interactive feedback, and repeated playback sessions.
 - [x] Run performance, type, unit, browser, responsive, and console validation and document real evidence in AUDIT.md.
-- [ ] Save the required checkpoint that publishes the verified performance and interaction update.
+- [x] Save the required checkpoint that publishes the verified performance and interaction update.
