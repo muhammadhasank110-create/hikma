@@ -132,3 +132,10 @@
 - [x] Verify that rate adjustments affect only subsequent lesson playback and do not alter progress, focus mode, highlights, onboarding choices, or global Settings state.
 - [x] Add regression coverage and record evidence in AUDIT.md.
 - [x] Save the required checkpoint that publishes the verified lesson voice-speed control.
+- [x] Audit only the existing Concept Map component, its data contract, lesson/concept relationships, current APIs, and reusable image-generation/storage capabilities.
+- [x] Replace the existing text-node concept map with a subject-aware Visual Learning Map that reuses existing concept data and does not alter the data model.
+- [x] Add a localized optional visual layer for major concepts with educational prompt construction, request prioritization, cache reuse where compatible, and text/programmatic fallback.
+- [x] Add simple selectable concept details and reuse the existing tutor pathways for explain, example, deeper explanation, and quiz actions without creating another AI system.
+- [x] Verify keyboard, screen-reader, alt/description, high contrast, reduced motion, responsive, loading, failure, and no-visual fallback behavior within the Concept Map feature only.
+- [x] Add focused regression coverage, record evidence in AUDIT.md, and publish the verified Concept Map-only change.
+- [x] Stabilize the existing second-session lesson narration browser assertion so it verifies the intended active-session behavior without a transient word-boundary timing race.

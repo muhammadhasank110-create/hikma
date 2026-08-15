@@ -340,7 +340,15 @@ export default function LessonPage() {
                 <p className="text-sm font-semibold">{t("Concept Map", "خريطة المفاهيم")}</p>
                 <Button variant="ghost" size="icon" onClick={() => s.setShowConceptMap(false)} aria-label={t("Close map", "إغلاق الخريطة")}><X className="w-4 h-4" /></Button>
               </div>
-              <ConceptMapSVG lessonTitle={s.lessonTitle} sections={s.sections} locale={locale} defaultList={profile.fontFamily === "opendyslexic"} />
+              <ConceptMapSVG
+                lessonTitle={s.lessonTitle}
+                sections={s.sections}
+                locale={locale}
+                defaultList={profile.fontFamily === "opendyslexic"}
+                conceptGraph={s.lesson?.conceptGraph}
+                subjectArea={locale === "ar" ? s.lesson?.subjectAreaAr : s.lesson?.subjectArea}
+                onAskTutor={() => setShowInlineTutor(true)}
+              />
             </CardContent>
           </Card>
         )}

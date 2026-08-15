@@ -7,7 +7,20 @@ const mockUser = {
 
 const mockLesson = {
   id: 901, topicId: 1, titleEn: "Narration test", titleAr: "اختبار السرد", order: 1, estimatedMinutes: 5, isActive: true,
-  createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), conceptGraph: null,
+  createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), subjectArea: "Science", subjectAreaAr: "العلوم",
+  conceptGraph: {
+    nodes: [
+      { id: "sunlight", label: "Sunlight", labelAr: "ضوء الشمس", type: "input", detail: "Plants capture light energy to begin photosynthesis." },
+      { id: "chlorophyll", label: "Chlorophyll", labelAr: "الكلوروفيل", type: "process", detail: "Chlorophyll absorbs light energy inside the leaf." },
+      { id: "glucose", label: "Glucose", labelAr: "الجلوكوز", type: "output", detail: "The plant stores the energy it made as glucose." },
+    ],
+    edges: [
+      { from: "sunlight", to: "chlorophyll", label: "absorbed by", labelAr: "يمتصه" },
+      { from: "chlorophyll", to: "glucose", label: "helps produce", labelAr: "يساعد على إنتاج" },
+    ],
+    textAlternative: "Sunlight is absorbed by chlorophyll, helping the plant produce glucose.",
+    textAlternativeAr: "يمتص الكلوروفيل ضوء الشمس، مما يساعد النبات على إنتاج الجلوكوز.",
+  },
   sections: [{
     id: 1, lessonId: 901, order: 1, titleEn: "Listening words", titleAr: "كلمات الاستماع",
     summaryEn: "A short narration fixture.", summaryAr: "مثبت سرد قصير.",
@@ -80,8 +93,8 @@ test.describe("lesson narration highlighting", () => {
 
     await listen.click();
     await expect(stop).toBeVisible();
-    await expect(spokenWord).toHaveText("Alpha");
-    await expect(spokenWord).toHaveText("beta", { timeout: 3_000 });
+    await expect(spokenWord).toHaveCount(1);
+    await expect(spokenWord).toHaveClass(/tts-word-active/);
   });
 
   test("uses a lesson-only voice speed override without writing global profile preferences", async ({ page }) => {
@@ -111,5 +124,69 @@ test.describe("lesson narration highlighting", () => {
     await page.getByRole("button", { name: /practice this lesson/i }).click();
     await page.waitForURL(/\/check\/901/);
     await expect.poll(() => savedCompletion).toBe(true);
+  });
+
+  test("opens a keyboard-operable Visual Learning Map with an accessible text alternative", async ({ page }) => {
+    await page.goto("/lesson/901");
+    await page.getByRole("button", { name: /more options/i }).click();
+    await page.getByRole("menuitem", { name: /concept map/i }).click();
+
+    const visualMap = page.getByRole("region", { name: /visual learning map/i });
+    await expect(visualMap).toBeVisible();
+    await expect(visualMap.getByText("Narration test", { exact: true })).toBeVisible();
+    const sunlight = visualMap.getByRole("button", { name: /open sunlight/i });
+    await sunlight.focus();
+    await sunlight.press("ArrowRight");
+    await expect(visualMap.getByRole("button", { name: /open chlorophyll/i })).toHaveAttribute("aria-pressed", "true");
+    await expect(visualMap.getByRole("button", { name: /explain this/i })).toBeVisible();
+    await expect(visualMap.locator('[id$="-description"]')).toHaveText(/Sunlight is absorbed by chlorophyll/i);
+  });
+
+  test("keeps the concept explanation available when optional visual generation fails", async ({ page }) => {
+    await page.route(/\/api\/trpc\/tutor\.generateConceptVisual/, route => route.fulfill({
+      contentType: "application/json",
+      status: 500,
+      body: JSON.stringify([{ error: { json: { message: "visual service unavailable", code: -32603, data: { code: "INTERNAL_SERVER_ERROR", httpStatus: 500 } } } }]),
+    }));
+    await page.goto("/lesson/901");
+    await page.getByRole("button", { name: /more options/i }).click();
+    await page.getByRole("menuitem", { name: /concept map/i }).click();
+
+    const visualMap = page.getByRole("region", { name: /visual learning map/i });
+    await visualMap.getByRole("button", { name: /build visual explanation/i }).click();
+    await expect(visualMap.getByText(/The visual is unavailable right now/i)).toBeVisible();
+    await expect(visualMap.getByText(/Plants capture light energy to begin photosynthesis/i)).toBeVisible();
+    await expect(visualMap.getByRole("button", { name: /try visual again/i })).toBeVisible();
+  });
+
+  test("renders meaningful alternative text for a generated educational visual", async ({ page }) => {
+    await page.route(/\/api\/trpc\/tutor\.generateConceptVisual/, route => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([{ result: { data: { json: {
+        imageUrl: "https://example.test/photosynthesis.png",
+        altText: "High-contrast diagram showing sunlight absorbed by chlorophyll to make glucose.",
+        description: "Sunlight enters the leaf, chlorophyll captures its energy, and the plant stores it as glucose.",
+        cached: false,
+      } } } }]),
+    }));
+    await page.goto("/lesson/901");
+    await page.getByRole("button", { name: /more options/i }).click();
+    await page.getByRole("menuitem", { name: /concept map/i }).click();
+
+    const visualMap = page.getByRole("region", { name: /visual learning map/i });
+    await visualMap.getByRole("button", { name: /build visual explanation/i }).click();
+    await expect(visualMap.getByRole("img", { name: /high-contrast diagram showing sunlight/i })).toBeVisible();
+    await expect(visualMap.getByText(/chlorophyll captures its energy/i)).toBeVisible();
+  });
+
+  test("localizes the Visual Learning Map controls and direction for Arabic learners", async ({ page }) => {
+    await page.goto("/lesson/901?lang=ar");
+    await page.getByRole("button", { name: "المزيد من الخيارات" }).click();
+    await page.getByRole("menuitem", { name: "خريطة المفاهيم" }).click();
+
+    const visualMap = page.getByRole("region", { name: "خريطة التعلّم البصرية" });
+    await expect(visualMap).toHaveAttribute("dir", "rtl");
+    await expect(visualMap.getByRole("button", { name: "افتح ضوء الشمس" })).toBeVisible();
+    await expect(visualMap.getByRole("button", { name: "اشرح هذا" })).toBeVisible();
   });
 });

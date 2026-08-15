@@ -39,7 +39,28 @@ export const curriculumRouter = router({
       if (!lesson) return null;
       const lessonSections = await db.select().from(sections)
         .where(eq(sections.lessonId, input.lessonId));
-      return { ...lesson, sections: lessonSections };
+      const [topic] = await db.select({ subjectId: topics.subjectId, conceptId: topics.conceptId })
+        .from(topics)
+        .where(eq(topics.id, lesson.topicId))
+        .limit(1);
+      const [subject] = topic
+        ? await db.select({ titleEn: subjects.titleEn, titleAr: subjects.titleAr })
+          .from(subjects)
+          .where(eq(subjects.id, topic.subjectId))
+          .limit(1)
+        : [];
+      const [concept] = topic?.conceptId
+        ? await db.select({ subjectArea: concepts.subjectArea })
+          .from(concepts)
+          .where(eq(concepts.id, topic.conceptId))
+          .limit(1)
+        : [];
+      return {
+        ...lesson,
+        sections: lessonSections,
+        subjectArea: subject?.titleEn ?? concept?.subjectArea ?? "",
+        subjectAreaAr: subject?.titleAr ?? concept?.subjectArea ?? "",
+      };
     }),
 
   specPoints: publicProcedure

@@ -2,8 +2,54 @@ import { z } from "zod";
 import { mastery, progress, tutorConversations } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
+import { generateImage } from "../_core/imageGeneration";
 import { protectedProcedure, router } from "../_core/trpc";
 import { eq, and } from "drizzle-orm";
+
+type GeneratedConceptVisual = {
+  imageUrl: string;
+  altText: string;
+  description: string;
+};
+
+const conceptVisualCache = new Map<string, GeneratedConceptVisual>();
+const MAX_CONCEPT_VISUAL_CACHE_ENTRIES = 48;
+
+function cacheConceptVisual(key: string, visual: GeneratedConceptVisual) {
+  if (conceptVisualCache.size >= MAX_CONCEPT_VISUAL_CACHE_ENTRIES) {
+    const oldestKey = conceptVisualCache.keys().next().value;
+    if (oldestKey) conceptVisualCache.delete(oldestKey);
+  }
+  conceptVisualCache.set(key, visual);
+}
+
+function buildConceptVisualPrompt(input: {
+  conceptLabel: string;
+  conceptDetail: string;
+  subjectArea: string;
+  lessonTitle: string;
+  studentLevel: number;
+  visualType: "network" | "process" | "timeline" | "comparison" | "hierarchy" | "geography" | "literature";
+}) {
+  const visualDirection: Record<typeof input.visualType, string> = {
+    network: "a concept-relationship illustration with one clear focal idea and a small number of connected elements",
+    process: "a step-by-step process diagram that makes inputs, transformations, and outcomes visually distinct",
+    timeline: "a chronological timeline with a clear sequence and cause-and-effect relationships",
+    comparison: "a balanced comparison diagram that makes similarities and differences easy to distinguish",
+    hierarchy: "a simple hierarchy diagram showing category-to-subcategory relationships",
+    geography: "a geographic process or location-context illustration using landforms and spatial relationships",
+    literature: "a character, theme, or story-structure visual metaphor with clear relationships",
+  };
+
+  return [
+    `Create a clean educational ${visualDirection[input.visualType]} for a Year ${input.studentLevel} student.`,
+    `Subject: ${input.subjectArea || "general studies"}. Lesson: ${input.lessonTitle}. Concept: ${input.conceptLabel}.`,
+    `Explain this lesson evidence through the visual: ${input.conceptDetail || input.conceptLabel}.`,
+    "Make important relationships visually obvious using clear shapes, generous spacing, and a high-contrast educational illustration style.",
+    "Keep the composition calm and uncluttered. Do not use photorealism unless a real-world geographic scene is essential.",
+    "Do not include readable words, labels, numbers, logos, decorative borders, or text inside the image; the Hikma interface provides the accessible textual explanation separately.",
+  ].join(" ");
+}
 
 const TUTOR_SYSTEM_PROMPT = `You are Hikma AI (حكمة AI) — an adaptive Socratic learning guide.
 
@@ -184,6 +230,48 @@ Actual learner progress (use gently; never invent gaps or claim a score):
         ],
       });
       return { description: response.choices[0]?.message?.content ?? "" };
+    }),
+
+  generateConceptVisual: protectedProcedure
+    .input(z.object({
+      conceptLabel: z.string().trim().min(1).max(110),
+      conceptDetail: z.string().trim().max(700).optional().default(""),
+      subjectArea: z.string().trim().max(100).optional().default(""),
+      lessonTitle: z.string().trim().min(1).max(140),
+      locale: z.enum(["ar", "en"]),
+      studentLevel: z.number().int().min(1).max(13).default(9),
+      visualType: z.enum(["network", "process", "timeline", "comparison", "hierarchy", "geography", "literature"]),
+    }))
+    .mutation(async ({ input }) => {
+      const cacheKey = [
+        input.locale,
+        input.subjectArea.toLocaleLowerCase(),
+        input.lessonTitle.toLocaleLowerCase(),
+        input.conceptLabel.toLocaleLowerCase(),
+        input.visualType,
+      ].join("|");
+      const cached = conceptVisualCache.get(cacheKey);
+      if (cached) return { ...cached, cached: true };
+
+      const prompt = buildConceptVisualPrompt(input);
+      const generated = await generateImage({ prompt });
+      if (!generated.url) {
+        throw new Error("The educational visual could not be generated.");
+      }
+
+      const visual: GeneratedConceptVisual = input.locale === "ar"
+        ? {
+          imageUrl: generated.url,
+          altText: `رسم تعليمي عالي التباين يوضح مفهوم ${input.conceptLabel} وعلاقته بعناصر الدرس الأساسية.`,
+          description: input.conceptDetail || `تمثيل بصري تعليمي لمفهوم ${input.conceptLabel} ضمن درس ${input.lessonTitle}.`,
+        }
+        : {
+          imageUrl: generated.url,
+          altText: `High-contrast educational illustration of ${input.conceptLabel} and its relationship to the lesson's key elements.`,
+          description: input.conceptDetail || `Educational visual representation of ${input.conceptLabel} within ${input.lessonTitle}.`,
+        };
+      cacheConceptVisual(cacheKey, visual);
+      return { ...visual, cached: false };
     }),
 
   generateConceptMap: protectedProcedure
