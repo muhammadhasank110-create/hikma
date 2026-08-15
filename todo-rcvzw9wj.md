@@ -131,4 +131,4 @@
 - [x] Add an accessible lesson toolbar speed knob that adjusts narration from 0.5× to 2.0× without changing profile preferences or lesson data.
 - [x] Verify that rate adjustments affect only subsequent lesson playback and do not alter progress, focus mode, highlights, onboarding choices, or global Settings state.
 - [x] Add regression coverage and record evidence in AUDIT.md.
-- [ ] Save the required checkpoint that publishes the verified lesson voice-speed control.
+- [x] Save the required checkpoint that publishes the verified lesson voice-speed control.
