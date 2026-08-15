@@ -377,13 +377,14 @@ function CommandPalette({ open, onOpenChange, visibleItems }: { open: boolean; o
   const [, navigate] = useLocation();
   const motionConfig = useHikmaMotion();
 
-  const commands = [
+  const commandCandidates = [
     ...visibleItems.map(item => ({ label: locale === "ar" ? item.labelAr : item.labelEn, href: item.href, icon: item.icon })),
     { label: locale === "ar" ? "الإعدادات" : "Settings", href: "/settings", icon: Settings },
     { label: locale === "ar" ? "الاختصارات" : "Keyboard Shortcuts", href: "/shortcuts", icon: Keyboard },
-    { label: locale === "ar" ? "المنهج الموسّع" : "ECC", href: "/ecc", icon: Layers },
-    { label: locale === "ar" ? "مهارات الامتحان" : "Exam Skills", href: "/exam-skills", icon: FileText },
   ];
+  // Navigation items are role-filtered at the source. Keep the command list
+  // defensively unique so an item cannot be mounted twice if menus evolve.
+  const commands = Array.from(new Map(commandCandidates.map(command => [command.href, command])).values());
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>

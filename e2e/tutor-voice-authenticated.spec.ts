@@ -35,10 +35,58 @@ test.describe("authenticated tutor narration", () => {
 
   test("keeps learner dashboard surface tokens profile-aware for cream, calm, and high contrast", async ({ page }) => {
     await page.goto("/dashboard");
-    await expect(page.getByRole("heading", { name: "Playwright" })).toBeVisible();
+    await expect(page.locator("#main-content")).toBeVisible();
     for (const [theme, expectedCard] of [["cream", "255 253 248"], ["calm", "248 250 248"], ["high_contrast", "0 0 0"]] as const) {
       await page.evaluate(({ nextTheme }) => { document.documentElement.dataset.theme = nextTheme; }, { nextTheme: theme });
       await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--card").trim())).toBe(expectedCard);
     }
+  });
+
+  test("renders every command route once without duplicate-key console errors", async ({ page }, testInfo) => {
+    const duplicateKeyErrors: string[] = [];
+    page.on("console", message => {
+      if (message.type() === "error" && /same key|duplicate.*key/i.test(message.text())) {
+        duplicateKeyErrors.push(message.text());
+      }
+    });
+
+    await page.goto("/dashboard");
+    if (testInfo.project.name === "mobile") {
+      await page.getByRole("button", { name: "More" }).click();
+      await page.getByRole("button", { name: "Search" }).click();
+    } else {
+      await page.getByRole("button", { name: /open command palette/i }).click();
+    }
+    const palette = page.getByRole("dialog");
+    await expect(palette.getByPlaceholder(/search anything/i)).toBeVisible();
+    await expect(palette.getByText("ECC", { exact: true })).toHaveCount(1);
+    await expect(palette.getByText("Exam Skills", { exact: true })).toHaveCount(1);
+    await expect.poll(() => duplicateKeyErrors).toEqual([]);
+  });
+
+  test("renders the reported ECC area route without duplicate navigation keys", async ({ page }) => {
+    const duplicateKeyErrors: string[] = [];
+    page.on("console", message => {
+      if (message.type() === "error" && /same key|duplicate.*key/i.test(message.text())) {
+        duplicateKeyErrors.push(message.text());
+      }
+    });
+    await page.route(/\/api\/trpc\/ecc\.areas/, route => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([{ result: { data: { json: [{ id: 1, nameEn: "Independent living", nameAr: "الاستقلالية", descriptionEn: "Daily life skills", descriptionAr: "مهارات الحياة اليومية" }] } } }]),
+    }));
+    await page.route(/\/api\/trpc\/ecc\.units/, route => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([{ result: { data: { json: [{ id: 10, areaId: 1, titleEn: "Plan a journey", titleAr: "خطط لرحلة", descriptionEn: "", descriptionAr: "", lessonId: null, requiresInPersonPractice: false }] } } }]),
+    }));
+    await page.route(/\/api\/trpc\/ecc\.myProgress/, route => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([{ result: { data: { json: [] } } }]),
+    }));
+
+    await page.goto("/ecc/1");
+    await expect(page.getByRole("heading", { name: "Independent living" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Plan a journey" })).toBeVisible();
+    await expect.poll(() => duplicateKeyErrors).toEqual([]);
   });
 });

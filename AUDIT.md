@@ -218,3 +218,13 @@ The attached recording identified that the previous lesson-only word-segmented b
 
 [3] [Provided Figma site](https://tawny-rally-44666612.figma.site/)  
 [4] [Provided Figma accessibility-review board](https://www.figma.com/design/il0cCyKYozMTjq9CF1Pz7l/Accessibility-Review-Template--Community-?node-id=0-1&p=f&t=oaDXHP4SfEHCWd9E-)
+
+## ECC navigation key correction (2026-08-15)
+
+The reported React warnings originated in the shared command palette, which included role-filtered `visibleItems` and then manually added the same `/ecc` and `/exam-skills` routes again. When the command dialog mounted on `/ecc/1`, the two duplicate `href` values became duplicate React keys. The command list now uses the role-filtered source items plus Settings and Shortcuts only, then defensively deduplicates by `href`. The investigation also found two `main-content` IDs, one in the shared shell and one in Dashboard; Dashboard is now an ordinary container so the shell remains the sole skip-link target.
+
+| ID | Category | Severity | Profiles/locales affected | Location (file:line) | Symptom | Root cause | Fix | Verified how | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| NAV-04 | React reconciliation | P2 | ECC and Exam Skills command entries; desktop and mobile | `client/src/components/AppShell.tsx` | React reported duplicate keys `/ecc` and `/exam-skills` while the command palette mounted. | The route list duplicated items already supplied by the visible navigation model. | Removed hard-coded duplicate routes and deduplicated command candidates by `href` before rendering. | Authenticated desktop and mobile browser fixture opens the palette, confirms one ECC and one Exam Skills entry, and captures no duplicate-key console error. | Done |
+| A11Y-15 | Landmark identity | P2 | Dashboard keyboard and screen-reader users | `client/src/components/AppShell.tsx`, `client/src/pages/Dashboard.tsx` | The regression fixture surfaced two elements with `id="main-content"`. | Dashboard repeated the identifier owned by the shared application shell. | Converted the Dashboard root to a regular container, leaving one shared main skip target. | Authenticated browser fixture passed across desktop and mobile. | Done |
+| ECC-01 | Reported route coverage | P2 | `/ecc/1`; desktop and mobile | `e2e/tutor-voice-authenticated.spec.ts` | The exact reported route did not have a direct rendering regression check. | Existing fixtures covered shared navigation but not the ECC-area queries. | Added credential-free fixtures for `ecc.areas`, `ecc.units`, and `ecc.myProgress`, then rendered `/ecc/1` while recording duplicate-key errors. | The route shows its area heading and unit tab with no duplicate-key console errors. Targeted suite: 8 passed. | Done |

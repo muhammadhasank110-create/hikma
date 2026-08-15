@@ -74,7 +74,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <main id="main-content" className="relative min-h-screen max-w-6xl mx-auto space-y-8 px-4 pb-28 pt-5 sm:space-y-10 sm:p-8" tabIndex={-1}>
+    <div className="relative min-h-screen max-w-6xl mx-auto space-y-8 px-4 pb-28 pt-5 sm:space-y-10 sm:p-8">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <motion.div
@@ -219,6 +219,6 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
