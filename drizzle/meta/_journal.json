@@ -36,6 +36,20 @@
       "when": 1786220125072,
       "tag": "0004_chief_speed_demon",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1786793977192,
+      "tag": "0005_wild_grim_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1786794034829,
+      "tag": "0006_late_spot",
+      "breakpoints": true
     }
   ]
 }

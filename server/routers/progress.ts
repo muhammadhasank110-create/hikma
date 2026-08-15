@@ -1,6 +1,6 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { lessons, mastery, parkedThoughts, progress, sessionStates, topics } from "../../drizzle/schema";
+import { concepts, lessons, mastery, parkedThoughts, progress, sessionStates, subjects, topics } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -94,6 +94,114 @@ export const progressRouter = router({
     const db = await getDb();
     if (!db) return [];
     return db.select().from(mastery).where(eq(mastery.userId, ctx.user.id));
+  }),
+
+  masteryDetails: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    const [learnerMastery, allConcepts] = await Promise.all([
+      db.select().from(mastery).where(eq(mastery.userId, ctx.user.id)),
+      db.select().from(concepts),
+    ]);
+    const conceptById = new Map(allConcepts.map(concept => [concept.id, concept]));
+    return learnerMastery.map(item => {
+      const concept = conceptById.get(item.conceptId);
+      return {
+        ...item,
+        conceptEn: concept?.canonicalStatementEn ?? `Concept ${item.conceptId}`,
+        conceptAr: concept?.canonicalStatementAr ?? `المفهوم ${item.conceptId}`,
+        topicEn: concept?.subjectArea ?? "",
+        topicAr: concept?.subjectArea ?? "",
+      };
+    });
+  }),
+
+  learnerSummary: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) {
+      return {
+        stats: { masteredConcepts: 0, inProgressLessons: 0, completedLessons: 0, totalLessons: 0 },
+        continueLesson: null,
+        recentLessons: [],
+        weakAreas: [],
+      };
+    }
+
+    const [allLessons, allTopics, allSubjects, learnerProgress, learnerMastery] = await Promise.all([
+      db.select().from(lessons),
+      db.select().from(topics),
+      db.select().from(subjects),
+      db.select().from(progress).where(eq(progress.userId, ctx.user.id)).orderBy(desc(progress.updatedAt)),
+      db.select().from(mastery).where(eq(mastery.userId, ctx.user.id)),
+    ]);
+
+    const topicById = new Map(allTopics.map(topic => [topic.id, topic]));
+    const subjectById = new Map(allSubjects.map(subject => [subject.id, subject]));
+    const lessonById = new Map(allLessons.map(lesson => [lesson.id, lesson]));
+    const progressByLessonId = new Map(learnerProgress.map(item => [item.lessonId, item]));
+    const completedLessonIds = new Set(learnerProgress.filter(item => item.status === "complete").map(item => item.lessonId));
+    const inProgress = learnerProgress.filter(item => item.status === "in_progress");
+
+    const describeLesson = (lessonId: number) => {
+      const lesson = lessonById.get(lessonId);
+      if (!lesson) return null;
+      const topic = topicById.get(lesson.topicId);
+      const subject = topic ? subjectById.get(topic.subjectId) : undefined;
+      return {
+        lessonId: lesson.id,
+        titleEn: lesson.titleEn,
+        titleAr: lesson.titleAr,
+        topicEn: topic?.titleEn ?? "",
+        topicAr: topic?.titleAr ?? "",
+        subjectEn: subject?.titleEn ?? "",
+        subjectAr: subject?.titleAr ?? "",
+        status: progressByLessonId.get(lesson.id)?.status ?? "not_started",
+        updatedAt: progressByLessonId.get(lesson.id)?.updatedAt ?? lesson.updatedAt,
+      };
+    };
+
+    const continueLesson = describeLesson(inProgress[0]?.lessonId)
+      ?? allLessons.map(lesson => describeLesson(lesson.id)).find((lesson): lesson is NonNullable<typeof lesson> => Boolean(lesson && !completedLessonIds.has(lesson.lessonId)));
+
+    const recentLessons = learnerProgress
+      .map(item => describeLesson(item.lessonId))
+      .filter((lesson): lesson is NonNullable<typeof lesson> => Boolean(lesson))
+      .slice(0, 3);
+
+    const lessonCountsByTopic = new Map<number, { total: number; completed: number }>();
+    allLessons.forEach(lesson => {
+      const current = lessonCountsByTopic.get(lesson.topicId) ?? { total: 0, completed: 0 };
+      current.total += 1;
+      if (completedLessonIds.has(lesson.id)) current.completed += 1;
+      lessonCountsByTopic.set(lesson.topicId, current);
+    });
+    const weakAreas = Array.from(lessonCountsByTopic.entries())
+      .map(([topicId, counts]) => {
+        const topic = topicById.get(topicId);
+        return topic ? {
+          topicId,
+          titleEn: topic.titleEn,
+          titleAr: topic.titleAr,
+          completed: counts.completed,
+          total: counts.total,
+          coveragePct: counts.total > 0 ? Math.round((counts.completed / counts.total) * 100) : 0,
+        } : null;
+      })
+      .filter((topic): topic is NonNullable<typeof topic> => Boolean(topic && topic.coveragePct < 100))
+      .sort((a, b) => a.coveragePct - b.coveragePct)
+      .slice(0, 3);
+
+    return {
+      stats: {
+        masteredConcepts: learnerMastery.filter(item => item.level >= 4).length,
+        inProgressLessons: inProgress.length,
+        completedLessons: completedLessonIds.size,
+        totalLessons: allLessons.length,
+      },
+      continueLesson: continueLesson ?? null,
+      recentLessons,
+      weakAreas,
+    };
   }),
 
   subjectCoverage: protectedProcedure

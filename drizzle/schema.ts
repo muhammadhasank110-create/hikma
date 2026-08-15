@@ -80,6 +80,8 @@ export const learnerProfiles = mysqlTable("learner_profiles", {
   yearGroup: varchar("yearGroup", { length: 32 }),
   classCodes: json("classCodes").$type<string[]>().default([]),
   accessArrangements: json("accessArrangements").$type<string[]>().default([]),
+  subjectInterests: json("subjectInterests").$type<string[]>(),
+  learningMethods: json("learningMethods").$type<string[]>(),
 
   // Input
   inputMethod: mysqlEnum("inputMethod", ["keyboard", "pointer", "switch", "voice", "braille_display"]).default("keyboard").notNull(),

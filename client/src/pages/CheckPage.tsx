@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedProgress } from "@/components/PageTransition";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2, Volume2, Mic, MicOff, Trophy, RotateCcw, ArrowRight, CheckCircle2, XCircle, Sparkles } from "lucide-react";
+import { Loader2, Volume2, Mic, MicOff, Trophy, RotateCcw, ArrowRight, CheckCircle2, XCircle, Sparkles, Lightbulb } from "lucide-react";
 import { useCheckState } from "@/hooks/useCheckState";
 
 // ── Confetti burst (CSS-only, 12 particles) ───────────────────────────────────
@@ -315,24 +315,50 @@ export default function CheckPage() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              <AnimatePresence>
+                {s.currentHint && !isSubmitted && (
+                  <motion.div
+                    role="status"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="rounded-xl border border-primary/25 bg-primary/5 p-4 text-sm"
+                  >
+                    <div className="mb-1 flex items-center gap-2 font-semibold text-primary">
+                      <Lightbulb className="size-4" aria-hidden="true" />
+                      {t(`Hint ${s.currentHintLevel} of 3`, `تلميح ${s.currentHintLevel} من 3`)}
+                    </div>
+                    <p className="leading-relaxed text-foreground">{s.currentHint}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </motion.div>
       </AnimatePresence>
 
       {/* Actions */}
-      <motion.div className="flex gap-3 justify-between" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+      <motion.div className="flex flex-wrap gap-3 justify-between" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
         <Button variant="outline" onClick={() => navigate(`/lesson/${lessonId}`)}>{t("Back to Lesson", "العودة للدرس")}</Button>
         <AnimatePresence mode="wait">
           {!isSubmitted ? (
-            <motion.div key="submit" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
+            <motion.div key="submit" className="flex gap-2" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
+              <Button variant="outline" onClick={s.requestHint} disabled={s.currentHintLevel >= 3}>
+                <Lightbulb className="mr-2 size-4" />{s.currentHintLevel >= 3 ? t("All hints shown", "تم عرض كل التلميحات") : t("Get a hint", "احصل على تلميح")}
+              </Button>
               <Button onClick={s.submitAnswer} disabled={selectedAnswer === undefined && s.textAnswer === ""}
                 className="min-w-[140px]">
                 {t("Submit Answer", "تقديم الإجابة")}
               </Button>
             </motion.div>
           ) : (
-            <motion.div key="next" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
+            <motion.div key="next" className="flex gap-2" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
+              {!isCorrect && (
+                <Button variant="outline" onClick={s.retryQuestion}>
+                  <RotateCcw className="mr-2 size-4" />{t("Try again", "حاول مرة أخرى")}
+                </Button>
+              )}
               <Button onClick={s.nextQuestion} className="min-w-[140px] gap-2">
                 {s.currentIndex < s.questions.length - 1
                   ? <>{t("Next Question", "السؤال التالي")} <ArrowRight className="w-4 h-4" /></>

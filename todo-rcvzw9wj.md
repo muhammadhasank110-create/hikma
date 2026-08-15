@@ -114,3 +114,16 @@
 - [x] Add a regression check covering duplicate-route elimination and verify `/ecc/1` renders without React duplicate-key console errors.
 - [x] Run the full relevant validation suite and record actual evidence in AUDIT.md.
 - [x] Save the required checkpoint that publishes the verified ECC rendering correction.
+- [x] Audit the existing account, onboarding, dashboard, lesson, practice, progress, tutor, accessibility, search, settings, state, navigation, and content-management implementation against the supplied MVP requirements.
+- [x] Define and document a minimal durable learning model from subject through topic, lesson, practice, results, and mastery.
+- [x] Implement the existing guided lesson-to-practice flow with explicit learning objective, feedback, progressive hints, retry, and completion handoff.
+- [x] Implement mastery-focused learner progress, weak-area recommendations, and a clear Continue Learning dashboard action based on actual learning data.
+- [x] Complete practical onboarding, learner preferences, subject/learning-method selection, and settings updates without requiring disability disclosure.
+- [x] Strengthen the existing educational tutor/settings baseline with data-backed command search and retain existing empty, authentication, and responsive-navigation states.
+- [x] Add automated coverage and verify keyboard, screen-reader semantics, mobile interaction, Arabic/RTL public behavior, profile preferences, and data persistence contracts.
+- [x] Record verified core-MVP evidence in AUDIT.md and document the follow-up need for an authored question bank/content-management workflow rather than fabricating content.
+- [ ] Save the required checkpoint that publishes the verified core learning-platform update.
+- [x] Implement and test an explicit lesson-completion-to-practice handoff that preserves saved progress and focus-mode safeguards.
+- [x] Expose persisted subject interests and learning methods in Settings and add an authenticated round-trip persistence browser test.
+- [x] Add accessibility assertions for the new onboarding multi-select semantics and data-backed Progress learning states.
+- [x] Correct the MVP audit and task evidence after the remediation checks completed.

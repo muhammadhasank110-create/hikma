@@ -17,6 +17,20 @@ export default function SettingsPage() {
   const { enabled: spokenLabels, toggle: toggleSpokenLabels } = useSpokenLabels();
 
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  const toggleChoice = <T extends string,>(values: T[], value: T) => values.includes(value) ? values.filter(item => item !== value) : [...values, value];
+  const subjects = [
+    { value: "mathematics", en: "Mathematics", ar: "الرياضيات" },
+    { value: "science", en: "Science", ar: "العلوم" },
+    { value: "english", en: "English", ar: "اللغة الإنجليزية" },
+    { value: "arabic", en: "Arabic", ar: "اللغة العربية" },
+    { value: "exam_skills", en: "Exam skills", ar: "مهارات الاختبارات" },
+  ];
+  const learningMethods = [
+    { value: "visual" as const, en: "Visual examples", ar: "أمثلة بصرية" },
+    { value: "reading" as const, en: "Read and reflect", ar: "القراءة والتأمل" },
+    { value: "audio" as const, en: "Listen aloud", ar: "الاستماع بصوت عالٍ" },
+    { value: "practice" as const, en: "Practice questions", ar: "أسئلة تدريبية" },
+  ];
 
   const Section = ({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) => (
     <Card>
@@ -249,6 +263,27 @@ export default function SettingsPage() {
               `الهدف الحالي: ${profile.dailyGoalMinutes} دقيقة/يوم · ${Math.round(profile.dailyGoalMinutes * 7 / 60 * 10) / 10} ساعات/أسبوع`
             )}
           </p>
+        </div>
+      </Section>
+
+      <Section icon={Accessibility} title={t("Learning priorities", "أولويات التعلّم")}>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t("Subjects to prioritise", "المواد ذات الأولوية")}</p>
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t("Subjects to prioritise", "المواد ذات الأولوية")}>
+            {subjects.map(subject => {
+              const selected = profile.subjectInterests.includes(subject.value);
+              return <button key={subject.value} type="button" aria-pressed={selected} onClick={() => updateProfile({ subjectInterests: toggleChoice(profile.subjectInterests, subject.value) })} className={`rounded-xl border px-3 py-2 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>{t(subject.en, subject.ar)}</button>;
+            })}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t("Preferred learning methods", "أساليب التعلّم المفضلة")}</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="group" aria-label={t("Preferred learning methods", "أساليب التعلّم المفضلة")}>
+            {learningMethods.map(method => {
+              const selected = profile.learningMethods.includes(method.value);
+              return <button key={method.value} type="button" aria-pressed={selected} onClick={() => updateProfile({ learningMethods: toggleChoice(profile.learningMethods, method.value) })} className={`rounded-xl border px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>{t(method.en, method.ar)}</button>;
+            })}
+          </div>
         </div>
       </Section>
 

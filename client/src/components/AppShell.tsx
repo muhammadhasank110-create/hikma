@@ -25,6 +25,7 @@ import { useSpokenLabels } from "@/hooks/useSpokenLabels";
 import { HikmaLogo } from "@/components/HikmaLogo";
 import { useSpeech } from "@/contexts/SpeechContext";
 import { useHikmaMotion } from "@/hooks/useHikmaMotion";
+import { trpc } from "@/lib/trpc";
 
 interface NavItem {
   href: string;
@@ -376,6 +377,8 @@ function CommandPalette({ open, onOpenChange, visibleItems }: { open: boolean; o
   const { locale } = useProfile();
   const [, navigate] = useLocation();
   const motionConfig = useHikmaMotion();
+  const [query, setQuery] = useState("");
+  const { data: learningResults = [] } = trpc.curriculum.search.useQuery({ query: query.trim() }, { enabled: open && query.trim().length >= 2 });
 
   const commandCandidates = [
     ...visibleItems.map(item => ({ label: locale === "ar" ? item.labelAr : item.labelEn, href: item.href, icon: item.icon })),
@@ -389,7 +392,7 @@ function CommandPalette({ open, onOpenChange, visibleItems }: { open: boolean; o
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
       <motion.div className="rounded-2xl bg-popover text-popover-foreground" initial={motionConfig.item.initial} animate={motionConfig.item.animate} transition={motionConfig.transition}>
-        <CommandInput placeholder={locale === "ar" ? "ابحث عن أي شيء…" : "Search anything…"} />
+        <CommandInput value={query} onValueChange={setQuery} placeholder={locale === "ar" ? "ابحث عن درس أو موضوع أو مادة…" : "Search lessons, topics, or subjects…"} />
         <CommandList>
           <CommandEmpty>{locale === "ar" ? "لا توجد نتائج." : "No results found."}</CommandEmpty>
           <CommandGroup heading={locale === "ar" ? "التنقل" : "Navigation"}>
@@ -406,6 +409,16 @@ function CommandPalette({ open, onOpenChange, visibleItems }: { open: boolean; o
               );
             })}
           </CommandGroup>
+          {learningResults.length ? (
+            <CommandGroup heading={locale === "ar" ? "محتوى التعلّم" : "Learning content"}>
+              {learningResults.map(result => (
+                <CommandItem key={`${result.type}-${result.id}`} value={`${result.titleEn} ${result.titleAr} ${result.contextEn} ${result.contextAr}`} onSelect={() => { navigate(result.href); onOpenChange(false); setQuery(""); }}>
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  <span className="flex min-w-0 flex-col"><span className="truncate">{locale === "ar" ? result.titleAr : result.titleEn}</span><span className="text-xs text-muted-foreground">{locale === "ar" ? result.contextAr : result.contextEn}</span></span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ) : null}
         </CommandList>
       </motion.div>
     </CommandDialog>

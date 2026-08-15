@@ -60,4 +60,55 @@ export const curriculumRouter = router({
       return db.select().from(lessons)
         .where(and(eq(lessons.topicId, input.topicId), eq(lessons.isActive, true)));
     }),
+
+  search: publicProcedure
+    .input(z.object({ query: z.string().trim().min(2).max(80) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const query = input.query.toLocaleLowerCase();
+      const [allSubjects, allTopics, allLessons] = await Promise.all([
+        db.select().from(subjects).where(eq(subjects.isActive, true)),
+        db.select().from(topics).where(eq(topics.isActive, true)),
+        db.select().from(lessons).where(eq(lessons.isActive, true)),
+      ]);
+      const subjectById = new Map(allSubjects.map(subject => [subject.id, subject]));
+      const topicById = new Map(allTopics.map(topic => [topic.id, topic]));
+      const matches = (values: Array<string | null | undefined>) => values.some(value => value?.toLocaleLowerCase().includes(query));
+      return [
+        ...allSubjects.filter(subject => matches([subject.titleEn, subject.titleAr])).map(subject => ({
+          id: subject.id,
+          type: "subject" as const,
+          titleEn: subject.titleEn,
+          titleAr: subject.titleAr,
+          contextEn: "Subject",
+          contextAr: "مادة",
+          href: `/subjects/${subject.id}`,
+        })),
+        ...allTopics.filter(topic => matches([topic.titleEn, topic.titleAr])).map(topic => {
+          const subject = subjectById.get(topic.subjectId);
+          return {
+            id: topic.id,
+            type: "topic" as const,
+            titleEn: topic.titleEn,
+            titleAr: topic.titleAr,
+            contextEn: subject?.titleEn ?? "Topic",
+            contextAr: subject?.titleAr ?? "موضوع",
+            href: `/subjects/${topic.subjectId}`,
+          };
+        }),
+        ...allLessons.filter(lesson => matches([lesson.titleEn, lesson.titleAr])).map(lesson => {
+          const topic = topicById.get(lesson.topicId);
+          return {
+            id: lesson.id,
+            type: "lesson" as const,
+            titleEn: lesson.titleEn,
+            titleAr: lesson.titleAr,
+            contextEn: topic?.titleEn ?? "Lesson",
+            contextAr: topic?.titleAr ?? "درس",
+            href: `/lesson/${lesson.id}`,
+          };
+        }),
+      ].slice(0, 12);
+    }),
 });

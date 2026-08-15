@@ -33,6 +33,7 @@ export default function Dashboard() {
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
 
   const { data: curricula, isLoading } = trpc.curriculum.list.useQuery();
+  const { data: learnerSummary, isLoading: isSummaryLoading } = trpc.progress.learnerSummary.useQuery();
 
   const hour = new Date().getHours();
   const greeting = hour < 12
@@ -44,12 +45,12 @@ export default function Dashboard() {
     if (!profile.autoNarrate) return;
     const name = user?.name?.split(" ")[0] ?? "";
     const msg = locale === "ar"
-      ? `${greeting}${name ? ` ${name}` : ""}. مرحباً بك في حكمة. اختر مادة للبدء.`
-      : `${greeting}${name ? `, ${name}` : ""}. Welcome to Hikma. Choose a subject to start learning.`;
+      ? `${greeting}${name ? ` ${name}` : ""}. مرحباً بك في حكمة. ${learnerSummary?.continueLesson ? `يمكنك متابعة ${learnerSummary.continueLesson.titleAr}.` : "اختر مادة للبدء."}`
+      : `${greeting}${name ? `, ${name}` : ""}. Welcome to Hikma. ${learnerSummary?.continueLesson ? `You can continue ${learnerSummary.continueLesson.titleEn}.` : "Choose a subject to start learning."}`;
     const timer = setTimeout(() => speech.speak(msg, { priority: "polite" }), 900);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile.autoNarrate, locale]);
+  }, [profile.autoNarrate, locale, learnerSummary?.continueLesson?.lessonId]);
 
   const profileMode = (profile as any)?.accessibilityProfile ?? (profile as any)?.profile ?? "standard";
   const modeLabel: Record<string, string> = {
@@ -61,9 +62,9 @@ export default function Dashboard() {
   };
 
   const stats = [
-    { icon: Star, label: t("Mastered", "تم إتقانه"), value: 0, suffix: "", color: "from-amber-100 to-amber-50 dark:from-amber-500/20 dark:to-amber-500/5", iconColor: "text-amber-600 dark:text-amber-400" },
-    { icon: Activity, label: t("In Progress", "قيد التقدم"), value: 0, suffix: "", color: "from-blue-100 to-blue-50 dark:from-blue-500/20 dark:to-blue-500/5", iconColor: "text-blue-600 dark:text-blue-400" },
-    { icon: BookOpen, label: t("Total Concepts", "إجمالي المفاهيم"), value: 0, suffix: "", color: "from-emerald-100 to-emerald-50 dark:from-emerald-500/20 dark:to-emerald-500/5", iconColor: "text-emerald-600 dark:text-emerald-400" },
+    { icon: Star, label: t("Mastered", "تم إتقانه"), value: learnerSummary?.stats.masteredConcepts ?? 0, suffix: "", color: "from-amber-100 to-amber-50 dark:from-amber-500/20 dark:to-amber-500/5", iconColor: "text-amber-600 dark:text-amber-400" },
+    { icon: Activity, label: t("In Progress", "قيد التقدم"), value: learnerSummary?.stats.inProgressLessons ?? 0, suffix: "", color: "from-blue-100 to-blue-50 dark:from-blue-500/20 dark:to-blue-500/5", iconColor: "text-blue-600 dark:text-blue-400" },
+    { icon: BookOpen, label: t("Lessons complete", "دروس مكتملة"), value: learnerSummary?.stats.completedLessons ?? 0, suffix: learnerSummary?.stats.totalLessons ? `/${learnerSummary.stats.totalLessons}` : "", color: "from-emerald-100 to-emerald-50 dark:from-emerald-500/20 dark:to-emerald-500/5", iconColor: "text-emerald-600 dark:text-emerald-400" },
     { icon: Zap, label: t("Daily Goal", "الهدف اليومي"), value: profile?.dailyGoalMinutes ?? 20, suffix: "m", color: "from-purple-100 to-purple-50 dark:from-purple-500/20 dark:to-purple-500/5", iconColor: "text-purple-600 dark:text-purple-400" },
   ];
 
@@ -99,8 +100,8 @@ export default function Dashboard() {
                 {modeLabel[profileMode]}
               </span>
             </div>
-            <button type="button" onClick={() => navigate("/subjects/1")} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-emerald-950 transition-transform hover:-translate-y-0.5 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-              <BookOpen className="size-4" aria-hidden="true" />{t("Continue learning", "تابع التعلّم")}
+            <button type="button" onClick={() => navigate(learnerSummary?.continueLesson ? `/lesson/${learnerSummary.continueLesson.lessonId}` : "/subjects/1")} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold text-emerald-950 transition-transform hover:-translate-y-0.5 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+              <BookOpen className="size-4" aria-hidden="true" />{learnerSummary?.continueLesson ? t(`Continue ${learnerSummary.continueLesson.titleEn}`, `تابع ${learnerSummary.continueLesson.titleAr}`) : t("Choose a subject", "اختر مادة")}
               <ChevronRight className="size-4" aria-hidden="true" />
             </button>
           </div>
@@ -135,6 +136,26 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      {!isSummaryLoading && (learnerSummary?.recentLessons.length || learnerSummary?.weakAreas.length) ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-[1.5rem] border border-border bg-card/85 p-5 shadow-[0_12px_28px_rgba(21,47,30,0.05)]" aria-labelledby="recent-learning-heading">
+            <h2 id="recent-learning-heading" className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{t("Recent learning", "التعلّم الأخير")}</h2>
+            {learnerSummary?.recentLessons.length ? <div className="space-y-2">{learnerSummary.recentLessons.map(lesson => (
+              <button key={lesson.lessonId} onClick={() => navigate(`/lesson/${lesson.lessonId}`)} className="flex w-full items-center justify-between rounded-xl bg-muted/45 px-3 py-3 text-left transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                <span><span className="block text-sm font-semibold text-foreground">{locale === "ar" ? lesson.titleAr : lesson.titleEn}</span><span className="text-xs text-muted-foreground">{locale === "ar" ? lesson.topicAr : lesson.topicEn}</span></span>
+                <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+              </button>
+            ))}</div> : <p className="text-sm text-muted-foreground">{t("Your completed and in-progress lessons will appear here.", "ستظهر هنا الدروس المكتملة وقيد التقدّم.")}</p>}
+          </section>
+          <section className="rounded-[1.5rem] border border-border bg-card/85 p-5 shadow-[0_12px_28px_rgba(21,47,30,0.05)]" aria-labelledby="review-heading">
+            <h2 id="review-heading" className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{t("Recommended review", "مراجعة مقترحة")}</h2>
+            {learnerSummary?.weakAreas.length ? <div className="space-y-2">{learnerSummary.weakAreas.map(topic => (
+              <div key={topic.topicId} className="rounded-xl border border-primary/15 bg-primary/5 px-3 py-3"><p className="text-sm font-semibold text-foreground">{locale === "ar" ? topic.titleAr : topic.titleEn}</p><p className="mt-1 text-xs text-muted-foreground">{t(`${topic.completed} of ${topic.total} lessons complete`, `${topic.completed} من ${topic.total} دروس مكتملة`)}</p></div>
+            ))}</div> : <p className="text-sm text-muted-foreground">{t("Complete a lesson to receive a focused review recommendation.", "أكمل درساً لتتلقى توصية مراجعة مركزة.")}</p>}
+          </section>
+        </div>
+      ) : null}
 
       {/* ── Quick access ───────────────────────────────────────────────── */}
       <div>

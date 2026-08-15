@@ -12,6 +12,8 @@ export const profileRouter = router({
       .where(eq(learnerProfiles.userId, ctx.user.id)).limit(1);
     if (!result[0]) return null;
     const row = { ...(result[0] as any) };
+    row.subjectInterests = row.subjectInterests ?? [];
+    row.learningMethods = row.learningMethods ?? [];
     // Migrate legacy mode values stored before the enum was renamed
     const modeAliases: Record<string, string> = { audio: "audio_first" };
     if (row.mode && modeAliases[row.mode]) row.mode = modeAliases[row.mode];
@@ -50,6 +52,8 @@ export const profileRouter = router({
       board: z.string().optional(),
       tier: z.enum(["foundation", "higher", "core", "extended", "sl", "hl"]).nullable().optional(),
       yearGroup: z.string().optional(),
+      subjectInterests: z.array(z.string().max(80)).max(12).optional(),
+      learningMethods: z.array(z.enum(["visual", "reading", "audio", "practice"])).max(4).optional(),
       eccEnabled: z.boolean().optional(),
       eccAreas: z.array(z.string()).optional(),
       inputMethod: z.enum(["keyboard", "pointer", "switch", "voice", "braille_display"]).optional(),

@@ -81,4 +81,16 @@ test.describe("lesson narration highlighting", () => {
     await expect(spokenWord).toHaveText("Alpha");
     await expect(spokenWord).toHaveText("beta", { timeout: 3_000 });
   });
+
+  test("saves final lesson completion before entering the lesson practice flow", async ({ page }) => {
+    let savedCompletion = false;
+    await page.route(/\/api\/trpc\/progress\.updateProgress/, route => {
+      savedCompletion = true;
+      return route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: { success: true } } } }]) });
+    });
+    await page.goto("/lesson/901");
+    await page.getByRole("button", { name: /practice this lesson/i }).click();
+    await page.waitForURL(/\/check\/901/);
+    await expect.poll(() => savedCompletion).toBe(true);
+  });
 });

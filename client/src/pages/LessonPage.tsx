@@ -33,6 +33,7 @@ export default function LessonPage() {
   const lessonId = parseInt(params?.lessonId ?? "0");
   const [showInlineTutor, setShowInlineTutor] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [isStartingPractice, setIsStartingPractice] = useState(false);
   // Detect touch device using pointer media query — NOT screen width
   const isTouchDevice = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
@@ -50,6 +51,14 @@ export default function LessonPage() {
   const prevSectionRef = useRef(s.sectionIndex);
   const [slideDir, setSlideDir] = useState<1 | -1>(1);
   const prefersReducedMotion = useReducedMotion();
+  const startPractice = useCallback(async () => {
+    setIsStartingPractice(true);
+    try {
+      await s.saveProgress.mutateAsync({ lessonId, sectionId: s.sectionIndex, cursorOffset: 0, status: "complete" });
+    } finally {
+      navigate(`/check/${lessonId}`);
+    }
+  }, [lessonId, navigate, s.saveProgress, s.sectionIndex]);
   useEffect(() => {
     if (s.sectionIndex !== prevSectionRef.current) {
       setSlideDir(s.sectionIndex > prevSectionRef.current ? 1 : -1);
@@ -340,6 +349,12 @@ export default function LessonPage() {
                 <h2 className={`font-bold font-display ${s.isFocused ? "text-2xl text-[#111411] mb-5" : "text-lg"}`}>
                   {locale === "ar" ? (s.currentSection.titleAr ?? s.currentSection.titleEn ?? "") : (s.currentSection.titleEn ?? "")}
                 </h2>
+                {(locale === "ar" ? s.currentSection.summaryAr : s.currentSection.summaryEn) ? (
+                  <aside className={`rounded-xl border px-4 py-3 ${s.isFocused ? "border-[#111411]/15 bg-[#111411]/5" : "border-primary/15 bg-primary/5"}`} aria-labelledby="learning-goal-heading">
+                    <p id="learning-goal-heading" className={`text-[11px] font-bold uppercase tracking-[0.16em] ${s.isFocused ? "text-[#111411]/60" : "text-primary"}`}>{t("Learning goal", "هدف التعلّم")}</p>
+                    <p className={`mt-1 text-sm leading-relaxed ${s.isFocused ? "text-[#111411]" : "text-foreground"}`}>{locale === "ar" ? s.currentSection.summaryAr : s.currentSection.summaryEn}</p>
+                  </aside>
+                ) : null}
                 {/* Unified render path: Streamdown always (fixes bold/markdown), word-click via DOM text extraction */}
                 <div
                   data-lesson-content
@@ -523,10 +538,17 @@ export default function LessonPage() {
               <AlertTriangle className="w-3.5 h-3.5 mr-1" />{t("Break", "استراحة")}
             </Button>
           </div>
-          <Button onClick={() => { if (s.showTopicQuestion && s.topicAnswer.trim() === "") { toast.info(t("Please answer the question or press Continue to skip.", "الرجاء الإجابة على السؤال أو اضغط تابع للتخطي.")); return; } s.nextSection(); }} aria-label={s.sectionIndex < s.totalSections - 1 ? t("Next section", "القسم التالي") : t("Complete lesson", "إكمال الدرس")}>
-            {s.sectionIndex < s.totalSections - 1 ? t("Next", "التالي") : t("Complete", "إكمال")}
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {s.sectionIndex === s.totalSections - 1 && (
+              <Button variant="outline" onClick={startPractice} disabled={isStartingPractice} aria-label={t("Practice this lesson", "تدرّب على هذا الدرس")}>
+                <HelpCircle className="w-4 h-4 mr-1" />{isStartingPractice ? t("Saving…", "جارٍ الحفظ…") : t("Practice", "تدرّب")}
+              </Button>
+            )}
+            <Button onClick={() => { if (s.showTopicQuestion && s.topicAnswer.trim() === "") { toast.info(t("Please answer the question or press Continue to skip.", "الرجاء الإجابة على السؤال أو اضغط تابع للتخطي.")); return; } s.nextSection(); }} aria-label={s.sectionIndex < s.totalSections - 1 ? t("Next section", "القسم التالي") : t("Complete lesson", "إكمال الدرس")}>
+              {s.sectionIndex < s.totalSections - 1 ? t("Next", "التالي") : t("Complete", "إكمال")}
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
         </div>
 
         {/* Keyboard hints — hidden on touch devices, only shown on pointer-fine */}

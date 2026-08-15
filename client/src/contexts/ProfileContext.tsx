@@ -35,6 +35,8 @@ export interface LearnerProfileState {
   numerals: "arabic_indic" | "western";
   syllableSplit: boolean;
   curriculum: string;
+  subjectInterests: string[];
+  learningMethods: Array<"visual" | "reading" | "audio" | "practice">;
   tier: string | null;
   eccEnabled: boolean;
   inputMethod: "keyboard" | "pointer" | "switch" | "voice" | "braille_display";
@@ -71,6 +73,8 @@ const defaultProfile: LearnerProfileState = {
   numerals: "western",
   syllableSplit: false,
   curriculum: "none",
+  subjectInterests: [],
+  learningMethods: [],
   tier: null,
   eccEnabled: false,
   inputMethod: "keyboard",

@@ -58,6 +58,8 @@ export default function Onboarding() {
     voiceEnabled: false,
     autoNarrate: false,
     dailyGoalMinutes: 20,
+    subjectInterests: [],
+    learningMethods: [],
   });
 
   const updateData = useCallback((updates: Partial<OnboardingData>) => {
@@ -130,6 +132,8 @@ export default function Onboarding() {
       lineHeight: data.accessibilityProfile === "dyslexia" ? 1.8 : 1.5,
       overlayTint: (data.accessibilityProfile === "dyslexia" ? "yellow" : "none") as "none" | "blue" | "yellow" | "peach" | "green" | "grey",
       dailyGoalMinutes: data.dailyGoalMinutes,
+      subjectInterests: data.subjectInterests,
+      learningMethods: data.learningMethods,
     };
     try {
       const effectiveLocale = (data.locale === "both" ? "en" : data.locale) as "en" | "ar";

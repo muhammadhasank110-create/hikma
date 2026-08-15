@@ -21,6 +21,8 @@ export interface Question {
   correct?: number;
   explanation?: string;
   explanationAr?: string;
+  hints?: string[];
+  hintsAr?: string[];
   marks: number;
 }
 
@@ -33,8 +35,8 @@ async function generateQuestions(lessonTitle: string, sections: any[], locale: s
         : `${s.titleEn ?? ""}: ${(s.bodyEn ?? "").slice(0, 300)}`)
       .join("\n\n");
     const prompt = locale === "ar"
-      ? `بناءً على الدرس التالي، أنشئ بالضبط 5 أسئلة اختبار: 3 اختيار متعدد و2 صح/خطأ. يجب أن تغطي الأسئلة أجزاء مختلفة من الدرس. أجب بـ JSON فقط بهذا التنسيق:\n[{"id":"q1","type":"mcq","question":"...","questionAr":"...","options":["أ","ب","ج","د"],"optionsAr":["أ","ب","ج","د"],"correct":0,"explanation":"...","explanationAr":"...","marks":2},{"id":"q2","type":"true_false","question":"...","questionAr":"...","options":["True","False"],"optionsAr":["صحيح","خطأ"],"correct":0,"explanation":"...","explanationAr":"...","marks":1}]\n\nمهم: أعطِ بالضبط 5 أسئلة.\n\nالدرس:\n${sectionSummary}`
-      : `Based on the following lesson, create EXACTLY 5 quiz questions: 3 multiple choice (MCQ) and 2 true/false. Questions must cover different parts of the lesson. Reply with JSON ONLY in this format:\n[{"id":"q1","type":"mcq","question":"...","questionAr":"...","options":["A","B","C","D"],"optionsAr":["أ","ب","ج","د"],"correct":0,"explanation":"...","explanationAr":"...","marks":2},{"id":"q2","type":"true_false","question":"...","questionAr":"...","options":["True","False"],"optionsAr":["صحيح","خطأ"],"correct":0,"explanation":"...","explanationAr":"...","marks":1}]\n\nIMPORTANT: Return exactly 5 questions.\n\nLesson:\n${sectionSummary}`;
+      ? `بناءً على الدرس التالي، أنشئ بالضبط 5 أسئلة اختبار: 3 اختيار متعدد و2 صح/خطأ. يجب أن تغطي الأسئلة أجزاء مختلفة من الدرس. أجب بـ JSON فقط بهذا التنسيق:\n[{"id":"q1","type":"mcq","question":"...","questionAr":"...","options":["أ","ب","ج","د"],"optionsAr":["أ","ب","ج","د"],"correct":0,"explanation":"...","explanationAr":"...","hints":["تلميح صغير","تلميح أوضح","خطوة إرشادية"],"hintsAr":["تلميح صغير","تلميح أوضح","خطوة إرشادية"],"marks":2}]\n\nالمهم: أعطِ تلميحات تدريجية لا تكشف الإجابة، وأعطِ بالضبط 5 أسئلة.\n\nالدرس:\n${sectionSummary}`
+      : `Based on the following lesson, create EXACTLY 5 quiz questions: 3 multiple choice (MCQ) and 2 true/false. Questions must cover different parts of the lesson. Reply with JSON ONLY in this format:\n[{"id":"q1","type":"mcq","question":"...","questionAr":"...","options":["A","B","C","D"],"optionsAr":["أ","ب","ج","د"],"correct":0,"explanation":"...","explanationAr":"...","hints":["Small clue","Stronger clue","Guiding step"],"hintsAr":["تلميح صغير","تلميح أوضح","خطوة إرشادية"],"marks":2}]\n\nIMPORTANT: Include three progressive hints that do not reveal the answer and return exactly 5 questions.\n\nLesson:\n${sectionSummary}`;
     const res = await fetch("/api/tutor/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -88,6 +90,7 @@ export function useCheckState(lessonId: number) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string | number>>({});
   const [submitted, setSubmitted] = useState<Record<string, boolean>>({});
+  const [hintLevels, setHintLevels] = useState<Record<string, number>>({});
   const [textAnswer, setTextAnswer] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -112,6 +115,7 @@ export function useCheckState(lessonId: number) {
     setCurrentIndex(0);
     setAnswers({});
     setSubmitted({});
+    setHintLevels({});
     setTextAnswer("");
     setIsComplete(false);
     const sections = (lesson.sections as any[]) ?? [];
@@ -170,6 +174,26 @@ export function useCheckState(lessonId: number) {
       }
     }
   }, [currentIndex, questions.length, isAuthenticated, lessonId, sounds, saveProgress]);
+
+  const requestHint = useCallback(() => {
+    if (!currentQ || submitted[currentQ.id]) return;
+    setHintLevels(previous => ({ ...previous, [currentQ.id]: Math.min((previous[currentQ.id] ?? 0) + 1, 3) }));
+  }, [currentQ, submitted]);
+
+  const retryQuestion = useCallback(() => {
+    if (!currentQ) return;
+    setSubmitted(previous => {
+      const next = { ...previous };
+      delete next[currentQ.id];
+      return next;
+    });
+    if (currentQ.type === "short") setTextAnswer("");
+  }, [currentQ]);
+
+  const currentHintLevel = currentQ ? hintLevels[currentQ.id] ?? 0 : 0;
+  const currentHint = currentQ && currentHintLevel > 0
+    ? (locale === "ar" ? (currentQ.hintsAr ?? currentQ.hints) : currentQ.hints)?.[currentHintLevel - 1]
+    : undefined;
 
   const readQuestion = useCallback(() => {
     if (!currentQ) return;
@@ -233,6 +257,7 @@ export function useCheckState(lessonId: number) {
     isRecording, isComplete,
     progressPct, score, totalMarks,
     submitAnswer, nextQuestion, readQuestion,
+    requestHint, retryQuestion, currentHint, currentHintLevel,
     startRecording, stopRecording,
     lesson, navigate, t, locale,
   };

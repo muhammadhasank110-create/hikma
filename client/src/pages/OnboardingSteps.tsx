@@ -39,6 +39,8 @@ export interface OnboardingData {
   voiceEnabled: boolean;
   autoNarrate: boolean;
   dailyGoalMinutes: number;
+  subjectInterests: string[];
+  learningMethods: Array<"visual" | "reading" | "audio" | "practice">;
 }
 
 const PROFILES = [
@@ -105,6 +107,21 @@ const YEAR_GROUPS = [
   { value: "11", label: "Year 11 (Age 15–16)" },
   { value: "12", label: "Year 12 / AS Level" },
   { value: "other", label: "Other / Not sure" },
+];
+
+const SUBJECT_INTERESTS = [
+  { value: "mathematics", en: "Mathematics", ar: "الرياضيات" },
+  { value: "science", en: "Science", ar: "العلوم" },
+  { value: "english", en: "English", ar: "اللغة الإنجليزية" },
+  { value: "arabic", en: "Arabic", ar: "اللغة العربية" },
+  { value: "exam_skills", en: "Exam skills", ar: "مهارات الاختبارات" },
+];
+
+const LEARNING_METHODS = [
+  { value: "visual" as const, en: "Visual examples", ar: "أمثلة بصرية" },
+  { value: "reading" as const, en: "Read and reflect", ar: "القراءة والتأمل" },
+  { value: "audio" as const, en: "Listen aloud", ar: "الاستماع بصوت عالٍ" },
+  { value: "practice" as const, en: "Practice questions", ar: "أسئلة تدريبية" },
 ];
 
 export function profileToSettings(profile: AccessibilityProfile): Partial<OnboardingData> {
@@ -305,6 +322,18 @@ export function StepCurriculum({ data, onChange, locale }: { data: OnboardingDat
           ))}
         </div>
       </div>
+      <div className="space-y-2">
+        <p className="text-sm font-semibold">{t("Subjects you want to prioritise", "المواد التي تريد إعطاءها أولوية")}</p>
+        <p className="text-xs text-muted-foreground">{t("Choose any that matter to you. This helps Hikma surface the right next steps.", "اختر ما يهمك. يساعد هذا حكمة على إظهار الخطوات التالية المناسبة.")}</p>
+        <div className="flex flex-wrap gap-2" role="group" aria-label={t("Subject interests", "اهتمامات المواد")}>
+          {SUBJECT_INTERESTS.map(subject => {
+            const selected = data.subjectInterests.includes(subject.value);
+            return <button key={subject.value} type="button" aria-pressed={selected} onClick={() => onChange({ subjectInterests: selected ? data.subjectInterests.filter(item => item !== subject.value) : [...data.subjectInterests, subject.value] })} className={`rounded-xl border px-3 py-2 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>
+              {t(subject.en, subject.ar)}
+            </button>;
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -374,6 +403,18 @@ export function StepPersonalisation({ data, onChange, locale }: { data: Onboardi
               {th.label}
             </button>
           ))}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <p className="text-sm font-semibold">{t("How do you want to learn?", "كيف تريد أن تتعلم؟")}</p>
+        <p className="text-xs text-muted-foreground">{t("Select as many approaches as help. You can change these later.", "اختر كل الأساليب التي تساعدك. يمكنك تغييرها لاحقاً.")}</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="group" aria-label={t("Learning methods", "أساليب التعلّم")}>
+          {LEARNING_METHODS.map(method => {
+            const selected = data.learningMethods.includes(method.value);
+            return <button key={method.value} type="button" aria-pressed={selected} onClick={() => onChange({ learningMethods: selected ? data.learningMethods.filter(item => item !== method.value) : [...data.learningMethods, method.value] })} className={`rounded-xl border px-3 py-3 text-left text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>
+              <span className="font-semibold">{t(method.en, method.ar)}</span>{selected ? <Check className="float-right size-4" aria-hidden="true" /> : null}
+            </button>;
+          })}
         </div>
       </div>
     </div>

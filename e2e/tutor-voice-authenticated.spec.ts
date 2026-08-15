@@ -42,6 +42,21 @@ test.describe("authenticated tutor narration", () => {
     }
   });
 
+  test("persists learner subject priorities from accessible Settings controls", async ({ page }) => {
+    let persistedInterest = false;
+    await page.route(/\/api\/trpc\/profile\.update/, route => {
+      persistedInterest = route.request().postData()?.includes("mathematics") ?? false;
+      return route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: {} } } }]) });
+    });
+    await page.goto("/settings");
+    const subjectGroup = page.getByRole("group", { name: "Subjects to prioritise" });
+    const mathematics = subjectGroup.getByRole("button", { name: "Mathematics" });
+    await expect(mathematics).toHaveAttribute("aria-pressed", "false");
+    await mathematics.click();
+    await expect(mathematics).toHaveAttribute("aria-pressed", "true");
+    await expect.poll(() => persistedInterest).toBe(true);
+  });
+
   test("renders every command route once without duplicate-key console errors", async ({ page }, testInfo) => {
     const duplicateKeyErrors: string[] = [];
     page.on("console", message => {
@@ -58,10 +73,29 @@ test.describe("authenticated tutor narration", () => {
       await page.getByRole("button", { name: /open command palette/i }).click();
     }
     const palette = page.getByRole("dialog");
-    await expect(palette.getByPlaceholder(/search anything/i)).toBeVisible();
+    await expect(palette.getByPlaceholder(/search lessons, topics, or subjects/i)).toBeVisible();
     await expect(palette.getByText("ECC", { exact: true })).toHaveCount(1);
     await expect(palette.getByText("Exam Skills", { exact: true })).toHaveCount(1);
     await expect.poll(() => duplicateKeyErrors).toEqual([]);
+  });
+
+  test("discovers matching learning content from the shared command search", async ({ page }, testInfo) => {
+    await page.route(/\/api\/trpc\/curriculum\.search/, route => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([{ result: { data: { json: [{ id: 17, type: "lesson", titleEn: "Energy transfer", titleAr: "انتقال الطاقة", contextEn: "Physics", contextAr: "الفيزياء", href: "/lesson/17" }] } } }]),
+    }));
+    await page.goto("/dashboard");
+    if (testInfo.project.name === "mobile") {
+      await page.getByRole("button", { name: "More" }).click();
+      await page.getByRole("button", { name: "Search" }).click();
+    } else {
+      await page.getByRole("button", { name: /open command palette/i }).click();
+    }
+    const palette = page.getByRole("dialog");
+    const search = palette.getByPlaceholder(/search lessons, topics, or subjects/i);
+    await search.fill("energy");
+    await expect(palette.getByText("Energy transfer", { exact: true })).toBeVisible();
+    await expect(palette.getByText("Physics", { exact: true })).toBeVisible();
   });
 
   test("renders the reported ECC area route without duplicate navigation keys", async ({ page }) => {
