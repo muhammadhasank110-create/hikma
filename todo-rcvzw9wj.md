@@ -113,4 +113,4 @@
 - [x] Correct the navigation data or rendering logic so each rendered ECC navigation child has a stable unique identity.
 - [x] Add a regression check covering duplicate-route elimination and verify `/ecc/1` renders without React duplicate-key console errors.
 - [x] Run the full relevant validation suite and record actual evidence in AUDIT.md.
-- [ ] Save the required checkpoint that publishes the verified ECC rendering correction.
+- [x] Save the required checkpoint that publishes the verified ECC rendering correction.
