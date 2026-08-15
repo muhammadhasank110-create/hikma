@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildWordStartTimes, getAlignedWordIndex } from "./useTTS";
+import { buildWordStartTimes, clampSpeechRate, getAlignedWordIndex } from "./useTTS";
 
 describe("aligned TTS word timing", () => {
   const text = "Alpha beta gamma.";
@@ -21,5 +21,16 @@ describe("aligned TTS word timing", () => {
     expect(getAlignedWordIndex(times, 0.02)).toBe(0);
     expect(getAlignedWordIndex(times, 0.5)).toBe(1);
     expect(getAlignedWordIndex(times, 0.82)).toBe(2);
+  });
+});
+
+describe("speech rate normalization", () => {
+  it("preserves the supported lesson-local range and safely clamps invalid values", () => {
+    expect(clampSpeechRate(0.5)).toBe(0.5);
+    expect(clampSpeechRate(1.5)).toBe(1.5);
+    expect(clampSpeechRate(2)).toBe(2);
+    expect(clampSpeechRate(0.2)).toBe(0.5);
+    expect(clampSpeechRate(4)).toBe(2);
+    expect(clampSpeechRate(Number.NaN)).toBe(1);
   });
 });

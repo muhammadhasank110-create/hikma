@@ -139,3 +139,7 @@
 - [x] Verify keyboard, screen-reader, alt/description, high contrast, reduced motion, responsive, loading, failure, and no-visual fallback behavior within the Concept Map feature only.
 - [x] Add focused regression coverage, record evidence in AUDIT.md, and publish the verified Concept Map-only change.
 - [x] Stabilize the existing second-session lesson narration browser assertion so it verifies the intended active-session behavior without a transient word-boundary timing race.
+- [x] Confirm the lesson-local voice-speed propagation defect across the browser and provider-backed narration paths without touching global profile state.
+- [x] Apply the smallest playback-only repair so aligned provider audio uses the selected lesson-local rate for the next narration.
+- [x] Add focused regression coverage for selected playback rate, timestamp-aligned highlighting, and no profile persistence.
+- [x] Verify keyboard, English/Arabic, Focus mode, browser fallback, provider audio, desktop/mobile, type/unit/browser suites, and audit evidence; publish the isolated repair.

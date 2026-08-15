@@ -19,11 +19,13 @@ const mockLesson = {
 test.describe("streamed lesson narration highlighting", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
+      (window as any).__lessonAudioPlaybackRates = [];
       class MockAudio {
         currentTime = 0;
         duration = 1;
         paused = true;
         ended = false;
+        playbackRate = 1;
         src = "";
         onplay: ((event: Event) => void) | null = null;
         onended: ((event: Event) => void) | null = null;
@@ -32,6 +34,7 @@ test.describe("streamed lesson narration highlighting", () => {
         constructor(_src?: string) { this.src = _src ?? ""; }
         play() {
           this.paused = false;
+          (window as any).__lessonAudioPlaybackRates.push(this.playbackRate);
           this.onplay?.(new Event("play"));
           this.timer = window.setInterval(() => { this.currentTime = Math.min(0.98, this.currentTime + 0.08); }, 200);
           return Promise.resolve();
@@ -72,5 +75,23 @@ test.describe("streamed lesson narration highlighting", () => {
     await page.getByRole("button", { name: /stop narration/i }).click();
     await expect(spokenWord).toHaveCount(0);
     await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "idle");
+  });
+
+  test("applies the lesson-only speed control to aligned provider audio without saving profile preferences", async ({ page }) => {
+    let profileWasUpdated = false;
+    await page.route(/\/api\/trpc\/profile\.update/, route => {
+      profileWasUpdated = true;
+      return route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: {} } } }]) });
+    });
+    await page.goto("/lesson/902");
+    await page.waitForTimeout(150);
+    const speed = page.locator('[role="slider"]').first();
+    await speed.press("ArrowRight");
+    await speed.press("ArrowRight");
+    await expect(speed).toHaveAttribute("aria-valuenow", "1.5");
+
+    await page.getByRole("button", { name: /read aloud/i }).click();
+    await expect.poll(() => page.evaluate(() => (window as any).__lessonAudioPlaybackRates.at(-1))).toBe(1.5);
+    expect(profileWasUpdated).toBe(false);
   });
 });

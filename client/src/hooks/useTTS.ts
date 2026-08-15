@@ -60,6 +60,10 @@ interface UseTTSOptions {
   syncWords?: boolean;
 }
 
+export function clampSpeechRate(rate: number) {
+  return Number.isFinite(rate) ? Math.max(0.5, Math.min(2, rate)) : 1;
+}
+
 /**
  * The canonical cleaner. Anything that maps charIndex back to a word MUST use
  * this exact function, or the indices refer to a different string.
@@ -208,7 +212,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary, syncWo
     };
     const createUtterance = (spokenText: string) => {
       const utterance = new SpeechSynthesisUtterance(spokenText);
-      utterance.rate = Math.max(0.5, Math.min(2, rate));
+      utterance.rate = clampSpeechRate(rate);
       utterance.lang = lang;
       const voice = pickVoice(lang, voiceHint);
       if (voice) utterance.voice = voice;
@@ -310,6 +314,9 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary, syncWo
       const url = URL.createObjectURL(blob);
       objectUrlRef.current = url;
       const audio = new Audio(url);
+      // The lesson control supplies this hook's rate. Provider-backed audio
+      // must apply it locally as well as browser speech, without persisting it.
+      audio.playbackRate = clampSpeechRate(rate);
       audioRef.current = audio;
 
       const { offsets } = buildWordOffsets(text);
@@ -356,7 +363,7 @@ export function useTTS({ rate = 1, lang = "en-GB", voiceHint, onBoundary, syncWo
         speakWithBrowser(text);
       }
     }
-  }, [lang, stopElevenLabs, stopHighlightLoop, speakWithBrowser]);
+  }, [lang, rate, stopElevenLabs, stopHighlightLoop, speakWithBrowser]);
 
   const speak = useCallback((rawText: string) => {
     const text = cleanText(rawText);
