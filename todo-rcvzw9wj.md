@@ -122,7 +122,7 @@
 - [x] Strengthen the existing educational tutor/settings baseline with data-backed command search and retain existing empty, authentication, and responsive-navigation states.
 - [x] Add automated coverage and verify keyboard, screen-reader semantics, mobile interaction, Arabic/RTL public behavior, profile preferences, and data persistence contracts.
 - [x] Record verified core-MVP evidence in AUDIT.md and document the follow-up need for an authored question bank/content-management workflow rather than fabricating content.
-- [ ] Save the required checkpoint that publishes the verified core learning-platform update.
+- [x] Save the required checkpoint that publishes the verified core learning-platform update.
 - [x] Implement and test an explicit lesson-completion-to-practice handoff that preserves saved progress and focus-mode safeguards.
 - [x] Expose persisted subject interests and learning methods in Settings and add an authenticated round-trip persistence browser test.
 - [x] Add accessibility assertions for the new onboarding multi-select semantics and data-backed Progress learning states.
