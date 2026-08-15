@@ -127,3 +127,8 @@
 - [x] Expose persisted subject interests and learning methods in Settings and add an authenticated round-trip persistence browser test.
 - [x] Add accessibility assertions for the new onboarding multi-select semantics and data-backed Progress learning states.
 - [x] Correct the MVP audit and task evidence after the remediation checks completed.
+- [x] Audit lesson narration rate inputs, global preference boundaries, and highlight synchronization before adding an isolated lesson speed control.
+- [x] Add an accessible lesson toolbar speed knob that adjusts narration from 0.5× to 2.0× without changing profile preferences or lesson data.
+- [x] Verify that rate adjustments affect only subsequent lesson playback and do not alter progress, focus mode, highlights, onboarding choices, or global Settings state.
+- [x] Add regression coverage and record evidence in AUDIT.md.
+- [ ] Save the required checkpoint that publishes the verified lesson voice-speed control.

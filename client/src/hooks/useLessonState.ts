@@ -30,6 +30,9 @@ export function useLessonState(lessonId: number) {
   const [, navigate] = useLocation();
   const { profile, locale } = useProfile();
   const sounds = useSounds();
+  // Local to this lesson route: changing it must never persist through the
+  // global profile or modify the learner's broader accessibility preferences.
+  const [lessonSpeechRate, setLessonSpeechRate] = useState(profile.speechRate);
 
   const [highlightOffsets, setHighlightOffsets] = useState<number[]>([]);
   const highlightOffsetsRef = useRef<number[]>([]);
@@ -44,7 +47,7 @@ export function useLessonState(lessonId: number) {
     if (wordIndex >= 0) setHighlightIndex(wordIndex);
   }, []);
   const tts = useTTS({
-    rate: profile.speechRate,
+    rate: lessonSpeechRate,
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     voiceHint: profile.voice,
     onBoundary: handleBoundary,
@@ -54,6 +57,11 @@ export function useLessonState(lessonId: number) {
     syncWords: false,
   });
   const isNarrating = tts.isSpeaking;
+  useEffect(() => {
+    // A global Settings update can become the default for the next playback,
+    // but never interrupts an active lesson narration.
+    if (!tts.isSpeaking) setLessonSpeechRate(profile.speechRate);
+  }, [profile.speechRate, tts.isSpeaking]);
   const speakingTextRef = useRef<string>("");
 
   const [sectionIndex, setSectionIndex] = useState(0);
@@ -411,7 +419,7 @@ export function useLessonState(lessonId: number) {
     highlightedWords, highlightIndex, selectedWord, setSelectedWord,
     handleWordClick, contentRef,
     // TTS
-    isNarrating, readAloud, stopNarration, tts,
+    isNarrating, readAloud, stopNarration, tts, lessonSpeechRate, setLessonSpeechRate,
     // Pomodoro
     pomodoroActive, setPomodoroActive, pomodoroDisplay, pomodoroPhase,
     // Utilities

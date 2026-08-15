@@ -20,9 +20,11 @@ test.describe("lesson narration highlighting", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       let active: SpeechSynthesisUtterance | null = null;
+      (window as any).__lessonSpeechRates = [];
       Object.defineProperty(window, "speechSynthesis", { configurable: true, value: {
         getVoices: () => [], addEventListener: () => {}, removeEventListener: () => {}, resume: () => {},
         speak: (utterance: SpeechSynthesisUtterance) => {
+          (window as any).__lessonSpeechRates.push(utterance.rate);
           active = utterance;
           setTimeout(() => utterance.onstart?.(new Event("start") as SpeechSynthesisEvent), 0);
           setTimeout(() => utterance.onboundary?.({ name: "word", charIndex: 0 } as SpeechSynthesisEvent), 90);
@@ -80,6 +82,23 @@ test.describe("lesson narration highlighting", () => {
     await expect(stop).toBeVisible();
     await expect(spokenWord).toHaveText("Alpha");
     await expect(spokenWord).toHaveText("beta", { timeout: 3_000 });
+  });
+
+  test("uses a lesson-only voice speed override without writing global profile preferences", async ({ page }) => {
+    let profileWasUpdated = false;
+    await page.route(/\/api\/trpc\/profile\.update/, route => {
+      profileWasUpdated = true;
+      return route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: {} } } }]) });
+    });
+    await page.goto("/lesson/901");
+    await expect(page.getByRole("group", { name: /lesson voice speed/i })).toBeVisible();
+    const speed = page.locator('[role="slider"]').first();
+    await expect(speed).toHaveAttribute("aria-valuenow", "1");
+    await speed.press("ArrowRight");
+    await expect(speed).toHaveAttribute("aria-valuenow", "1.25");
+    await page.getByRole("button", { name: /read aloud/i }).click();
+    await expect.poll(() => page.evaluate(() => (window as any).__lessonSpeechRates.at(-1))).toBe(1.25);
+    expect(profileWasUpdated).toBe(false);
   });
 
   test("saves final lesson completion before entering the lesson practice flow", async ({ page }) => {

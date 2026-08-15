@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Streamdown } from "streamdown";
@@ -69,7 +70,7 @@ export default function LessonPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target instanceof HTMLElement && e.target.closest('[role="slider"]'))) return;
       // Arrow-key section navigation fires ONLY when focus is on the lesson body or document.body.
       // When focus is inside a toolbar, card grid, or nav bar, useGridNavigation handles the event
       // and calls stopPropagation() — so we never see it here.
@@ -282,6 +283,23 @@ export default function LessonPage() {
               </span>
             </div>
           )}
+          <div className="min-w-[172px] rounded-xl border border-border bg-card px-3 py-1.5" role="group" aria-label={t("Lesson voice speed", "سرعة صوت الدرس")}>
+            <div className="flex items-center justify-between gap-3">
+              <label id="lesson-voice-speed-label" className="text-xs font-medium">{t("Voice speed", "سرعة الصوت")}</label>
+              <output className="text-xs tabular-nums text-muted-foreground" aria-live="polite">{s.lessonSpeechRate.toFixed(2)}×</output>
+            </div>
+            <Slider
+              className="mt-1.5"
+              min={0.5}
+              max={2}
+              step={0.25}
+              value={[s.lessonSpeechRate]}
+              onValueChange={([nextRate]) => s.setLessonSpeechRate(nextRate)}
+              aria-label={t("Lesson voice speed", "سرعة صوت الدرس")}
+              aria-labelledby="lesson-voice-speed-label"
+            />
+            <p className="mt-1 text-[10px] leading-tight text-muted-foreground">{t("Applies to the next Listen in this lesson only.", "تُطبّق على الاستماع التالي في هذا الدرس فقط.")}</p>
+          </div>
           {/* Primary: Focus mode toggle */}
           <Button variant={s.isFocused ? "default" : "outline"} size="sm" onClick={() => setLessonFocusMode(!s.isFocused)} aria-label={t("Toggle focus mode", "وضع التركيز")} aria-pressed={s.isFocused}>
             {s.isFocused ? <Minimize2 className="w-3.5 h-3.5 mr-1.5" /> : <Maximize2 className="w-3.5 h-3.5 mr-1.5" />}
