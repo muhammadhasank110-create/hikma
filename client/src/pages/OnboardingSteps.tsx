@@ -23,7 +23,7 @@ import {
   ChevronLeft, ChevronRight, Check, Volume2
 } from "lucide-react";
 
-export const TOTAL_STEPS = 7;
+export const TOTAL_STEPS = 8;
 
 export type AccessibilityProfile = "blind" | "low_vision" | "adhd" | "dyslexia" | "none" | null;
 
@@ -41,6 +41,10 @@ export interface OnboardingData {
   dailyGoalMinutes: number;
   subjectInterests: string[];
   learningMethods: Array<"visual" | "reading" | "audio" | "practice">;
+  learningGoals: Array<"understand" | "homework" | "exam" | "revision" | "fundamentals" | "practice" | "independent">;
+  explanationPreference: "quick" | "balanced" | "detailed" | "step_by_step";
+  practicePreference: "short" | "mixed" | "exam_style" | "step_by_step";
+  sessionPreference: "short" | "medium" | "long";
 }
 
 const PROFILES = [
@@ -122,6 +126,30 @@ const LEARNING_METHODS = [
   { value: "reading" as const, en: "Read and reflect", ar: "القراءة والتأمل" },
   { value: "audio" as const, en: "Listen aloud", ar: "الاستماع بصوت عالٍ" },
   { value: "practice" as const, en: "Practice questions", ar: "أسئلة تدريبية" },
+];
+
+const EXPLANATION_PREFERENCES = [
+  { value: "quick" as const, en: "Quick and simple", ar: "سريع وبسيط" },
+  { value: "balanced" as const, en: "Balanced", ar: "متوازن" },
+  { value: "detailed" as const, en: "Detailed", ar: "مفصّل" },
+  { value: "step_by_step" as const, en: "Step by step", ar: "خطوة بخطوة" },
+];
+
+const PRACTICE_PREFERENCES = [
+  { value: "short" as const, en: "Short practice", ar: "تدريب قصير" },
+  { value: "mixed" as const, en: "Mixed questions", ar: "أسئلة متنوعة" },
+  { value: "exam_style" as const, en: "Exam-style questions", ar: "أسئلة بنمط الاختبار" },
+  { value: "step_by_step" as const, en: "Guided practice", ar: "تدريب موجّه" },
+];
+
+const LEARNING_GOALS = [
+  { value: "understand" as const, en: "Understand difficult topics", ar: "فهم الموضوعات الصعبة" },
+  { value: "homework" as const, en: "Homework support", ar: "دعم الواجبات" },
+  { value: "exam" as const, en: "Prepare for exams", ar: "التحضير للاختبارات" },
+  { value: "revision" as const, en: "Revision", ar: "المراجعة" },
+  { value: "fundamentals" as const, en: "Build strong foundations", ar: "بناء أساس قوي" },
+  { value: "practice" as const, en: "Practise questions", ar: "التدرّب على الأسئلة" },
+  { value: "independent" as const, en: "Learn independently", ar: "التعلّم باستقلالية" },
 ];
 
 export function profileToSettings(profile: AccessibilityProfile): Partial<OnboardingData> {
@@ -417,6 +445,24 @@ export function StepPersonalisation({ data, onChange, locale }: { data: Onboardi
           })}
         </div>
       </div>
+      <div className="space-y-2">
+        <p className="text-sm font-semibold">{t("When a topic is difficult, what helps most?", "عندما يكون الموضوع صعباً، ما الذي يساعدك أكثر؟")}</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("Explanation preference", "تفضيل الشرح")}>
+          {EXPLANATION_PREFERENCES.map(preference => {
+            const selected = data.explanationPreference === preference.value;
+            return <button key={preference.value} type="button" role="radio" aria-checked={selected} onClick={() => onChange({ explanationPreference: preference.value })} className={`rounded-xl border px-3 py-3 text-left text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}><span className="font-semibold">{t(preference.en, preference.ar)}</span>{selected ? <Check className="float-right size-4" aria-hidden="true" /> : null}</button>;
+          })}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <p className="text-sm font-semibold">{t("How would you like to practise?", "كيف تفضّل التدرّب؟")}</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("Practice preference", "تفضيل التدريب")}>
+          {PRACTICE_PREFERENCES.map(preference => {
+            const selected = data.practicePreference === preference.value;
+            return <button key={preference.value} type="button" role="radio" aria-checked={selected} onClick={() => onChange({ practicePreference: preference.value })} className={`rounded-xl border px-3 py-3 text-left text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}><span className="font-semibold">{t(preference.en, preference.ar)}</span>{selected ? <Check className="float-right size-4" aria-hidden="true" /> : null}</button>;
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -602,9 +648,9 @@ export function StepDailyGoal({ data, onChange, locale }: { data: OnboardingData
               role="radio"
               aria-checked={isSelected}
               tabIndex={isSelected ? 0 : -1}
-              onClick={() => onChange({ dailyGoalMinutes: opt.minutes })}
+              onClick={() => onChange({ dailyGoalMinutes: opt.minutes, sessionPreference: opt.minutes <= 10 ? "short" : opt.minutes <= 30 ? "medium" : "long" })}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ dailyGoalMinutes: opt.minutes }); }
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ dailyGoalMinutes: opt.minutes, sessionPreference: opt.minutes <= 10 ? "short" : opt.minutes <= 30 ? "medium" : "long" }); }
               }}
               className={[
                 "flex flex-col items-center justify-center gap-1 p-4 rounded-xl border-2 text-center transition-all",
@@ -636,6 +682,32 @@ export function StepDailyGoal({ data, onChange, locale }: { data: OnboardingData
           `هدفك: ${selected} دقيقة يومياً. هذا حوالي ${Math.round(selected * 7 / 60 * 10) / 10} ساعات أسبوعياً.`
         )}
       </p>
+    </div>
+  );
+}
+
+export function StepLearningGoals({ data, onChange, locale }: { data: OnboardingData; onChange: (u: Partial<OnboardingData>) => void; locale: string }) {
+  const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  const toggleGoal = (goal: OnboardingData["learningGoals"][number]) => {
+    const selected = data.learningGoals.includes(goal);
+    if (!selected && data.learningGoals.length >= 3) return;
+    onChange({ learningGoals: selected ? data.learningGoals.filter(item => item !== goal) : [...data.learningGoals, goal] });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">{t("What are you working toward?", "ما الذي تعمل من أجله الآن؟")}</h2>
+        <p className="text-sm text-muted-foreground">{t("Choose up to three goals so Hikma can make the next step more useful. You can change these later.", "اختر حتى ثلاثة أهداف لتجعل حكمة خطوتك التالية أكثر فائدة. يمكنك تغييرها لاحقاً.")}</p>
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="group" aria-label={t("Learning goals", "أهداف التعلّم")}>
+        {LEARNING_GOALS.map(goal => {
+          const selected = data.learningGoals.includes(goal.value);
+          const disabled = !selected && data.learningGoals.length >= 3;
+          return <button key={goal.value} type="button" aria-pressed={selected} disabled={disabled} onClick={() => toggleGoal(goal.value)} className={`rounded-xl border px-3 py-3 text-left text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}><span className="font-semibold">{t(goal.en, goal.ar)}</span>{selected ? <Check className="float-right size-4" aria-hidden="true" /> : null}</button>;
+        })}
+      </div>
+      <p className="text-center text-xs text-muted-foreground" role="status">{data.learningGoals.length ? t(`${data.learningGoals.length} goal${data.learningGoals.length === 1 ? "" : "s"} selected`, `تم اختيار ${data.learningGoals.length} أهداف`) : t("Choose any goals that matter to you.", "اختر الأهداف التي تهمك.")}</p>
     </div>
   );
 }

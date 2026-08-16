@@ -66,6 +66,12 @@ export function registerTutorStreamRoute(app: Express) {
           tier?: string | null;
           tashkeel: boolean;
           numerals: string;
+          subjectInterests?: string[];
+          learningMethods?: string[];
+          learningGoals?: string[];
+          explanationPreference?: "quick" | "balanced" | "detailed" | "step_by_step";
+          practicePreference?: "short" | "mixed" | "exam_style" | "step_by_step";
+          sessionPreference?: "short" | "medium" | "long";
         };
         conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
       };
@@ -85,6 +91,14 @@ Learner profile:
 - Tier: ${profile?.tier ?? "standard"}
 - Tashkeel: ${profile?.tashkeel ?? false}
 - Numerals: ${profile?.numerals ?? "western"}
+- Priority subjects: ${profile?.subjectInterests?.join(", ") || "not set"}
+- Helpful approaches: ${profile?.learningMethods?.join(", ") || "not set"}
+- Current learning goals: ${profile?.learningGoals?.join(", ") || "not set"}
+- Explanation preference: ${profile?.explanationPreference ?? "balanced"}
+- Practice preference: ${profile?.practicePreference ?? "mixed"}
+- Session preference: ${profile?.sessionPreference ?? "medium"}
+
+Use these as adjustable choices, not fixed labels. When they are relevant, honour them by changing explanation depth, structure, examples, modality, or practice format. Prioritise actual learner questions and demonstrated understanding over stated preferences, and never mention profile internals unless the learner asks to review preferences.
 `;
       const studySources = await retrieveCurrentStudySources(message);
 

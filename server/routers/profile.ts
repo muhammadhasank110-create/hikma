@@ -14,6 +14,7 @@ export const profileRouter = router({
     const row = { ...(result[0] as any) };
     row.subjectInterests = row.subjectInterests ?? [];
     row.learningMethods = row.learningMethods ?? [];
+    row.learningGoals = row.learningGoals ?? [];
     // Migrate legacy mode values stored before the enum was renamed
     const modeAliases: Record<string, string> = { audio: "audio_first" };
     if (row.mode && modeAliases[row.mode]) row.mode = modeAliases[row.mode];
@@ -54,6 +55,10 @@ export const profileRouter = router({
       yearGroup: z.string().optional(),
       subjectInterests: z.array(z.string().max(80)).max(12).optional(),
       learningMethods: z.array(z.enum(["visual", "reading", "audio", "practice"])).max(4).optional(),
+      learningGoals: z.array(z.enum(["understand", "homework", "exam", "revision", "fundamentals", "practice", "independent"])).max(3).optional(),
+      explanationPreference: z.enum(["quick", "balanced", "detailed", "step_by_step"]).optional(),
+      practicePreference: z.enum(["short", "mixed", "exam_style", "step_by_step"]).optional(),
+      sessionPreference: z.enum(["short", "medium", "long"]).optional(),
       eccEnabled: z.boolean().optional(),
       eccAreas: z.array(z.string()).optional(),
       inputMethod: z.enum(["keyboard", "pointer", "switch", "voice", "braille_display"]).optional(),

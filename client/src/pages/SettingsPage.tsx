@@ -31,6 +31,15 @@ export default function SettingsPage() {
     { value: "audio" as const, en: "Listen aloud", ar: "الاستماع بصوت عالٍ" },
     { value: "practice" as const, en: "Practice questions", ar: "أسئلة تدريبية" },
   ];
+  const learningGoals = [
+    { value: "understand" as const, en: "Understand difficult topics", ar: "فهم الموضوعات الصعبة" },
+    { value: "homework" as const, en: "Homework support", ar: "دعم الواجبات" },
+    { value: "exam" as const, en: "Prepare for exams", ar: "التحضير للاختبارات" },
+    { value: "revision" as const, en: "Revision", ar: "المراجعة" },
+    { value: "fundamentals" as const, en: "Build strong foundations", ar: "بناء أساس قوي" },
+    { value: "practice" as const, en: "Practise questions", ar: "التدرّب على الأسئلة" },
+    { value: "independent" as const, en: "Learn independently", ar: "التعلّم باستقلالية" },
+  ];
 
   const Section = ({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) => (
     <Card>
@@ -243,7 +252,7 @@ export default function SettingsPage() {
             {[10, 20, 30, 45, 60, 90].map(mins => (
               <button
                 key={mins}
-                onClick={() => updateProfile({ dailyGoalMinutes: mins })}
+                onClick={() => updateProfile({ dailyGoalMinutes: mins, sessionPreference: mins <= 10 ? "short" : mins <= 30 ? "medium" : "long" })}
                 className={[
                   "py-2 px-3 rounded-lg border text-sm font-medium transition-colors",
                   profile.dailyGoalMinutes === mins
@@ -266,7 +275,7 @@ export default function SettingsPage() {
         </div>
       </Section>
 
-      <Section icon={Accessibility} title={t("Learning priorities", "أولويات التعلّم")}>
+      <Section icon={Accessibility} title={t("Learning preferences", "تفضيلات التعلّم")}>
         <div className="space-y-2">
           <p className="text-sm font-medium">{t("Subjects to prioritise", "المواد ذات الأولوية")}</p>
           <div className="flex flex-wrap gap-2" role="group" aria-label={t("Subjects to prioritise", "المواد ذات الأولوية")}>
@@ -285,6 +294,39 @@ export default function SettingsPage() {
             })}
           </div>
         </div>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t("Current goals", "الأهداف الحالية")}</p>
+          <p className="text-xs text-muted-foreground">{t("Choose up to three. These help shape your next learning recommendation.", "اختر حتى ثلاثة. تساعد هذه على تشكيل توصيتك التعليمية التالية.")}</p>
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t("Current learning goals", "أهداف التعلّم الحالية")}>
+            {learningGoals.map(goal => {
+              const selected = profile.learningGoals.includes(goal.value);
+              const disabled = !selected && profile.learningGoals.length >= 3;
+              return <button key={goal.value} type="button" aria-pressed={selected} disabled={disabled} onClick={() => updateProfile({ learningGoals: selected ? profile.learningGoals.filter(item => item !== goal.value) : [...profile.learningGoals, goal.value] })} className={`rounded-xl border px-3 py-2 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>{t(goal.en, goal.ar)}</button>;
+            })}
+          </div>
+        </div>
+        <Row label={t("Explanation depth", "عمق الشرح")}>
+          <Select value={profile.explanationPreference} onValueChange={(value: any) => updateProfile({ explanationPreference: value })}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="quick">{t("Quick and simple", "سريع وبسيط")}</SelectItem>
+              <SelectItem value="balanced">{t("Balanced", "متوازن")}</SelectItem>
+              <SelectItem value="detailed">{t("Detailed", "مفصّل")}</SelectItem>
+              <SelectItem value="step_by_step">{t("Step by step", "خطوة بخطوة")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </Row>
+        <Row label={t("Practice style", "أسلوب التدريب")}>
+          <Select value={profile.practicePreference} onValueChange={(value: any) => updateProfile({ practicePreference: value })}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="short">{t("Short practice", "تدريب قصير")}</SelectItem>
+              <SelectItem value="mixed">{t("Mixed questions", "أسئلة متنوعة")}</SelectItem>
+              <SelectItem value="exam_style">{t("Exam-style questions", "أسئلة بنمط الاختبار")}</SelectItem>
+              <SelectItem value="step_by_step">{t("Guided practice", "تدريب موجّه")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </Row>
       </Section>
 
             {/* Cognition */}

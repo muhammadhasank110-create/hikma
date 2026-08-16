@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useRef, useEffect } from "react";
-import { Bot, TrendingUp, Layers, BookOpen, ChevronRight, Zap, Star, Activity } from "lucide-react";
+import { Bot, TrendingUp, BookOpen, ChevronRight, Zap, Star, Activity } from "lucide-react";
 import { useSpeech } from "@/contexts/SpeechContext";
 import { useHikmaMotion } from "@/hooks/useHikmaMotion";
 import { StatusSkeleton } from "@/components/StatusSkeleton";
@@ -60,6 +60,11 @@ export default function Dashboard() {
     lowVision: t("Low Vision Mode", "وضع ضعف البصر"),
     standard: t("Standard Mode", "الوضع القياسي"),
   };
+  const recommendationNote = learnerSummary?.recommendationSource === "priority_subject"
+    ? t("Recommended from the subjects you chose to prioritise.", "موصى به من المواد التي اخترت إعطاءها أولوية.")
+    : learnerSummary?.recommendationSource === "continue"
+      ? t("Continue where you last left off.", "تابع من حيث توقفت آخر مرة.")
+      : t("A clear next step to help you get started.", "خطوة تالية واضحة لمساعدتك على البدء.");
 
   const stats = [
     { icon: Star, label: t("Mastered", "تم إتقانه"), value: learnerSummary?.stats.masteredConcepts ?? 0, suffix: "", color: "from-amber-100 to-amber-50 dark:from-amber-500/20 dark:to-amber-500/5", iconColor: "text-amber-600 dark:text-amber-400" },
@@ -71,7 +76,6 @@ export default function Dashboard() {
   const quickActions = [
     { icon: Bot, title: t("Hikma AI", "حكمة AI"), desc: t("Ask anything. Get guided, not told.", "اسأل أي شيء. احصل على توجيه."), href: "/tutor", color: "from-emerald-100 to-emerald-50 dark:from-emerald-500/15 dark:to-emerald-500/5", iconBg: "bg-emerald-500/20", iconColor: "text-emerald-700 dark:text-emerald-300" },
     { icon: TrendingUp, title: t("My Progress", "تقدمي"), desc: t("Track your mastery journey.", "تتبع رحلة إتقانك."), href: "/progress", color: "from-blue-100 to-blue-50 dark:from-blue-500/15 dark:to-blue-500/5", iconBg: "bg-blue-500/20", iconColor: "text-blue-700 dark:text-blue-300" },
-    { icon: Layers, title: t("ECC", "المنهج الموسّع"), desc: t("9 foundational life skills.", "9 مهارات حياتية أساسية."), href: "/ecc", color: "from-purple-100 to-purple-50 dark:from-purple-500/15 dark:to-purple-500/5", iconBg: "bg-purple-500/20", iconColor: "text-purple-700 dark:text-purple-300" },
   ];
 
   return (
@@ -104,6 +108,7 @@ export default function Dashboard() {
               <BookOpen className="size-4" aria-hidden="true" />{learnerSummary?.continueLesson ? t(`Continue ${learnerSummary.continueLesson.titleEn}`, `تابع ${learnerSummary.continueLesson.titleAr}`) : t("Choose a subject", "اختر مادة")}
               <ChevronRight className="size-4" aria-hidden="true" />
             </button>
+            <p className="mt-2 max-w-md text-xs leading-relaxed text-white/70">{recommendationNote}</p>
           </div>
           <div className="grid size-14 place-items-center rounded-2xl border border-white/15 bg-white/8"><HikmaLogo surface="dark" size={38} decorative /></div>
           </div>

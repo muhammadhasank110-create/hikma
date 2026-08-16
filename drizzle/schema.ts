@@ -82,6 +82,10 @@ export const learnerProfiles = mysqlTable("learner_profiles", {
   accessArrangements: json("accessArrangements").$type<string[]>().default([]),
   subjectInterests: json("subjectInterests").$type<string[]>(),
   learningMethods: json("learningMethods").$type<string[]>(),
+  learningGoals: json("learningGoals").$type<string[]>(),
+  explanationPreference: mysqlEnum("explanationPreference", ["quick", "balanced", "detailed", "step_by_step"]).default("balanced").notNull(),
+  practicePreference: mysqlEnum("practicePreference", ["short", "mixed", "exam_style", "step_by_step"]).default("mixed").notNull(),
+  sessionPreference: mysqlEnum("sessionPreference", ["short", "medium", "long"]).default("medium").notNull(),
 
   // Input
   inputMethod: mysqlEnum("inputMethod", ["keyboard", "pointer", "switch", "voice", "braille_display"]).default("keyboard").notNull(),

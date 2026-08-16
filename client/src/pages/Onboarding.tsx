@@ -28,7 +28,7 @@ import { AnimatedProgress } from "@/components/PageTransition";
 import { useHikmaMotion } from "@/hooks/useHikmaMotion";
 import {
   StepAccessibility, StepLanguage, StepCurriculum,
-  StepPersonalisation, StepVoicePreferences, StepVoice, StepDailyGoal,
+  StepPersonalisation, StepVoicePreferences, StepVoice, StepDailyGoal, StepLearningGoals,
   type OnboardingData, TOTAL_STEPS,
 } from "./OnboardingSteps";
 
@@ -60,6 +60,10 @@ export default function Onboarding() {
     dailyGoalMinutes: 20,
     subjectInterests: [],
     learningMethods: [],
+    learningGoals: [],
+    explanationPreference: "balanced",
+    practicePreference: "mixed",
+    sessionPreference: "medium",
   });
 
   const updateData = useCallback((updates: Partial<OnboardingData>) => {
@@ -134,6 +138,12 @@ export default function Onboarding() {
       dailyGoalMinutes: data.dailyGoalMinutes,
       subjectInterests: data.subjectInterests,
       learningMethods: data.learningMethods,
+      learningGoals: data.learningGoals,
+      explanationPreference: data.explanationPreference,
+      practicePreference: data.practicePreference,
+      sessionPreference: data.sessionPreference,
+      onboardingComplete: true,
+      onboardingStep: TOTAL_STEPS,
     };
     try {
       const effectiveLocale = (data.locale === "both" ? "en" : data.locale) as "en" | "ar";
@@ -167,7 +177,7 @@ export default function Onboarding() {
     }
   };
 
-  const stepTitles = ["Accessibility", "Language", "Curriculum", "Personalise", "Voice & Audio", "Daily Goal", "Preview"];
+  const stepTitles = ["Accessibility", "Language", "Curriculum", "Personalise", "Goals", "Voice & Audio", "Daily Goal", "Preview"];
 
   return (
     <div className="min-h-screen bg-background flex flex-col" dir={data.locale === "ar" ? "rtl" : "ltr"}>
@@ -226,9 +236,10 @@ export default function Onboarding() {
               {step === 2 && <StepLanguage data={data} onChange={updateData} locale={data.locale} />}
               {step === 3 && <StepCurriculum data={data} onChange={updateData} locale={data.locale} />}
               {step === 4 && <StepPersonalisation data={data} onChange={updateData} locale={data.locale} />}
-              {step === 5 && <StepVoicePreferences data={data} onChange={updateData} locale={data.locale} />}
-              {step === 6 && <StepDailyGoal data={data} onChange={updateData} locale={data.locale} />}
-              {step === 7 && <StepVoice data={data} locale={data.locale} />}
+              {step === 5 && <StepLearningGoals data={data} onChange={updateData} locale={data.locale} />}
+              {step === 6 && <StepVoicePreferences data={data} onChange={updateData} locale={data.locale} />}
+              {step === 7 && <StepDailyGoal data={data} onChange={updateData} locale={data.locale} />}
+              {step === 8 && <StepVoice data={data} locale={data.locale} />}
             </motion.div>
           </AnimatePresence>
         </div>

@@ -38,11 +38,11 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", labelEn: "Home", labelAr: "الرئيسية", icon: Home },
-  { href: "/subjects/1", labelEn: "Subjects", labelAr: "المواد", icon: Library },
-  { href: "/tutor", labelEn: "Hikma AI", labelAr: "حكمة AI", icon: Sparkles },
+  { href: "/subjects/1", labelEn: "Learn", labelAr: "تعلّم", icon: Library },
+  { href: "/tutor", labelEn: "AI Tutor", labelAr: "المعلّم الذكي", icon: Sparkles },
   { href: "/progress", labelEn: "Progress", labelAr: "تقدمي", icon: BarChart3 },
   { href: "/ecc", labelEn: "ECC", labelAr: "المنهج الموسّع", icon: Brain },
-  { href: "/exam-skills", labelEn: "Exam Skills", labelAr: "مهارات الامتحان", icon: FileText },
+  { href: "/exam-skills", labelEn: "Practice", labelAr: "تدريب", icon: FileText },
   { href: "/teacher", labelEn: "Teacher", labelAr: "المعلم", icon: GraduationCap, roles: ["teacher", "admin"] },
   { href: "/guardian", labelEn: "Guardian", labelAr: "ولي الأمر", icon: Users, roles: ["guardian", "admin"] },
   { href: "/admin", labelEn: "Admin", labelAr: "الإدارة", icon: Shield, roles: ["admin"] },
@@ -352,7 +352,7 @@ function TopNav({ onMenuOpen, onSearchOpen, visibleItems }: { onMenuOpen: () => 
 
           {/* Settings */}
           <Button asChild variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-muted/50 w-8 h-8">
-            <Link href="/settings" aria-label={t("Settings", "الإعدادات")}>
+            <Link href="/settings" aria-label={t("Profile and settings", "الملف الشخصي والإعدادات")}>
               <Settings className="w-4 h-4" />
             </Link>
           </Button>

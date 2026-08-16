@@ -57,6 +57,49 @@ test.describe("authenticated tutor narration", () => {
     await expect.poll(() => persistedInterest).toBe(true);
   });
 
+  test("persists an editable learning goal from the Learning preferences settings", async ({ page }) => {
+    let persistedGoal = false;
+    await page.route(/\/api\/trpc\/profile\.update/, route => {
+      persistedGoal = route.request().postData()?.includes("exam") ?? false;
+      return route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: {} } } }]) });
+    });
+    await page.goto("/settings");
+    const goals = page.getByRole("group", { name: "Current learning goals" });
+    const examGoal = goals.getByRole("button", { name: "Prepare for exams" });
+    await expect(examGoal).toHaveAttribute("aria-pressed", "false");
+    await examGoal.click();
+    await expect(examGoal).toHaveAttribute("aria-pressed", "true");
+    await expect.poll(() => persistedGoal).toBe(true);
+  });
+
+  test("shows the preference-weighted recommendation reason beside the primary learning action", async ({ page }) => {
+    await page.route(/\/api\/trpc\/progress\.learnerSummary/, route => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([{ result: { data: { json: {
+        stats: { masteredConcepts: 1, inProgressLessons: 0, completedLessons: 0, totalLessons: 3 },
+        continueLesson: { lessonId: 71, titleEn: "Algebra foundations", titleAr: "أساسيات الجبر", topicEn: "Algebra", topicAr: "الجبر", subjectEn: "Mathematics", subjectAr: "الرياضيات", status: "not_started", updatedAt: new Date().toISOString() },
+        recommendationSource: "priority_subject",
+        recentLessons: [],
+        weakAreas: [],
+      } } } }]),
+    }));
+    await page.goto("/dashboard");
+    await expect(page.getByRole("button", { name: /continue algebra foundations/i })).toBeVisible();
+    await expect(page.getByText("Recommended from the subjects you chose to prioritise.")).toBeVisible();
+  });
+
+  test("presents the new learning-goals step in Arabic after the learner selects Arabic", async ({ page }) => {
+    await page.goto("/onboarding");
+    await page.getByRole("radio", { name: /no specific need/i }).click();
+    await page.getByRole("button", { name: "Go to next step" }).click();
+    await page.getByRole("radio", { name: "Arabic: All content in Arabic" }).click();
+    await page.getByRole("button", { name: /الانتقال للخطوة التالية/ }).click();
+    await page.getByRole("button", { name: /الانتقال للخطوة التالية/ }).click();
+    await page.getByRole("button", { name: /الانتقال للخطوة التالية/ }).click();
+    await expect(page.getByRole("heading", { name: "ما الذي تعمل من أجله الآن؟" })).toBeVisible();
+    await expect(page.getByRole("group", { name: "أهداف التعلّم" })).toBeVisible();
+  });
+
   test("renders every command route once without duplicate-key console errors", async ({ page }, testInfo) => {
     const duplicateKeyErrors: string[] = [];
     page.on("console", message => {
@@ -75,7 +118,7 @@ test.describe("authenticated tutor narration", () => {
     const palette = page.getByRole("dialog");
     await expect(palette.getByPlaceholder(/search lessons, topics, or subjects/i)).toBeVisible();
     await expect(palette.getByText("ECC", { exact: true })).toHaveCount(1);
-    await expect(palette.getByText("Exam Skills", { exact: true })).toHaveCount(1);
+    await expect(palette.getByText("Practice", { exact: true })).toHaveCount(1);
     await expect.poll(() => duplicateKeyErrors).toEqual([]);
   });
 

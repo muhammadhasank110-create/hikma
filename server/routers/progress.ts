@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { concepts, lessons, mastery, parkedThoughts, progress, sessionStates, subjects, topics } from "../../drizzle/schema";
+import { concepts, learnerProfiles, lessons, mastery, parkedThoughts, progress, sessionStates, subjects, topics } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -127,12 +127,13 @@ export const progressRouter = router({
       };
     }
 
-    const [allLessons, allTopics, allSubjects, learnerProgress, learnerMastery] = await Promise.all([
+    const [allLessons, allTopics, allSubjects, learnerProgress, learnerMastery, profileRows] = await Promise.all([
       db.select().from(lessons),
       db.select().from(topics),
       db.select().from(subjects),
       db.select().from(progress).where(eq(progress.userId, ctx.user.id)).orderBy(desc(progress.updatedAt)),
       db.select().from(mastery).where(eq(mastery.userId, ctx.user.id)),
+      db.select().from(learnerProfiles).where(eq(learnerProfiles.userId, ctx.user.id)).limit(1),
     ]);
 
     const topicById = new Map(allTopics.map(topic => [topic.id, topic]));
@@ -160,8 +161,22 @@ export const progressRouter = router({
       };
     };
 
-    const continueLesson = describeLesson(inProgress[0]?.lessonId)
-      ?? allLessons.map(lesson => describeLesson(lesson.id)).find((lesson): lesson is NonNullable<typeof lesson> => Boolean(lesson && !completedLessonIds.has(lesson.lessonId)));
+    const availableLessons = allLessons
+      .map(lesson => describeLesson(lesson.id))
+      .filter((lesson): lesson is NonNullable<typeof lesson> => Boolean(lesson && !completedLessonIds.has(lesson.lessonId)));
+    const prioritySubjects = new Set((profileRows[0]?.subjectInterests ?? []).map(subject => subject.toLowerCase()));
+    const isPrioritySubject = (lesson: NonNullable<ReturnType<typeof describeLesson>>) => {
+      const subject = lesson.subjectEn.toLowerCase();
+      return (prioritySubjects.has("mathematics") && /math/.test(subject))
+        || (prioritySubjects.has("science") && /science|biology|chemistry|physics/.test(subject))
+        || (prioritySubjects.has("english") && /english/.test(subject))
+        || (prioritySubjects.has("arabic") && /arabic/.test(subject))
+        || (prioritySubjects.has("exam_skills") && /exam/.test(subject));
+    };
+    const inProgressLesson = describeLesson(inProgress[0]?.lessonId);
+    const priorityLesson = availableLessons.find(isPrioritySubject);
+    const continueLesson = inProgressLesson ?? priorityLesson ?? availableLessons[0];
+    const recommendationSource = inProgressLesson ? "continue" : priorityLesson ? "priority_subject" : "next";
 
     const recentLessons = learnerProgress
       .map(item => describeLesson(item.lessonId))
@@ -199,6 +214,7 @@ export const progressRouter = router({
         totalLessons: allLessons.length,
       },
       continueLesson: continueLesson ?? null,
+      recommendationSource,
       recentLessons,
       weakAreas,
     };

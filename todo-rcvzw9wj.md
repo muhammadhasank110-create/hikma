@@ -146,3 +146,7 @@
 - [x] Review the supplied map recording and the existing Visual Learning Map component to identify the exact selected/related/background styling surface.
 - [x] Refine only the Visual Learning Map state styling so selected, directly related, and background concepts/connections have clear non-colour-only hierarchy without changing interaction or data logic.
 - [x] Verify default, hover, focus, selected, connection, high-contrast, reduced-motion, keyboard, desktop/mobile, and English/Arabic map-state behavior; record evidence and publish the styling-only correction.
+- [x] Read the complete personalization/minimalist UX specification and audit the existing home, navigation, onboarding, profile, settings, recommendation, and tutor behavior against it.
+- [x] Define a minimal, durable preference-to-decision model using only established profile/data structures, identifying which requested capabilities already work and which gaps are genuinely actionable.
+- [x] Implement only the verified, high-value personalization and minimalist UX gaps while preserving accessibility, existing progress, lesson, practice, tutor, and navigation contracts.
+- [x] Add focused regression coverage and verify persistence, personalized recommendations, settings effects, English/Arabic RTL, keyboard, accessibility profiles, desktop/mobile, type/unit/browser checks; record evidence and publish.

@@ -37,6 +37,10 @@ export interface LearnerProfileState {
   curriculum: string;
   subjectInterests: string[];
   learningMethods: Array<"visual" | "reading" | "audio" | "practice">;
+  learningGoals: Array<"understand" | "homework" | "exam" | "revision" | "fundamentals" | "practice" | "independent">;
+  explanationPreference: "quick" | "balanced" | "detailed" | "step_by_step";
+  practicePreference: "short" | "mixed" | "exam_style" | "step_by_step";
+  sessionPreference: "short" | "medium" | "long";
   tier: string | null;
   eccEnabled: boolean;
   inputMethod: "keyboard" | "pointer" | "switch" | "voice" | "braille_display";
@@ -75,6 +79,10 @@ const defaultProfile: LearnerProfileState = {
   curriculum: "none",
   subjectInterests: [],
   learningMethods: [],
+  learningGoals: [],
+  explanationPreference: "balanced",
+  practicePreference: "mixed",
+  sessionPreference: "medium",
   tier: null,
   eccEnabled: false,
   inputMethod: "keyboard",
@@ -172,6 +180,12 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       ...(db.numerals && { numerals: db.numerals }),
       ...(db.syllableSplit != null && { syllableSplit: Boolean(db.syllableSplit) }),
       ...(db.curriculum && { curriculum: db.curriculum }),
+      ...(Array.isArray(db.subjectInterests) && { subjectInterests: db.subjectInterests }),
+      ...(Array.isArray(db.learningMethods) && { learningMethods: db.learningMethods }),
+      ...(Array.isArray(db.learningGoals) && { learningGoals: db.learningGoals }),
+      ...(db.explanationPreference && { explanationPreference: db.explanationPreference }),
+      ...(db.practicePreference && { practicePreference: db.practicePreference }),
+      ...(db.sessionPreference && { sessionPreference: db.sessionPreference }),
       ...(db.tier !== undefined && { tier: db.tier }),
       ...(db.eccEnabled != null && { eccEnabled: Boolean(db.eccEnabled) }),
       ...(db.inputMethod && { inputMethod: db.inputMethod }),
