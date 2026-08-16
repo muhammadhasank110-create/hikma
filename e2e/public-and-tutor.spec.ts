@@ -15,6 +15,35 @@ test.describe("public entry and protected tutor", () => {
     await expect(page.locator("h1")).toContainText(/learning system that respects your attention/i);
   });
 
+  test("uses a clear, accessible shared HIKMA brand link with an uncropped public mark", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(1_800);
+    const homeBrand = page.getByRole("link", { name: "Hikma home" });
+    await expect(homeBrand).toBeVisible();
+    const logo = homeBrand.locator('[data-hikma-logo="compact"] img');
+    await expect(logo).toHaveAttribute("src", /hikma-icon-dark\.png/);
+    const box = await logo.boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(40);
+    expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(316 / 242, 1);
+  });
+
+  test("keeps the shared authentication brand substantial and contrast-safe", async ({ page }, testInfo) => {
+    for (const route of ["/signin", "/signup"]) {
+      await page.goto(route);
+      const brand = testInfo.project.name === "mobile"
+        ? page.locator('.lg\\:hidden [data-hikma-logo="compact"]')
+        : page.getByRole("link", { name: "Hikma home" });
+      await expect(brand).toBeVisible();
+      const logo = testInfo.project.name === "mobile"
+        ? brand.locator("img")
+        : brand.locator('[data-hikma-logo="compact"] img');
+      await expect(logo).toHaveAttribute("src", /hikma-icon-white\.png/);
+      const box = await logo.boundingBox();
+      expect(box?.height).toBeGreaterThanOrEqual(testInfo.project.name === "mobile" ? 44 : 52);
+      expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(316 / 242, 1);
+    }
+  });
+
   test("exposes a keyboard skip link after the automatic entry", async ({ page }) => {
     await page.goto("/");
     await page.waitForTimeout(1_800);
@@ -36,6 +65,17 @@ test.describe("public entry and protected tutor", () => {
     const heading = page.getByRole("heading", { name: /learning system that respects your attention/i });
     await expect(heading).toBeVisible({ timeout: 4_000 });
     const box = await heading.boundingBox();
+    expect(box).not.toBeNull();
+    expect((box?.x ?? -1) >= 0).toBeTruthy();
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(375);
+  });
+
+  test("keeps the compact shared public brand within the mobile header", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "This assertion targets the narrow viewport project.");
+    await page.goto("/");
+    await page.waitForTimeout(1_800);
+    const brand = page.getByRole("link", { name: "Hikma home" });
+    const box = await brand.boundingBox();
     expect(box).not.toBeNull();
     expect((box?.x ?? -1) >= 0).toBeTruthy();
     expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(375);

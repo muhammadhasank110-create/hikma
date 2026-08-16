@@ -181,11 +181,8 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-background flex flex-col" dir={data.locale === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
-      <div className="border-b border-border bg-card px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <HikmaLogo surface="light" variant="wordmark" width={120} alt="Hikma" />
-          <span className="font-bold text-sm">Hikma حكمة</span>
-        </div>
+      <div className="border-b border-border bg-card px-4 py-4 flex items-center justify-between sm:px-6">
+        <HikmaLogo surface="light" variant="compact" size={52} alt={data.locale === "ar" ? "شعار حكمة" : "Hikma logo"} imageClassName="h-11 w-auto sm:h-13" />
         <button
           onClick={() => { speech.stop(); navigate("/dashboard"); }}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"

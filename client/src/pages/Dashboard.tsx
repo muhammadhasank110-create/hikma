@@ -110,7 +110,7 @@ export default function Dashboard() {
             </button>
             <p className="mt-2 max-w-md text-xs leading-relaxed text-white/70">{recommendationNote}</p>
           </div>
-          <div className="grid size-14 place-items-center rounded-2xl border border-white/15 bg-white/8"><HikmaLogo surface="dark" size={38} decorative /></div>
+          <div className="grid size-16 place-items-center rounded-2xl border border-white/15 bg-white/8"><HikmaLogo surface="dark" size={46} decorative imageClassName="h-11 w-auto" /></div>
           </div>
         </div>
       </motion.div>

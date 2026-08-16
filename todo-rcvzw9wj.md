@@ -154,3 +154,7 @@
 - [x] Define a source-of-truth subject list and retain only onboarding questions that are saved and consumed by real existing features; identify voice-command root causes and feature-parity gaps.
 - [x] Implement only verified source-of-truth subject rendering, Arabic/RTL accuracy, feature-aware onboarding, and end-to-end voice-command corrections without inventing unavailable capabilities.
 - [x] Add focused regression coverage and verify subject availability, preference persistence, English/Arabic RTL, keyboard, microphone permission/unavailable/error states, command parsing/execution/feedback, type/unit/browser suites; record evidence and publish.
+- [x] Read the complete logo specification and audit every existing HIKMA logo asset, current logo component, desktop/mobile header, public home, onboarding, loading, and favicon render location for real sizing, asset, and constraint issues.
+- [x] Define or refine one shared HIKMA logo source with controlled full, compact, and icon variants that preserves the approved asset, aspect ratio, accessible name, and theme visibility.
+- [x] Apply only localized responsive branding, sizing, spacing, and placement corrections to verified logo surfaces without changing navigation structure, learning functionality, or unrelated styling.
+- [x] Add focused coverage and verify sharpness, aspect ratio, light/dark/high-contrast visibility, reduced motion, keyboard access, public/app/onboarding/loading/mobile layouts, type/unit/browser suites; record evidence and publish.

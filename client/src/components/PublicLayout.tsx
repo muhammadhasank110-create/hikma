@@ -26,9 +26,8 @@ export function PublicLayout({ children, active, backdrop = "forest" }: PublicLa
     <div className="premium-public relative min-h-screen overflow-x-clip" dir={locale === "ar" ? "rtl" : "ltr"}>
       <AmbientBackdrop variant={backdrop} />
       <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-5 py-5 sm:px-8 lg:px-10">
-        <Link href={publicHref("/")} className="group flex items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800" aria-label={t("Hikma home", "الصفحة الرئيسية لحكمة")}>
-          <span className="premium-surface grid size-10 place-items-center rounded-2xl border transition-transform duration-200 group-hover:-translate-y-0.5"><HikmaLogo surface="light" size={30} alt="Hikma logo" /></span>
-          <span className="leading-tight"><strong className="premium-ink block text-sm tracking-[0.18em]">HIKMA</strong><span className="premium-muted text-xs">حكمة</span></span>
+        <Link href={publicHref("/")} className="group rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800" aria-label={t("Hikma home", "الصفحة الرئيسية لحكمة")}>
+          <HikmaLogo variant="compact" surface="light" size={44} decorative imageClassName="h-10 w-auto sm:h-11" className="transition-transform duration-200 group-hover:-translate-y-0.5" />
         </Link>
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <nav className="flex max-w-[13rem] items-center gap-1 overflow-x-auto rounded-full border border-emerald-950/8 bg-white/60 p-1 text-xs font-semibold shadow-[0_8px_20px_rgba(25,59,37,0.06)] sm:max-w-none sm:text-sm" aria-label={t("Public navigation", "التنقّل العام")}>

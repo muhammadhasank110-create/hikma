@@ -233,13 +233,8 @@ function TopNav({ onMenuOpen, onSearchOpen, visibleItems }: { onMenuOpen: () => 
     >
       <div className="container flex items-center justify-between h-[4.5rem] gap-4">
         {/* Logo */}
-        <Link href="/dashboard" aria-label="Go to dashboard" className="flex items-center gap-3 flex-shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300 rounded px-1 group">
-          {/* Logo — white icon on dark nav */}
-          <HikmaLogo surface="dark" size={52} decorative />
-          <span className="flex flex-col leading-none select-none">
-            <span className="text-white font-bold text-sm" style={{ letterSpacing: "0.2em" }}>HIKMA</span>
-            <span className="text-white/70 font-light text-xs" style={{ letterSpacing: "0.08em" }}>حكمة</span>
-          </span>
+        <Link href="/dashboard" aria-label={t("Hikma home", "الصفحة الرئيسية لحكمة")} className="flex-shrink-0 rounded px-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-300">
+          <HikmaLogo variant="compact" surface="dark" size={56} decorative imageClassName="h-12 w-auto lg:h-14" />
         </Link>
 
         {/* Desktop nav links */}
@@ -511,7 +506,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <HikmaLogo surface="dark" size={44} alt="Hikma" />
+                <HikmaLogo variant="compact" surface="dark" size={48} alt="Hikma" imageClassName="h-12 w-auto" />
               </div>
               <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)} className="text-white hover:bg-muted/50 w-8 h-8">
                 <X className="w-4 h-4" />

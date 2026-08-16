@@ -42,18 +42,14 @@ export default function SignInPage() {
           style={{ background: "radial-gradient(circle, rgba(45,100,55,0.25) 0%, transparent 70%)" }}
           animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }} />
         {/* Falcon */}
-        <motion.img src="/img/hikma-wordmark.png" alt="" aria-hidden="true"
-          className="absolute bottom-0 right-0 w-[70%] object-contain opacity-15 pointer-events-none select-none"
-          initial={{ opacity: 0, y: 40 }} animate={{ opacity: 0.15, y: 0 }} transition={{ duration: 1.2, ease: "easeOut" }}
-          onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+        <motion.div className="absolute bottom-0 right-0 w-[70%] opacity-15 pointer-events-none select-none"
+          initial={{ opacity: 0, y: 40 }} animate={{ opacity: 0.15, y: 0 }} transition={{ duration: 1.2, ease: "easeOut" }}>
+          <HikmaLogo variant="full" surface="dark" width={420} decorative imageClassName="w-full h-auto" />
+        </motion.div>
         {/* Logo */}
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-          <a href="/" className="flex items-center gap-3 group">
-            <HikmaLogo surface="dark" size={44} decorative />
-            <div>
-              <p className="font-black text-lg text-white leading-none">Hikma</p>
-              <p className="text-[10px] text-white/40 tracking-widest">حكمة</p>
-            </div>
+          <a href="/" aria-label="Hikma home" className="group">
+            <HikmaLogo variant="compact" surface="dark" size={58} decorative imageClassName="h-14 w-auto" />
           </a>
         </motion.div>
         {/* Headline */}
@@ -91,9 +87,8 @@ export default function SignInPage() {
         <motion.div className="w-full max-w-md"
           initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] as any }}>
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <HikmaLogo surface="dark" size={44} decorative />
-            <span className="font-black text-white">Hikma</span>
+          <div className="lg:hidden mb-8">
+            <HikmaLogo variant="compact" surface="dark" size={50} decorative imageClassName="h-12 w-auto" />
           </div>
 
           <h1 className="text-3xl font-black text-white mb-1">Welcome back</h1>

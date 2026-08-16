@@ -49,6 +49,17 @@ test.describe("authenticated tutor narration", () => {
     }
   });
 
+  test("uses the shared contrast-safe compact HIKMA brand in the authenticated app header", async ({ page }) => {
+    await page.goto("/dashboard");
+    const brand = page.getByRole("link", { name: "Hikma home" });
+    await expect(brand).toBeVisible();
+    const logo = brand.locator('[data-hikma-logo="compact"] img');
+    await expect(logo).toHaveAttribute("src", /hikma-icon-white\.png/);
+    const box = await logo.boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(48);
+    expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(316 / 242, 1);
+  });
+
   test("persists learner subject priorities from accessible Settings controls", async ({ page }) => {
     let persistedInterest = false;
     await page.route(/\/api\/trpc\/profile\.update/, route => {
