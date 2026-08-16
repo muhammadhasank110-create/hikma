@@ -135,9 +135,18 @@ test.describe("lesson narration highlighting", () => {
     await expect(visualMap).toBeVisible();
     await expect(visualMap.getByText("Narration test", { exact: true })).toBeVisible();
     const sunlight = visualMap.getByRole("button", { name: /open sunlight/i });
+    const chlorophyll = visualMap.getByRole("button", { name: /open chlorophyll/i });
+    const glucose = visualMap.getByRole("button", { name: /open glucose/i });
+    await expect(sunlight).toHaveAttribute("data-visual-state", "selected");
+    await expect(chlorophyll).toHaveAttribute("data-visual-state", "related");
+    await expect(glucose).toHaveAttribute("data-visual-state", "background");
     await sunlight.focus();
+    await expect(sunlight).toBeFocused();
     await sunlight.press("ArrowRight");
-    await expect(visualMap.getByRole("button", { name: /open chlorophyll/i })).toHaveAttribute("aria-pressed", "true");
+    await expect(chlorophyll).toHaveAttribute("aria-pressed", "true");
+    await expect(chlorophyll).toHaveAttribute("data-visual-state", "selected");
+    await expect(sunlight).toHaveAttribute("data-visual-state", "related");
+    await expect(glucose).toHaveAttribute("data-visual-state", "related");
     await expect(visualMap.getByRole("button", { name: /explain this/i })).toBeVisible();
     await expect(visualMap.locator('[id$="-description"]')).toHaveText(/Sunlight is absorbed by chlorophyll/i);
   });
@@ -188,5 +197,23 @@ test.describe("lesson narration highlighting", () => {
     await expect(visualMap).toHaveAttribute("dir", "rtl");
     await expect(visualMap.getByRole("button", { name: "افتح ضوء الشمس" })).toBeVisible();
     await expect(visualMap.getByRole("button", { name: "اشرح هذا" })).toBeVisible();
+  });
+
+  test("keeps the selected Visual Learning Map concept distinct in high contrast without motion", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/lesson/901");
+    await page.getByRole("button", { name: /more options/i }).click();
+    await page.getByRole("menuitem", { name: /concept map/i }).click();
+
+    const visualMap = page.getByRole("region", { name: /visual learning map/i });
+    await expect(visualMap).toBeVisible();
+    await page.waitForTimeout(250);
+    await page.evaluate(() => document.documentElement.setAttribute("data-theme", "high_contrast"));
+    const selected = visualMap.getByRole("button", { name: /open sunlight/i });
+    await expect(selected).toHaveAttribute("data-visual-state", "selected");
+    await expect.poll(() => page.evaluate(() => document.documentElement.getAttribute("data-theme"))).toBe("high_contrast");
+    await expect(selected).toHaveCSS("background-color", "oklch(0.866435 0.294791 142.489)");
+    await expect(selected).toHaveCSS("color", "oklch(0 0 0)");
+    await expect(selected).toHaveClass(/motion-reduce:transition-none/);
   });
 });

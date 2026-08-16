@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useState, type KeyboardEvent } from "react";
-import { BookOpen, ImageIcon, List, MessageCircle, Network, Sparkles } from "lucide-react";
+import { BookOpen, Check, ImageIcon, List, MessageCircle, Network, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 
@@ -225,26 +225,39 @@ export default function ConceptMapSVG({ lessonTitle, sections, locale, defaultLi
             aria-label={t("Related lesson concepts", "مفاهيم الدرس المرتبطة")}
             onKeyDown={selectRelativeNode}
           >
-            {nodes.map((node, index) => (
+            {nodes.map((node, index) => {
+              const isSelected = selectedNode?.id === node.id;
+              const isDirectlyRelated = !isSelected && Boolean(selectedNode?.relatedIds.includes(node.id));
+              const stateLabel = isSelected
+                ? t("Selected concept", "المفهوم المحدد")
+                : isDirectlyRelated
+                  ? t("Directly connected concept", "مفهوم مرتبط مباشرة")
+                  : node.type === "process" ? t("Process step", "خطوة في عملية") : t("Related concept", "مفهوم مرتبط");
+
+              return (
               <li key={node.id} className="list-none">
                 <button
                   type="button"
                   data-visual-node={node.id}
-                  aria-pressed={selectedNode?.id === node.id}
+                  data-visual-state={isSelected ? "selected" : isDirectlyRelated ? "related" : "background"}
+                  aria-pressed={isSelected}
                   aria-label={t(`Open ${node.label}`, `افتح ${node.label}`)}
                   onClick={() => setSelectedId(node.id)}
-                  className={`min-h-14 w-full rounded-xl border p-3 text-start transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${selectedNode?.id === node.id ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-card-foreground hover:border-primary/60 hover:bg-primary/5"}`}
+                  className={`min-h-14 w-full rounded-xl border p-3 text-start transition-[background-color,border-color,box-shadow] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${isSelected ? "border-primary bg-primary text-primary-foreground shadow-md outline outline-2 outline-primary-foreground outline-offset-2" : isDirectlyRelated ? "border-primary/70 bg-primary/10 text-card-foreground shadow-sm hover:border-primary hover:bg-primary/15 hover:shadow-md" : "border-border bg-card text-card-foreground hover:border-primary/70 hover:bg-primary/5 hover:shadow-sm"}`}
                 >
                   <span className="flex items-start gap-2">
-                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${selectedNode?.id === node.id ? "bg-primary-foreground/15 text-primary-foreground" : "bg-primary/10 text-primary"}`} aria-hidden="true">{index + 1}</span>
+                    <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${isSelected ? "bg-primary-foreground text-primary" : isDirectlyRelated ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}`} aria-hidden="true">
+                      {isSelected ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : isDirectlyRelated ? <Network className="h-3 w-3" strokeWidth={2.5} /> : index + 1}
+                    </span>
                     <span>
                       <span className="block text-sm font-semibold">{node.label}</span>
-                      <span className={`mt-0.5 block text-xs ${selectedNode?.id === node.id ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{node.type === "process" ? t("Process step", "خطوة في عملية") : t("Related concept", "مفهوم مرتبط")}</span>
+                      <span className={`mt-0.5 block text-xs ${isSelected ? "text-primary-foreground" : "text-muted-foreground"}`}>{stateLabel}</span>
                     </span>
                   </span>
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
 
           {selectedNode && (

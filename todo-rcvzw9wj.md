@@ -143,3 +143,6 @@
 - [x] Apply the smallest playback-only repair so aligned provider audio uses the selected lesson-local rate for the next narration.
 - [x] Add focused regression coverage for selected playback rate, timestamp-aligned highlighting, and no profile persistence.
 - [x] Verify keyboard, English/Arabic, Focus mode, browser fallback, provider audio, desktop/mobile, type/unit/browser suites, and audit evidence; publish the isolated repair.
+- [x] Review the supplied map recording and the existing Visual Learning Map component to identify the exact selected/related/background styling surface.
+- [x] Refine only the Visual Learning Map state styling so selected, directly related, and background concepts/connections have clear non-colour-only hierarchy without changing interaction or data logic.
+- [x] Verify default, hover, focus, selected, connection, high-contrast, reduced-motion, keyboard, desktop/mobile, and English/Arabic map-state behavior; record evidence and publish the styling-only correction.
