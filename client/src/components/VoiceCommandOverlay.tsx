@@ -15,7 +15,7 @@
  * - UNAUTHORIZED from parseVoiceIntent shows "Please sign in" instead of generic toast.
  */
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Mic, MicOff, HelpCircle } from "lucide-react";
+import { Mic, MicOff, Keyboard } from "lucide-react";
 import { useVoiceCommands, type VoiceCommandAction } from "@/hooks/useVoiceCommands";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useLocation } from "wouter";
@@ -23,6 +23,7 @@ import { useSpeech } from "@/contexts/SpeechContext";
 import { playTestSound } from "@/lib/sound";
 import { VoiceChatPanel } from "@/components/VoiceChatPanel";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 /** Written by Onboarding step 5. Absent = show the button (previous behaviour). */
 export const VOICE_COMMANDS_KEY = "hikma:voice-commands";
@@ -159,40 +160,43 @@ export function VoiceCommandOverlay() {
     }
   }, [profile, locale, chatMessages, speech, t]);
 
-  const handleAction = useCallback((action: VoiceCommandAction) => {
-    const say = (msg: string) => speech.speak(msg, { priority: "assertive" });
+  const { data: availableSubjects = [] } = trpc.curriculum.availableSubjects.useQuery();
+
+  const handleAction = useCallback((action: VoiceCommandAction, feedback: string) => {
+    const say = () => speech.speak(feedback, { priority: "assertive" });
+    const confirmThenNavigate = (path: string) => {
+      say();
+      window.setTimeout(() => navigate(path), 280);
+    };
     switch (action.type) {
       case "navigate":
         if (!action.path) break;
-        navigate(action.path);
-        say(t("Navigating", "جارٍ الانتقال"));
+        confirmThenNavigate(action.path);
         break;
       case "go_back":
-        window.history.back();
-        say(t("Going back", "رجوع"));
+        say();
+        window.setTimeout(() => window.history.back(), 280);
         break;
       case "go_home":
-        navigate("/dashboard");
-        say(t("Going home", "الصفحة الرئيسية"));
+        confirmThenNavigate("/dashboard");
         break;
       case "open_tutor":
-        navigate("/tutor");
-        say(t("Opening the tutor", "جارٍ فتح المعلم"));
+        confirmThenNavigate("/tutor");
         break;
       case "stop_speech":
         speech.stop();
         break;
       case "increase_font":
         updateProfile({ fontScale: Math.min(2.5, (profile.fontScale ?? 1) + 0.1) });
-        say(t("Font increased", "تكبير الخط"));
+        say();
         break;
       case "decrease_font":
         updateProfile({ fontScale: Math.max(1.0, (profile.fontScale ?? 1) - 0.1) });
-        say(t("Font decreased", "تصغير الخط"));
+        say();
         break;
       case "focus_mode":
         updateProfile({ mode: "focus", hideDecorative: true, reduceMotion: true, chunkSize: "micro" });
-        say(t("Focus mode on", "وضع التركيز مفعّل"));
+        say();
         break;
       case "read_aloud":
         window.dispatchEvent(new CustomEvent("hikma:read_aloud"));
@@ -203,28 +207,21 @@ export function VoiceCommandOverlay() {
       case "prev_section":
         window.dispatchEvent(new CustomEvent("hikma:prev_section"));
         break;
-      case "answer_question":
-        window.dispatchEvent(new CustomEvent("hikma:answer_question"));
-        break;
-      case "ask_tutor":
-        // Handled by the onAction callback in useVoiceCommands via transcript
-        break;
       default:
         break;
     }
   }, [navigate, speech, updateProfile, profile, t]);
 
-  const { isListening, toggleVoice, lastTranscript } = useVoiceCommands({
+  const { mode, isListening, toggleVoice, lastTranscript, statusMessage, isSupported } = useVoiceCommands({
     lang: locale === "ar" ? "ar-SA" : "en-GB",
     locale,
     onAction: handleAction,
     onAskTutor: askTutor,
     enabled: true,
+    subjects: availableSubjects,
   });
 
-  const label = isListening
-    ? t("Turn off voice commands", "إيقاف الأوامر الصوتية")
-    : t("Turn on voice commands", "تفعيل الأوامر الصوتية");
+  const label = isListening ? t("Stop listening", "إيقاف الاستماع") : t("Speak a command", "تحدث بأمر");
 
   const handleToggle = () => {
     try {
@@ -288,24 +285,25 @@ export function VoiceCommandOverlay() {
             }
           </button>
         </div>
-        {isListening && (
+        {mode !== "off" && statusMessage && (
           <p
+            role="status"
             aria-live="polite"
-            className="mt-1.5 text-center text-[10px] font-semibold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/40 px-2 py-0.5 rounded-full select-none"
+            className="mt-1.5 max-w-[220px] text-center text-[10px] font-semibold text-foreground bg-card/95 border border-border px-2 py-1 rounded-full select-none"
           >
-            {t("Listening", "يستمع")}
+            {statusMessage}
           </p>
         )}
-        {/* Last heard transcript strip */}
-        {isListening && lastTranscript && (
+        {lastTranscript && mode !== "off" && (
           <div
             aria-live="polite"
             className="mt-1 max-w-[180px] text-center text-[10px] text-foreground/60 bg-black/40 backdrop-blur-sm border border-border px-2 py-1 rounded-xl truncate select-none"
             title={lastTranscript}
           >
-            &ldquo;{lastTranscript}&rdquo;
+            {t("You said:", "قلت:")} &ldquo;{lastTranscript}&rdquo;
           </div>
         )}
+        {!isSupported || mode === "error" ? <button type="button" onClick={() => setChatOpen(true)} className="mt-1 inline-flex min-h-8 items-center gap-1 rounded-full bg-card px-2 text-[10px] font-semibold text-foreground shadow-sm ring-1 ring-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"><Keyboard className="size-3" aria-hidden="true" />{t("Type instead", "اكتب بدلاً من ذلك")}</button> : null}
         {/* Commands tooltip — shown on hover of the mic button, anchored above it */}
         {showHint && (
           <div

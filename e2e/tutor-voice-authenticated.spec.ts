@@ -5,6 +5,12 @@ const mockUser = {
   role: "learner", locale: "en", loginMethod: "test", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), lastSignedIn: new Date().toISOString(),
 };
 
+const usableSubjects = [
+  { id: 1, curriculumId: 1, code: "MATH-IGCSE", titleEn: "Mathematics", titleAr: "الرياضيات", curriculumFamily: "igcse", curriculumBoard: "Edexcel", curriculumTitleEn: "IGCSE Edexcel", curriculumTitleAr: "IGCSE إيدكسيل", profileKey: "igcse_edexcel" },
+  { id: 2, curriculumId: 1, code: "ENG-IGCSE", titleEn: "English Language", titleAr: "اللغة الإنجليزية", curriculumFamily: "igcse", curriculumBoard: "Edexcel", curriculumTitleEn: "IGCSE Edexcel", curriculumTitleAr: "IGCSE إيدكسيل", profileKey: "igcse_edexcel" },
+  { id: 3, curriculumId: 1, code: "SCI-IGCSE", titleEn: "Science (Double)", titleAr: "العلوم (مزدوج)", curriculumFamily: "igcse", curriculumBoard: "Edexcel", curriculumTitleEn: "IGCSE Edexcel", curriculumTitleAr: "IGCSE إيدكسيل", profileKey: "igcse_edexcel" },
+];
+
 test.describe("authenticated tutor narration", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
@@ -19,6 +25,7 @@ test.describe("authenticated tutor narration", () => {
     await page.route(/\/api\/trpc\/auth\.me/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: mockUser } } }]) }));
     await page.route("**/api/tts/config", route => route.fulfill({ contentType: "application/json", body: JSON.stringify({ hasElevenLabs: false }) }));
     await page.route(/\/api\/trpc\/curriculum\.list/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: [] } } }]) }));
+    await page.route(/\/api\/trpc\/curriculum\.availableSubjects/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: usableSubjects } } }]) }));
   });
 
   test("shows the speaking wave and stops authenticated tutor narration", async ({ page }) => {
@@ -45,7 +52,7 @@ test.describe("authenticated tutor narration", () => {
   test("persists learner subject priorities from accessible Settings controls", async ({ page }) => {
     let persistedInterest = false;
     await page.route(/\/api\/trpc\/profile\.update/, route => {
-      persistedInterest = route.request().postData()?.includes("mathematics") ?? false;
+      persistedInterest = route.request().postData()?.includes("MATH-IGCSE") ?? false;
       return route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: {} } } }]) });
     });
     await page.goto("/settings");
@@ -98,6 +105,86 @@ test.describe("authenticated tutor narration", () => {
     await page.getByRole("button", { name: /الانتقال للخطوة التالية/ }).click();
     await expect(page.getByRole("heading", { name: "ما الذي تعمل من أجله الآن؟" })).toBeVisible();
     await expect(page.getByRole("group", { name: "أهداف التعلّم" })).toBeVisible();
+  });
+
+  test("shows only live usable subjects in Arabic onboarding and never invents Arabic as a subject", async ({ page }) => {
+    await page.goto("/onboarding");
+    await page.getByRole("radio", { name: /no specific need/i }).click();
+    await page.getByRole("button", { name: "Go to next step" }).click();
+    await page.getByRole("radio", { name: "Arabic: All content in Arabic" }).click();
+    await page.getByRole("button", { name: /الانتقال للخطوة التالية/ }).click();
+    const subjects = page.getByRole("group", { name: "اهتمامات المواد" });
+    await expect(subjects.getByRole("button", { name: "الرياضيات" })).toBeVisible();
+    await expect(subjects.getByRole("button", { name: "اللغة الإنجليزية" })).toBeVisible();
+    await expect(subjects.getByRole("button", { name: "العلوم (مزدوج)" })).toBeVisible();
+    await expect(subjects.getByRole("button", { name: /^العربية$/ })).toHaveCount(0);
+  });
+
+  test("executes a recognized live subject voice command and confirms the action visibly", async ({ page }) => {
+    await page.addInitScript(() => {
+      class VoiceRecognition {
+        lang = ""; continuous = false; interimResults = false; maxAlternatives = 1;
+        onstart?: () => void; onresult?: (event: any) => void; onerror?: () => void; onend?: () => void;
+        start() { (window as any).__hikmaRecognition = this; this.onstart?.(); }
+        stop() { this.onend?.(); }
+        abort() {}
+        emit(transcript: string) { this.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript } }] }); }
+      }
+      Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: VoiceRecognition });
+      Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: async () => ({ getTracks: () => [{ stop: () => {} }] }) } });
+    });
+    await page.route("**/api/trpc/**", async route => {
+      const procedureNames = new URL(route.request().url()).pathname.split("/").at(-1)?.split(",") ?? [];
+      if (!procedureNames.includes("curriculum.availableSubjects")) return route.fallback();
+      const body = procedureNames.map(name => ({ result: { data: { json:
+        name === "auth.me" ? mockUser
+          : name === "curriculum.availableSubjects" ? usableSubjects
+            : name === "progress.learnerSummary" ? { stats: { masteredConcepts: 0, inProgressLessons: 0, completedLessons: 0, totalLessons: 0 }, continueLesson: null, recentLessons: [], weakAreas: [] }
+              : name === "curriculum.list" ? []
+                : null,
+      } } }));
+      await route.fulfill({ contentType: "application/json", body: JSON.stringify(body) });
+    });
+    const availableSubjectsResponse = page.waitForResponse(response => response.url().includes("curriculum.availableSubjects"));
+    await page.goto("/dashboard");
+    await availableSubjectsResponse;
+    const speak = page.getByRole("button", { name: "Speak a command" });
+    await expect(speak).toBeEnabled();
+    await speak.click();
+    await expect(page.getByText("Listening…", { exact: true })).toBeVisible();
+    await page.evaluate(() => (window as any).__hikmaRecognition.emit("Open mathematics"));
+    await expect(page.getByText("Opening Mathematics", { exact: true })).toBeVisible();
+  });
+
+  test("reports an unsupported spoken feature and preserves a typed fallback", async ({ page }) => {
+    await page.addInitScript(() => {
+      class VoiceRecognition {
+        onstart?: () => void; onresult?: (event: any) => void; onend?: () => void;
+        start() { (window as any).__hikmaRecognition = this; this.onstart?.(); }
+        stop() { this.onend?.(); } abort() {}
+        emit(transcript: string) { this.onresult?.({ resultIndex: 0, results: [{ isFinal: true, 0: { transcript } }] }); }
+      }
+      Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: VoiceRecognition });
+      Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: async () => ({ getTracks: () => [{ stop: () => {} }] }) } });
+    });
+    await page.goto("/dashboard");
+    await page.getByRole("button", { name: "Speak a command" }).click();
+    await page.evaluate(() => (window as any).__hikmaRecognition.emit("Open Arabic"));
+    await expect(page.getByText("That feature is not available", { exact: false })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Type instead" })).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard$/);
+  });
+
+  test("explains denied microphone permission and keeps the typed fallback available", async ({ page }) => {
+    await page.addInitScript(() => {
+      class VoiceRecognition { start() {} stop() {} abort() {} }
+      Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: VoiceRecognition });
+      Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: async () => { throw Object.assign(new Error("Denied"), { name: "NotAllowedError" }); } } });
+    });
+    await page.goto("/dashboard");
+    await page.getByRole("button", { name: "Speak a command" }).click();
+    await expect(page.getByText("Microphone access was denied", { exact: false })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Type instead" })).toBeVisible();
   });
 
   test("renders every command route once without duplicate-key console errors", async ({ page }, testInfo) => {

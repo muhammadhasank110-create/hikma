@@ -13,6 +13,7 @@ import { useSpeech } from "@/contexts/SpeechContext";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useProfile } from "@/contexts/ProfileContext";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { useSounds } from "@/hooks/useSounds";
 import { toast } from "sonner";
@@ -31,7 +32,6 @@ export interface OnboardingData {
   accessibilityProfile: AccessibilityProfile;
   locale: "en" | "ar" | "both";
   curriculum: string;
-  yearGroup: string;
   mode: "audio_first" | "reading" | "focus" | "custom";
   fontScale: number;
   speechRate: number;
@@ -103,22 +103,6 @@ const PROFILES = [
     selectedColour: "border-gray-500 bg-gray-100 dark:bg-gray-800/50 ring-2 ring-gray-400",
     applies: ["Standard mode", "All features available"],
   },
-];
-
-const YEAR_GROUPS = [
-  { value: "9", label: "Year 9 (Age 13–14)" },
-  { value: "10", label: "Year 10 (Age 14–15)" },
-  { value: "11", label: "Year 11 (Age 15–16)" },
-  { value: "12", label: "Year 12 / AS Level" },
-  { value: "other", label: "Other / Not sure" },
-];
-
-const SUBJECT_INTERESTS = [
-  { value: "mathematics", en: "Mathematics", ar: "الرياضيات" },
-  { value: "science", en: "Science", ar: "العلوم" },
-  { value: "english", en: "English", ar: "اللغة الإنجليزية" },
-  { value: "arabic", en: "Arabic", ar: "اللغة العربية" },
-  { value: "exam_skills", en: "Exam skills", ar: "مهارات الاختبارات" },
 ];
 
 const LEARNING_METHODS = [
@@ -293,36 +277,43 @@ export function StepLanguage({ data, onChange, locale }: { data: OnboardingData;
 // ── Step 3: Curriculum ─────────────────────────────────────────────────────────
 export function StepCurriculum({ data, onChange, locale }: { data: OnboardingData; onChange: (u: Partial<OnboardingData>) => void; locale: string }) {
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
-  const opts = [
-    { value: "igcse_edexcel", labelEn: "IGCSE Edexcel", labelAr: "إيدكسيل", descEn: "Pearson Edexcel IGCSE — used internationally", descAr: "إيدكسيل للمرحلة الثانوية — دولي" },
-    { value: "qatar_moehe", labelEn: "Qatar MoEHE", labelAr: "وزارة التعليم القطرية", descEn: "Qatar Ministry of Education curriculum", descAr: "منهج وزارة التعليم والتعليم العالي القطرية" },
-    { value: "igcse_caie", labelEn: "IGCSE Cambridge (CAIE)", labelAr: "كامبريدج", descEn: "Cambridge Assessment International Education", descAr: "تقييم كامبريدج الدولي" },
-    { value: "gcse", labelEn: "GCSE (UK)", labelAr: "GCSE بريطاني", descEn: "UK General Certificate of Secondary Education", descAr: "شهادة التعليم الثانوي البريطانية" },
-    { value: "ib", labelEn: "IB (International Baccalaureate)", labelAr: "البكالوريا الدولية", descEn: "International Baccalaureate MYP/DP", descAr: "البكالوريا الدولية" },
-  ];
+  const { data: liveSubjects = [], isLoading } = trpc.curriculum.availableSubjects.useQuery();
+  const liveCurricula = Array.from(new Map(liveSubjects.map(subject => [subject.curriculumId, subject])).values());
+  const activeCurriculum = liveCurricula.find(curriculum => curriculum.profileKey === data.curriculum) ?? liveCurricula[0];
+  const displayedSubjects = activeCurriculum
+    ? liveSubjects.filter(subject => subject.curriculumId === activeCurriculum.curriculumId)
+    : [];
+
+  useEffect(() => {
+    if (!activeCurriculum || activeCurriculum.profileKey === data.curriculum) return;
+    onChange({ curriculum: activeCurriculum.profileKey, subjectInterests: [] });
+  }, [activeCurriculum, data.curriculum, onChange]);
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">{t("What curriculum are you following?", "ما المنهج الذي تتبعه؟")}</h2>
+        <h2 className="text-2xl font-bold">{t("Your available learning content", "المحتوى التعليمي المتاح لك")}</h2>
+        <p className="text-sm text-muted-foreground">{t("Hikma only shows curricula and subjects with lessons ready to open.", "تعرض حكمة فقط المناهج والمواد التي تحتوي على دروس جاهزة للفتح.")}</p>
       </div>
-      <div className="grid grid-cols-1 gap-3" role="radiogroup" aria-label={t("Curriculum", "المنهج")}>
-        {opts.map(opt => {
-          const isSelected = data.curriculum === opt.value;
+      {isLoading ? <p className="text-sm text-muted-foreground" role="status">{t("Loading available content…", "جارٍ تحميل المحتوى المتاح…")}</p> : null}
+      <div className="grid grid-cols-1 gap-3" role="radiogroup" aria-label={t("Available curriculum", "المنهج المتاح")}>
+        {liveCurricula.map(curriculum => {
+          const isSelected = activeCurriculum?.curriculumId === curriculum.curriculumId;
           return (
             <button
-              key={opt.value}
+              key={curriculum.curriculumId}
               role="radio"
               aria-checked={isSelected}
-              aria-label={`${t(opt.labelEn, opt.labelAr)}: ${t(opt.descEn, opt.descAr)}${isSelected ? ". " + t("Selected", "محدد") : ""}`}
+              aria-label={`${t(curriculum.curriculumTitleEn, curriculum.curriculumTitleAr)}${isSelected ? ". " + t("Selected", "محدد") : ""}`}
               tabIndex={0}
-              onClick={() => onChange({ curriculum: opt.value })}
-              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ curriculum: opt.value }); }}}
+              onClick={() => onChange({ curriculum: curriculum.profileKey, subjectInterests: [] })}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ curriculum: curriculum.profileKey, subjectInterests: [] }); }}}
               className={`text-left p-4 rounded-2xl border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${isSelected ? "border-primary bg-primary/10 ring-2 ring-primary" : "border-border hover:border-primary/50"}`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-sm">{t(opt.labelEn, opt.labelAr)}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{t(opt.descEn, opt.descAr)}</p>
+                  <p className="font-semibold text-sm">{t(curriculum.curriculumTitleEn, curriculum.curriculumTitleAr)}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t("Lessons are currently available in this curriculum.", "تتوفر دروس حالياً في هذا المنهج.")}</p>
                 </div>
                 {isSelected && <Check className="w-5 h-5 text-primary flex-shrink-0" aria-hidden="true" />}
               </div>
@@ -330,34 +321,15 @@ export function StepCurriculum({ data, onChange, locale }: { data: OnboardingDat
           );
         })}
       </div>
-      {/* Year group */}
-      <div>
-        <p className="text-sm font-semibold mb-2">{t("Year group", "المرحلة الدراسية")}</p>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("Year group", "المرحلة الدراسية")}>
-          {YEAR_GROUPS.map(yg => (
-            <button
-              key={yg.value}
-              role="radio"
-              aria-checked={data.yearGroup === yg.value}
-              aria-label={`${yg.label}${data.yearGroup === yg.value ? ". " + t("Selected", "محدد") : ""}`}
-              tabIndex={0}
-              onClick={() => onChange({ yearGroup: yg.value })}
-              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onChange({ yearGroup: yg.value }); }}}
-              className={`px-3 py-2 rounded-xl border text-xs text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${data.yearGroup === yg.value ? "border-primary bg-primary/10 font-semibold" : "border-border hover:border-primary/50"}`}
-            >
-              {yg.label}
-            </button>
-          ))}
-        </div>
-      </div>
       <div className="space-y-2">
         <p className="text-sm font-semibold">{t("Subjects you want to prioritise", "المواد التي تريد إعطاءها أولوية")}</p>
         <p className="text-xs text-muted-foreground">{t("Choose any that matter to you. This helps Hikma surface the right next steps.", "اختر ما يهمك. يساعد هذا حكمة على إظهار الخطوات التالية المناسبة.")}</p>
         <div className="flex flex-wrap gap-2" role="group" aria-label={t("Subject interests", "اهتمامات المواد")}>
-          {SUBJECT_INTERESTS.map(subject => {
-            const selected = data.subjectInterests.includes(subject.value);
-            return <button key={subject.value} type="button" aria-pressed={selected} onClick={() => onChange({ subjectInterests: selected ? data.subjectInterests.filter(item => item !== subject.value) : [...data.subjectInterests, subject.value] })} className={`rounded-xl border px-3 py-2 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>
-              {t(subject.en, subject.ar)}
+          {displayedSubjects.map(subject => {
+            const value = subject.code ?? String(subject.id);
+            const selected = data.subjectInterests.includes(value);
+            return <button key={subject.id} type="button" aria-pressed={selected} onClick={() => onChange({ subjectInterests: selected ? data.subjectInterests.filter(item => item !== value) : [...data.subjectInterests, value] })} className={`rounded-xl border px-3 py-2 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>
+              {t(subject.titleEn, subject.titleAr)}
             </button>;
           })}
         </div>

@@ -1,22 +1,5 @@
-/**
- * useVoiceCommands — simple, direct voice commands.
- *
- * Architecture:
- * - Unmute → mic is live → speak any command directly
- * - No wake word required
- * - Fast pattern matching first, LLM fallback for anything unrecognised
- * - Context-aware: knows which page the user is on
- *
- * Fixes (Aug 2026):
- * - Mic is muted for a short window after every recognised command, so spoken
- *   confirmations ("Going back") are not re-heard as new commands.
- * - The hook no longer speaks its own confirmation when the caller supplies
- *   `onAction` — the caller already speaks, and both firing caused overlap.
- * - "stop" is matched before "read", so "stop reading" stops instead of starting.
- */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
-import { toast } from "sonner";
 import { useSpeech } from "@/contexts/SpeechContext";
 
 export type VoiceCommandAction =
@@ -30,62 +13,109 @@ export type VoiceCommandAction =
   | { type: "read_aloud" }
   | { type: "next_section" }
   | { type: "prev_section" }
-  | { type: "open_tutor" }
-  | { type: "answer_question" }
-  | { type: "ask_tutor" }
-  | { type: "unknown"; transcript: string };
+  | { type: "open_tutor" };
+
+export type VoiceMode = "off" | "requesting_permission" | "listening" | "processing" | "executing" | "error";
+
+export interface VoiceSubject {
+  id: number;
+  curriculumId: number;
+  code: string | null;
+  titleEn: string;
+  titleAr: string;
+}
 
 interface UseVoiceCommandsOptions {
   lang?: string;
-  locale?: string;
-  onAction?: (action: VoiceCommandAction) => void;
-  /** Called when the LLM returns ask_tutor — receives the raw transcript */
+  locale?: "en" | "ar";
+  onAction?: (action: VoiceCommandAction, feedback: string) => void;
   onAskTutor?: (transcript: string) => void;
   enabled?: boolean;
+  subjects?: VoiceSubject[];
+  subjectsReady?: boolean;
   context?: string;
 }
 
-/** How long the mic stays muted after a command, while we speak the reply. */
+export interface VoiceInterpretation {
+  kind: "action" | "ask_tutor" | "unsupported";
+  action?: VoiceCommandAction;
+  feedback: string;
+}
+
 const SPEAK_MUTE_MS = 2500;
 
-// Fast pattern matching for common commands (no LLM needed).
-// ORDER MATTERS — the first match wins. "stop" must precede "read".
-const COMMANDS: Array<{ patterns: RegExp[]; action: VoiceCommandAction; label: string }> = [
-  { patterns: [/\b(stop|silence|quiet|pause|أوقف|صمت|توقف)\b/i], action: { type: "stop_speech" }, label: "Stopped" },
-  { patterns: [/\b(home|dashboard|go home|main|رئيسي|الرئيسية)\b/i], action: { type: "go_home" }, label: "Going home" },
-  { patterns: [/\b(back|go back|رجوع)\b/i], action: { type: "go_back" }, label: "Going back" },
-  { patterns: [/\b(tutor|ai tutor|open tutor|hikma ai|ask hikma|المعلم|المساعد|افتح المعلم)\b/i], action: { type: "open_tutor" }, label: "Opening Hikma AI" },
-  { patterns: [/\b(subjects?|lessons?|المواد|الدروس)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening Subjects" },
-  { patterns: [/\b(math|maths|mathematics|رياضيات)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening Maths" },
-  { patterns: [/\b(english|إنجليزي|اللغة الإنجليزية)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening English" },
-  { patterns: [/\b(science|علوم)\b/i], action: { type: "navigate", path: "/subjects/1" }, label: "Opening Science" },
-  { patterns: [/\b(progress|my progress|تقدم|تقدمي)\b/i], action: { type: "navigate", path: "/progress" }, label: "Opening Progress" },
-  { patterns: [/\b(settings?|إعدادات)\b/i], action: { type: "navigate", path: "/settings" }, label: "Opening Settings" },
-  { patterns: [/\b(ecc|expanded core|المهارات الأساسية)\b/i], action: { type: "navigate", path: "/ecc" }, label: "Opening ECC" },
-  { patterns: [/\b(previous|prev|back section|القسم السابق|السابق)\b/i], action: { type: "prev_section" }, label: "Previous section" },
-  { patterns: [/\b(next|next section|التالي|القسم التالي|continue|استمر)\b/i], action: { type: "next_section" }, label: "Next section" },
-  { patterns: [/\b(read|read (this|aloud|it)|start reading|narrate|اقرأ|اقرأ بصوت|ابدأ القراءة)\b/i], action: { type: "read_aloud" }, label: "Reading now" },
-  { patterns: [/\b(bigger|larger|increase|font up|أكبر|تكبير)\b/i], action: { type: "increase_font" }, label: "Text bigger" },
-  { patterns: [/\b(smaller|decrease|font down|أصغر|تصغير)\b/i], action: { type: "decrease_font" }, label: "Text smaller" },
-  { patterns: [/\b(focus|focus mode|وضع التركيز|ركّز)\b/i], action: { type: "focus_mode" }, label: "Focus mode" },
-  { patterns: [/\b(answer|submit|my answer|أجب|إجابتي|أرسل)\b/i], action: { type: "answer_question" }, label: "Answering" },
+type CommandDefinition = {
+  patterns: RegExp[];
+  action: VoiceCommandAction;
+  feedbackEn: string;
+  feedbackAr: string;
+};
+
+// This list includes only actions that exist in the application today.
+const COMMANDS: CommandDefinition[] = [
+  { patterns: [/stop|silence|quiet|pause|أوقف|صمت|توقف/i], action: { type: "stop_speech" }, feedbackEn: "Stopping narration", feedbackAr: "جارٍ إيقاف القراءة" },
+  { patterns: [/go home|home|dashboard|main|اذهب للرئيسية|افتح الرئيسية|الرئيسية/i], action: { type: "go_home" }, feedbackEn: "Opening Home", feedbackAr: "جارٍ فتح الرئيسية" },
+  { patterns: [/go back|back|رجوع|ارجع/i], action: { type: "go_back" }, feedbackEn: "Going back", feedbackAr: "جارٍ الرجوع" },
+  { patterns: [/ai tutor|open tutor|hikma ai|ask hikma|tutor|افتح المعلم|المعلم الذكي|المعلم/i], action: { type: "open_tutor" }, feedbackEn: "Opening AI Tutor", feedbackAr: "جارٍ فتح المعلّم الذكي" },
+  { patterns: [/open practice|practice|exam skills|افتح التدريب|التدريب/i], action: { type: "navigate", path: "/exam-skills" }, feedbackEn: "Opening Practice", feedbackAr: "جارٍ فتح التدريب" },
+  { patterns: [/show my progress|how am i doing|open progress|progress|افتح تقدمي|كيف أتقدم|تقدمي|التقدم/i], action: { type: "navigate", path: "/progress" }, feedbackEn: "Opening Progress", feedbackAr: "جارٍ فتح التقدّم" },
+  { patterns: [/open profile|open settings|profile|settings|افتح الملف الشخصي|افتح الإعدادات|الإعدادات/i], action: { type: "navigate", path: "/settings" }, feedbackEn: "Opening Profile and Settings", feedbackAr: "جارٍ فتح الملف الشخصي والإعدادات" },
+  { patterns: [/open learn|open subjects|subjects|lessons|learn|افتح التعلّم|افتح المواد|المواد|الدروس/i], action: { type: "navigate", path: "/subjects/1" }, feedbackEn: "Opening Learn", feedbackAr: "جارٍ فتح التعلّم" },
+  { patterns: [/open ecc|expanded core|افتح المنهج الموسع|المنهج الموسع/i], action: { type: "navigate", path: "/ecc" }, feedbackEn: "Opening ECC", feedbackAr: "جارٍ فتح المنهج الموسّع" },
+  { patterns: [/previous section|previous|prev|back section|القسم السابق|السابق/i], action: { type: "prev_section" }, feedbackEn: "Previous section", feedbackAr: "القسم السابق" },
+  { patterns: [/next section|next|continue|القسم التالي|التالي|استمر/i], action: { type: "next_section" }, feedbackEn: "Next section", feedbackAr: "القسم التالي" },
+  { patterns: [/read aloud|start reading|narrate|read this|اقرأ بصوت|ابدأ القراءة|اقرأ/i], action: { type: "read_aloud" }, feedbackEn: "Starting narration", feedbackAr: "جارٍ بدء القراءة" },
+  { patterns: [/bigger|larger|increase font|font up|تكبير الخط|أكبر/i], action: { type: "increase_font" }, feedbackEn: "Increasing text size", feedbackAr: "جارٍ تكبير الخط" },
+  { patterns: [/smaller|decrease font|font down|تصغير الخط|أصغر/i], action: { type: "decrease_font" }, feedbackEn: "Decreasing text size", feedbackAr: "جارٍ تصغير الخط" },
+  { patterns: [/focus mode|focus|وضع التركيز|ركّز/i], action: { type: "focus_mode" }, feedbackEn: "Turning on Focus mode", feedbackAr: "جارٍ تفعيل وضع التركيز" },
 ];
 
-function parseCommand(text: string): VoiceCommandAction | null {
-  const t = text.toLowerCase().trim();
-  for (const cmd of COMMANDS) {
-    if (cmd.patterns.some(p => p.test(t))) return cmd.action;
+function normalize(text: string) {
+  return text.toLocaleLowerCase().replace(/[\u064B-\u065Fـ]/g, "").replace(/[،؟!.,]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function isFeatureRequest(text: string) {
+  return /\b(open|go|show|take me|start)\b|افتح|اذهب|اعرض|أرني|خذني/i.test(text);
+}
+
+function matchesSubject(text: string, subject: VoiceSubject) {
+  const normalized = normalize(text);
+  const values = [subject.titleEn, subject.titleAr, subject.code ?? ""].map(normalize).filter(Boolean);
+  if (values.some(value => normalized.includes(value))) return true;
+  const code = (subject.code ?? "").toLowerCase();
+  if (/math/.test(code)) return /\bmaths?\b|mathematics|رياضيات/i.test(normalized);
+  if (/eng/.test(code)) return /\benglish\b|إنجليزي|اللغة الإنجليزية/i.test(normalized);
+  if (/sci/.test(code)) return /\bscience\b|علوم/i.test(normalized);
+  return false;
+}
+
+export function interpretVoiceCommand(text: string, subjects: VoiceSubject[], locale: "en" | "ar" = "en"): VoiceInterpretation {
+  const normalized = normalize(text);
+  const command = COMMANDS.find(candidate => candidate.patterns.some(pattern => pattern.test(normalized)));
+  if (command) return { kind: "action", action: command.action, feedback: locale === "ar" ? command.feedbackAr : command.feedbackEn };
+
+  const subject = subjects.find(candidate => matchesSubject(normalized, candidate));
+  if (subject) {
+    const label = locale === "ar" ? subject.titleAr : subject.titleEn;
+    return {
+      kind: "action",
+      action: { type: "navigate", path: `/subjects/${subject.curriculumId}/topics/${subject.id}` },
+      feedback: locale === "ar" ? `جارٍ فتح ${label}` : `Opening ${label}`,
+    };
   }
-  return null;
+
+  if (isFeatureRequest(normalized)) {
+    return {
+      kind: "unsupported",
+      feedback: locale === "ar"
+        ? "هذه الميزة غير متاحة حالياً. جرّب فتح التعلّم أو التقدّم أو المعلّم الذكي."
+        : "That feature is not available yet. Try opening Learn, Progress, or AI Tutor.",
+    };
+  }
+
+  return { kind: "ask_tutor", feedback: locale === "ar" ? "جارٍ إرسال سؤالك إلى حكمة" : "Asking Hikma" };
 }
 
-function getLabelForAction(action: VoiceCommandAction): string {
-  if (action.type === "unknown") return "";
-  const cmd = COMMANDS.find(c => c.action.type === action.type);
-  return cmd?.label ?? action.type;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getSpeechRecognition(): any {
   if (typeof window === "undefined") return null;
   return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
@@ -97,180 +127,156 @@ export function useVoiceCommands({
   onAction,
   onAskTutor,
   enabled = true,
-  context = "app",
+  subjects = [],
+  subjectsReady = true,
 }: UseVoiceCommandsOptions = {}) {
   const [, navigate] = useLocation();
   const speech = useSpeech();
-  const [isOn, setIsOn] = useState(false);
-  const [lastTranscript, setLastTranscript] = useState<string>("");
+  const [mode, setMode] = useState<VoiceMode>("off");
+  const [statusMessage, setStatusMessage] = useState("");
+  const [lastTranscript, setLastTranscript] = useState("");
   const isOnRef = useRef(false);
   const recRef = useRef<any>(null);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const contextRef = useRef(context);
-  useEffect(() => { contextRef.current = context; }, [context]);
-
-  // True while we are speaking a reply — the mic is stopped during this window.
-  const speakingRef = useRef(false);
   const muteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Lets handleAction restart recognition without depending on startRecognition
-  // (which is defined further down).
+  const speakingRef = useRef(false);
   const startRecognitionRef = useRef<(() => void) | null>(null);
+  const subjectsRef = useRef(subjects);
 
-  /**
-   * Stop listening while a confirmation is spoken, then resume.
-   * Without this the reply is picked up by the mic and matched as a new
-   * command — "Going back" contains "back", which loops history.back().
-   */
-  const muteMicWhileSpeaking = useCallback((ms: number = SPEAK_MUTE_MS) => {
-    speakingRef.current = true;
-    if (restartTimerRef.current) { clearTimeout(restartTimerRef.current); restartTimerRef.current = null; }
-    try { recRef.current?.stop(); } catch { /* already stopped */ }
-    if (muteTimerRef.current) clearTimeout(muteTimerRef.current);
-    muteTimerRef.current = setTimeout(() => {
-      speakingRef.current = false;
-      if (isOnRef.current) startRecognitionRef.current?.();
-    }, ms);
-  }, []);
-
-  const handleAction = useCallback((action: VoiceCommandAction, replyText?: string) => {
-    muteMicWhileSpeaking();
-
-    // The caller handles the action AND speaks its own reply — don't double up.
-    if (onAction) { onAction(action); return; }
-
-    if (replyText) {
-      // Use the shared speech service so voice commands use ElevenLabs voice
-      speech.speak(replyText, { priority: "assertive" });
-    }
-    switch (action.type) {
-      case "navigate": navigate(action.path); break;
-      case "go_back": window.history.back(); break;
-      case "go_home": navigate("/dashboard"); break;
-      case "open_tutor": navigate("/tutor"); break;
-      default: break;
-    }
-  }, [onAction, navigate, muteMicWhileSpeaking, speech]);
+  useEffect(() => { subjectsRef.current = subjects; }, [subjects]);
 
   const stopRecognition = useCallback(() => {
-    if (restartTimerRef.current) { clearTimeout(restartTimerRef.current); restartTimerRef.current = null; }
-    if (muteTimerRef.current) { clearTimeout(muteTimerRef.current); muteTimerRef.current = null; }
+    if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+    if (muteTimerRef.current) clearTimeout(muteTimerRef.current);
+    restartTimerRef.current = null;
+    muteTimerRef.current = null;
     speakingRef.current = false;
     try { recRef.current?.stop(); recRef.current?.abort(); } catch { /* already stopped */ }
     recRef.current = null;
   }, []);
 
+  const muteMicWhileSpeaking = useCallback(() => {
+    speakingRef.current = true;
+    try { recRef.current?.stop(); } catch { /* already stopped */ }
+    if (muteTimerRef.current) clearTimeout(muteTimerRef.current);
+    muteTimerRef.current = setTimeout(() => {
+      speakingRef.current = false;
+      if (isOnRef.current) startRecognitionRef.current?.();
+    }, SPEAK_MUTE_MS);
+  }, []);
+
+  const runAction = useCallback((action: VoiceCommandAction, feedback: string) => {
+    muteMicWhileSpeaking();
+    if (onAction) {
+      onAction(action, feedback);
+      return;
+    }
+    speech.speak(feedback, { priority: "assertive" });
+    if (action.type === "navigate") navigate(action.path);
+    if (action.type === "go_home") navigate("/dashboard");
+    if (action.type === "go_back") window.history.back();
+    if (action.type === "open_tutor") navigate("/tutor");
+  }, [muteMicWhileSpeaking, navigate, onAction, speech]);
+
   const startRecognition = useCallback(() => {
     const SpeechRecognition = getSpeechRecognition();
-    if (!SpeechRecognition || !isOnRef.current) return;
-
-    // Tear down the previous instance without wiping the mute state.
-    if (restartTimerRef.current) { clearTimeout(restartTimerRef.current); restartTimerRef.current = null; }
+    if (!SpeechRecognition || !isOnRef.current || !enabled) return;
     try { recRef.current?.stop(); recRef.current?.abort(); } catch { /* already stopped */ }
-    recRef.current = null;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rec = new (SpeechRecognition as any)();
+    const rec = new SpeechRecognition();
     rec.lang = lang;
     rec.continuous = true;
     rec.interimResults = false;
     rec.maxAlternatives = 3;
-
+    rec.onstart = () => {
+      setMode("listening");
+      setStatusMessage(locale === "ar" ? "يستمع…" : "Listening…");
+    };
     rec.onresult = (event: any) => {
-      // Ignore anything captured while we were talking.
       if (speakingRef.current) return;
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (!event.results[i].isFinal) continue;
-        const transcripts = Array.from({ length: event.results[i].length }, (_, j) =>
-          (event.results[i][j]?.transcript ?? "").trim()
-        ).filter(Boolean);
-        const transcript = transcripts[0] ?? "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        if (!event.results[index].isFinal) continue;
+        const transcript = String(event.results[index][0]?.transcript ?? "").trim();
         if (!transcript) continue;
         setLastTranscript(transcript);
-
-        // Try instant pattern matching first — works offline, no auth needed
-        const action = parseCommand(transcript);
-        if (action) {
-          const label = getLabelForAction(action);
-          toast.success(`✓ ${label}`, { id: "voice-cmd", duration: 2000 });
-          handleAction(action, label);
+        setMode("processing");
+        setStatusMessage(locale === "ar" ? "جارٍ الفهم…" : "Understanding…");
+        const interpretation = interpretVoiceCommand(transcript, subjectsRef.current, locale);
+        if (interpretation.kind === "action" && interpretation.action) {
+          setMode("executing");
+          setStatusMessage(interpretation.feedback);
+          runAction(interpretation.action, interpretation.feedback);
           return;
         }
-
-        // No pattern matched — treat as a question for the AI tutor
-        // (e.g. "what is photosynthesis?", "explain this to me", etc.)
-        if (onAskTutor) {
-          onAskTutor(transcript);
+        if (interpretation.kind === "unsupported") {
+          setMode("error");
+          setStatusMessage(interpretation.feedback);
+          speech.speak(interpretation.feedback, { priority: "assertive" });
           return;
         }
-
-        // Fallback: show what was heard
-        toast.info(`Heard: "${transcript}"`, { id: "voice-heard", duration: 3000 });
+        setStatusMessage(interpretation.feedback);
+        onAskTutor?.(transcript);
       }
     };
-
     rec.onerror = (event: any) => {
-      if (event.error === "not-allowed") {
-        setIsOn(false); isOnRef.current = false;
-        toast.error("Microphone access denied. Allow microphone in browser settings.");
-        return;
-      }
-      // Other errors: just restart
+      const denied = event.error === "not-allowed" || event.error === "service-not-allowed";
+      const message = denied
+        ? (locale === "ar" ? "تم رفض إذن الميكروفون. اسمح به من إعدادات المتصفح، أو اكتب بدلاً من ذلك." : "Microphone access was denied. Allow it in browser settings, or type instead.")
+        : (locale === "ar" ? "تعذّر استخدام الصوت الآن. جرّب الكتابة بدلاً من ذلك." : "Voice is unavailable right now. Try typing instead.");
+      setMode("error");
+      setStatusMessage(message);
+      if (denied) isOnRef.current = false;
     };
-
     rec.onend = () => {
-      // Don't fight the mute window — it restarts us when the reply finishes.
       if (isOnRef.current && !speakingRef.current) {
-        restartTimerRef.current = setTimeout(() => {
-          if (isOnRef.current && !speakingRef.current) startRecognition();
-        }, 300);
+        restartTimerRef.current = setTimeout(() => startRecognitionRef.current?.(), 300);
       }
     };
-
     recRef.current = rec;
-    try { rec.start(); } catch { /* start() throws if already running */ }
-  }, [lang, locale, handleAction]);
+    try { rec.start(); } catch {
+      setMode("error");
+      setStatusMessage(locale === "ar" ? "تعذّر بدء الاستماع. جرّب مرة أخرى أو اكتب بدلاً من ذلك." : "Could not start listening. Try again or type instead.");
+    }
+  }, [enabled, lang, locale, onAskTutor, runAction, speech]);
 
-  // Keep the ref pointing at the current startRecognition.
   useEffect(() => { startRecognitionRef.current = startRecognition; }, [startRecognition]);
+  useEffect(() => () => stopRecognition(), [stopRecognition]);
 
   const toggleVoice = useCallback(async () => {
     if (isOnRef.current) {
+      isOnRef.current = false;
       stopRecognition();
-      setIsOn(false); isOnRef.current = false;
-      toast.info(locale === "ar" ? "الأوامر الصوتية متوقفة" : "Voice commands off", { duration: 2000 });
+      setMode("off");
+      setStatusMessage(locale === "ar" ? "الأوامر الصوتية متوقفة" : "Voice commands are off");
       return;
     }
-
-    const SpeechRec = getSpeechRecognition();
-    if (!SpeechRec) {
-      toast.error("Voice commands require Chrome or Edge.");
+    const SpeechRecognition = getSpeechRecognition();
+    if (!SpeechRecognition || !navigator.mediaDevices?.getUserMedia) {
+      setMode("error");
+      setStatusMessage(locale === "ar" ? "الأوامر الصوتية غير مدعومة في هذا المتصفح. اكتب بدلاً من ذلك." : "Voice commands are not supported in this browser. Type instead.");
       return;
     }
-
+    setMode("requesting_permission");
+    setStatusMessage(locale === "ar" ? "جارٍ طلب إذن الميكروفون…" : "Requesting microphone access…");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(t => t.stop());
-    } catch {
-      toast.error("Microphone access denied. Allow it in browser settings.");
-      return;
+      stream.getTracks().forEach(track => track.stop());
+      isOnRef.current = true;
+      startRecognition();
+    } catch (error: any) {
+      const denied = error?.name === "NotAllowedError" || error?.name === "SecurityError";
+      setMode("error");
+      setStatusMessage(denied
+        ? (locale === "ar" ? "تم رفض إذن الميكروفون. اسمح به من إعدادات المتصفح، أو اكتب بدلاً من ذلك." : "Microphone access was denied. Allow it in browser settings, or type instead.")
+        : (locale === "ar" ? "الميكروفون غير متاح. اكتب بدلاً من ذلك." : "Microphone access is unavailable. Type instead."));
     }
-
-    setIsOn(true); isOnRef.current = true;
-    const onMsg = locale === "ar"
-      ? "الأوامر الصوتية مفعّلة — تكلّم الآن"
-      : "Voice on — speak your command";
-    toast.success(onMsg, { duration: 3000 });
-    startRecognition();
   }, [locale, startRecognition, stopRecognition]);
 
-  useEffect(() => () => { stopRecognition(); }, [stopRecognition]);
-
   return {
-    mode: isOn ? "listening" : "off" as "off" | "listening",
-    isListening: isOn,
-    isAwake: false,
+    mode,
+    isListening: mode === "listening",
     toggleVoice,
-    isSupported: getSpeechRecognition() !== null,
+    isSupported: getSpeechRecognition() !== null && Boolean(navigator.mediaDevices?.getUserMedia),
     lastTranscript,
+    statusMessage,
   };
 }

@@ -50,7 +50,6 @@ export default function Onboarding() {
     accessibilityProfile: null,
     locale: "en",
     curriculum: "igcse_edexcel",
-    yearGroup: "10",
     mode: "reading",
     fontScale: 1.0,
     speechRate: 1.0,

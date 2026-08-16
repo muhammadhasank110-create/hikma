@@ -156,6 +156,7 @@ export const progressRouter = router({
         topicAr: topic?.titleAr ?? "",
         subjectEn: subject?.titleEn ?? "",
         subjectAr: subject?.titleAr ?? "",
+        subjectCode: subject?.code ?? "",
         status: progressByLessonId.get(lesson.id)?.status ?? "not_started",
         updatedAt: progressByLessonId.get(lesson.id)?.updatedAt ?? lesson.updatedAt,
       };
@@ -167,7 +168,8 @@ export const progressRouter = router({
     const prioritySubjects = new Set((profileRows[0]?.subjectInterests ?? []).map(subject => subject.toLowerCase()));
     const isPrioritySubject = (lesson: NonNullable<ReturnType<typeof describeLesson>>) => {
       const subject = lesson.subjectEn.toLowerCase();
-      return (prioritySubjects.has("mathematics") && /math/.test(subject))
+      return prioritySubjects.has(lesson.subjectCode.toLowerCase())
+        || (prioritySubjects.has("mathematics") && /math/.test(subject))
         || (prioritySubjects.has("science") && /science|biology|chemistry|physics/.test(subject))
         || (prioritySubjects.has("english") && /english/.test(subject))
         || (prioritySubjects.has("arabic") && /arabic/.test(subject))

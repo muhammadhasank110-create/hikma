@@ -11,6 +11,43 @@ export const curriculumRouter = router({
     return db.select().from(curricula).where(eq(curricula.isActive, true));
   }),
 
+  availableSubjects: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return [];
+    const rows = await db.select({
+      id: subjects.id,
+      curriculumId: subjects.curriculumId,
+      code: subjects.code,
+      titleEn: subjects.titleEn,
+      titleAr: subjects.titleAr,
+      curriculumFamily: curricula.family,
+      curriculumBoard: curricula.board,
+      curriculumTitleEn: curricula.titleEn,
+      curriculumTitleAr: curricula.titleAr,
+    })
+      .from(subjects)
+      .innerJoin(curricula, eq(curricula.id, subjects.curriculumId))
+      .innerJoin(topics, eq(topics.subjectId, subjects.id))
+      .innerJoin(lessons, eq(lessons.topicId, topics.id))
+      .where(and(
+        eq(subjects.isActive, true),
+        eq(curricula.isActive, true),
+        eq(topics.isActive, true),
+        eq(lessons.isActive, true),
+      ))
+      .groupBy(subjects.id, subjects.curriculumId, subjects.code, subjects.titleEn, subjects.titleAr, curricula.family, curricula.board, curricula.titleEn, curricula.titleAr)
+      .orderBy(subjects.order, subjects.id);
+
+    return rows.map(subject => ({
+      ...subject,
+      profileKey: subject.curriculumFamily === "igcse" && /edexcel/i.test(subject.curriculumBoard)
+        ? "igcse_edexcel"
+        : subject.curriculumFamily === "national" && /qatar/i.test(subject.curriculumBoard)
+          ? "qatar_moehe"
+          : subject.curriculumFamily,
+    }));
+  }),
+
   subjects: publicProcedure
     .input(z.object({ curriculumId: z.number() }))
     .query(async ({ input }) => {

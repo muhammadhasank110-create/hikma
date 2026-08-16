@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Volume2, Eye, Type, Keyboard, Globe, Accessibility, Zap } from "lucide-react";
 import { FeedbackPanel } from "@/components/FeedbackPanel";
+import { trpc } from "@/lib/trpc";
 
 export default function SettingsPage() {
   const { profile, updateProfile, locale, setLocale } = useProfile();
@@ -18,13 +19,7 @@ export default function SettingsPage() {
 
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
   const toggleChoice = <T extends string,>(values: T[], value: T) => values.includes(value) ? values.filter(item => item !== value) : [...values, value];
-  const subjects = [
-    { value: "mathematics", en: "Mathematics", ar: "الرياضيات" },
-    { value: "science", en: "Science", ar: "العلوم" },
-    { value: "english", en: "English", ar: "اللغة الإنجليزية" },
-    { value: "arabic", en: "Arabic", ar: "اللغة العربية" },
-    { value: "exam_skills", en: "Exam skills", ar: "مهارات الاختبارات" },
-  ];
+  const { data: subjects = [] } = trpc.curriculum.availableSubjects.useQuery();
   const learningMethods = [
     { value: "visual" as const, en: "Visual examples", ar: "أمثلة بصرية" },
     { value: "reading" as const, en: "Read and reflect", ar: "القراءة والتأمل" },
@@ -280,8 +275,9 @@ export default function SettingsPage() {
           <p className="text-sm font-medium">{t("Subjects to prioritise", "المواد ذات الأولوية")}</p>
           <div className="flex flex-wrap gap-2" role="group" aria-label={t("Subjects to prioritise", "المواد ذات الأولوية")}>
             {subjects.map(subject => {
-              const selected = profile.subjectInterests.includes(subject.value);
-              return <button key={subject.value} type="button" aria-pressed={selected} onClick={() => updateProfile({ subjectInterests: toggleChoice(profile.subjectInterests, subject.value) })} className={`rounded-xl border px-3 py-2 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>{t(subject.en, subject.ar)}</button>;
+              const value = subject.code ?? String(subject.id);
+              const selected = profile.subjectInterests.includes(value);
+              return <button key={subject.id} type="button" aria-pressed={selected} onClick={() => updateProfile({ subjectInterests: toggleChoice(profile.subjectInterests, value) })} className={`rounded-xl border px-3 py-2 text-xs font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted"}`}>{t(subject.titleEn, subject.titleAr)}</button>;
             })}
           </div>
         </div>

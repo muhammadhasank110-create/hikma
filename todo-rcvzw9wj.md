@@ -150,3 +150,7 @@
 - [x] Define a minimal, durable preference-to-decision model using only established profile/data structures, identifying which requested capabilities already work and which gaps are genuinely actionable.
 - [x] Implement only the verified, high-value personalization and minimalist UX gaps while preserving accessibility, existing progress, lesson, practice, tutor, and navigation contracts.
 - [x] Add focused regression coverage and verify persistence, personalized recommendations, settings effects, English/Arabic RTL, keyboard, accessibility profiles, desktop/mobile, type/unit/browser checks; record evidence and publish.
+- [x] Audit live usable subjects, subject content/routes, onboarding questions and effects, Arabic translations/RTL, and the complete voice-command request-to-action pipeline against the supplied specification.
+- [x] Define a source-of-truth subject list and retain only onboarding questions that are saved and consumed by real existing features; identify voice-command root causes and feature-parity gaps.
+- [x] Implement only verified source-of-truth subject rendering, Arabic/RTL accuracy, feature-aware onboarding, and end-to-end voice-command corrections without inventing unavailable capabilities.
+- [x] Add focused regression coverage and verify subject availability, preference persistence, English/Arabic RTL, keyboard, microphone permission/unavailable/error states, command parsing/execution/feedback, type/unit/browser suites; record evidence and publish.
