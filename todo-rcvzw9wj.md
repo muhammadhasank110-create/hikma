@@ -159,8 +159,8 @@
 - [x] Apply only localized responsive branding, sizing, spacing, and placement corrections to verified logo surfaces without changing navigation structure, learning functionality, or unrelated styling.
 - [x] Add focused coverage and verify sharpness, aspect ratio, light/dark/high-contrast visibility, reduced motion, keyboard access, public/app/onboarding/loading/mobile layouts, type/unit/browser suites; record evidence and publish.
 - [x] Restore the application to the latest published checkpoint so none of the uncommitted moodboard-inspired app styling changes remain.
-- [ ] Audit the restored HIKMA app identity and define an app-faithful moodboard composition using its approved logo, existing semantic colors, typography, accessibility profiles, interaction cues, and responsive layout patterns.
-- [ ] Create and deliver only the improved HIKMA design-system moodboard image; do not modify or publish application code for this request.
+- [x] Audit the restored HIKMA app identity and define an app-faithful moodboard composition using its approved logo, existing semantic colors, typography, accessibility profiles, interaction cues, and responsive layout patterns.
+- [x] Create and deliver only the improved HIKMA design-system moodboard image; do not modify or publish application code for this request.
 - [x] Audit existing buttons and interactive controls to reproduce the reported screen-reader/narrator interaction defect, identifying only controls with incorrect semantics, naming, keyboard activation, state, or focus behavior.
 - [x] Apply the smallest correction only to verified broken controls, preserving all current visuals, content, navigation, language, audio, and unrelated component behavior.
 - [x] Add focused regression coverage and verify accessible names, roles, states, Tab, Enter, Space, activation outcomes, dialog/menu/dropdown focus, English/Arabic RTL, desktop/mobile, type/unit/browser checks; publish only the scoped repair.
