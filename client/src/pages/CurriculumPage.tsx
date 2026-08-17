@@ -34,24 +34,28 @@ export default function CurriculumPage() {
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {curricula?.map(c => (
-            <Card
+            <button
               key={c.id}
-              className={`cursor-pointer transition-colors ${selectedCurriculum === c.id ? "border-primary bg-primary/5" : "hover:border-primary/50"}`}
+              type="button"
               onClick={() => setSelectedCurriculum(c.id)}
+              aria-pressed={selectedCurriculum === c.id}
+              className="block w-full rounded-xl bg-transparent p-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-primary" />
+              <Card className={`transition-colors ${selectedCurriculum === c.id ? "border-primary bg-primary/5" : "hover:border-primary/50"}`}>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{locale === "ar" ? c.titleAr : c.titleEn}</p>
+                      <p className="text-xs text-muted-foreground">{c.board}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{locale === "ar" ? c.titleAr : c.titleEn}</p>
-                    <p className="text-xs text-muted-foreground">{c.board}</p>
-                  </div>
-                </div>
-                {selectedCurriculum === c.id && <CheckCircle className="w-5 h-5 text-primary" />}
-              </CardContent>
-            </Card>
+                  {selectedCurriculum === c.id && <CheckCircle className="w-5 h-5 text-primary" />}
+                </CardContent>
+              </Card>
+            </button>
           ))}
         </div>
       )}
@@ -65,29 +69,34 @@ export default function CurriculumPage() {
             <div className="space-y-3">
               {subjects.map(subject => (
                 <Card key={subject.id}>
-                  <CardHeader
-                    className="pb-2 cursor-pointer"
+                  <button
+                    type="button"
                     onClick={() => setExpandedSubject(expandedSubject === subject.id ? null : subject.id)}
+                    aria-expanded={expandedSubject === subject.id}
+                    aria-controls={`subject-topics-${subject.id}`}
+                    className="block w-full rounded-xl bg-transparent p-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <CardTitle className="text-base">{locale === "ar" ? subject.titleAr : subject.titleEn}</CardTitle>
-                        <Badge variant="outline" className="text-xs">{subject.code}</Badge>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="hidden sm:block w-32">
-                          <SubjectCoverage subjectId={subject.id} />
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <CardTitle className="text-base">{locale === "ar" ? subject.titleAr : subject.titleEn}</CardTitle>
+                          <Badge variant="outline" className="text-xs">{subject.code}</Badge>
                         </div>
-                        {expandedSubject === subject.id
-                          ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                          : <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                        }
+                        <div className="flex items-center gap-3">
+                          <div className="hidden sm:block w-32">
+                            <SubjectCoverage subjectId={subject.id} />
+                          </div>
+                          {expandedSubject === subject.id
+                            ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            : <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          }
+                        </div>
                       </div>
-                    </div>
-                    <Progress value={0} className="h-1.5 mt-2" />
-                  </CardHeader>
+                      <Progress value={0} className="h-1.5 mt-2" />
+                    </CardHeader>
+                  </button>
                   {expandedSubject === subject.id && (
-                    <CardContent className="pt-0">
+                    <CardContent id={`subject-topics-${subject.id}`} className="pt-0">
                       <SubjectTopics subjectId={subject.id} locale={locale} t={t} />
                     </CardContent>
                   )}

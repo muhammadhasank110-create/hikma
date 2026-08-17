@@ -49,6 +49,47 @@ test.describe("authenticated tutor narration", () => {
     }
   });
 
+  test("operates the repaired curriculum, subject, ECC, and admin cards as named native buttons", async ({ page }) => {
+    await page.route(/\/api\/trpc\/curriculum\.list/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: [{ id: 1, titleEn: "IGCSE Edexcel", titleAr: "إدكسل IGCSE", board: "Edexcel" }] } } }]) }));
+    await page.route(/\/api\/trpc\/curriculum\.subjects/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: [{ id: 1, titleEn: "Mathematics", titleAr: "الرياضيات", code: "MATH-IGCSE" }] } } }]) }));
+    await page.route(/\/api\/trpc\/curriculum\.topics/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: [] } } }]) }));
+    await page.goto("/curriculum");
+
+    const curriculum = page.getByRole("button", { name: /igcse edexcel/i });
+    await expect(curriculum).toHaveAttribute("aria-pressed", "false");
+    await curriculum.focus();
+    await page.keyboard.press("Space");
+    await expect(curriculum).toHaveAttribute("aria-pressed", "true");
+
+    const mathematicsDisclosure = page.getByRole("button", { name: /mathematics/i });
+    await expect(mathematicsDisclosure).toHaveAttribute("aria-expanded", "false");
+    await mathematicsDisclosure.focus();
+    await page.keyboard.press("Enter");
+    await expect(mathematicsDisclosure).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator("#subject-topics-1")).toBeVisible();
+
+    await page.goto("/subjects/1");
+    const mathematicsSubject = page.getByRole("button", { name: "Mathematics" });
+    await mathematicsSubject.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/subjects\/1\/topics\/1/);
+
+    await page.route(/\/api\/trpc\/ecc\.areas/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: [{ id: 1, number: 1, nameEn: "Sensory Awareness", nameAr: "الوعي الحسي", descriptionEn: "Learn sensory skills", descriptionAr: "تعلم المهارات الحسية" }] } } }]) }));
+    await page.route(/\/api\/trpc\/ecc\.myProgress/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: [] } } }]) }));
+    await page.goto("/ecc");
+    const eccArea = page.getByRole("button", { name: "Sensory Awareness", exact: true });
+    await eccArea.focus();
+    await page.keyboard.press("Space");
+    await expect(page).toHaveURL(/\/ecc\/1/);
+
+    await page.route(/\/api\/trpc\/auth\.me/, route => route.fulfill({ contentType: "application/json", body: JSON.stringify([{ result: { data: { json: { ...mockUser, role: "admin" } } } }]) }));
+    await page.goto("/admin");
+    const users = page.getByRole("button", { name: "Users" });
+    await users.focus();
+    await page.keyboard.press("Space");
+    await expect(page.getByText("User management coming soon")).toBeVisible();
+  });
+
   test("uses the shared contrast-safe compact HIKMA brand in the authenticated app header", async ({ page }) => {
     await page.goto("/dashboard");
     const brand = page.getByRole("link", { name: "Hikma home" });

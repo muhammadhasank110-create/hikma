@@ -28,30 +28,30 @@ export default function SubjectPage() {
       <h1 className="text-2xl font-bold">{locale === "ar" ? "المواد الدراسية" : "Subjects"}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {subjects?.map(subject => (
-          <Card
+          <button
             key={subject.id}
-            className="cursor-pointer hover:border-primary transition-all hover:shadow-md group"
+            type="button"
             onClick={() => navigate(`/subjects/${curriculumId}/topics/${subject.id}`)}
-            tabIndex={0}
-            role="button"
             aria-label={locale === "ar" ? subject.titleAr : subject.titleEn}
-            onKeyDown={e => e.key === "Enter" && navigate(`/subjects/${curriculumId}/topics/${subject.id}`)}
+            className="group block w-full rounded-xl bg-transparent p-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-primary/15">
-                  <BookOpen className="w-5 h-5 text-primary" style={{ strokeWidth: 2.5 }} />
+            <Card className="hover:border-primary transition-all hover:shadow-md">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <div className="p-2 rounded-lg bg-primary/15">
+                    <BookOpen className="w-5 h-5 text-primary" style={{ strokeWidth: 2.5 }} />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-              </div>
-              <CardTitle className="text-base mt-2">
-                {locale === "ar" ? subject.titleAr : subject.titleEn}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {subject.code && <Badge variant="secondary" className="text-xs">{subject.code}</Badge>}
-            </CardContent>
-          </Card>
+                <CardTitle className="text-base mt-2">
+                  {locale === "ar" ? subject.titleAr : subject.titleEn}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {subject.code && <Badge variant="secondary" className="text-xs">{subject.code}</Badge>}
+              </CardContent>
+            </Card>
+          </button>
         ))}
         {subjects?.length === 0 && (
           <p className="text-muted-foreground col-span-full text-center py-12">

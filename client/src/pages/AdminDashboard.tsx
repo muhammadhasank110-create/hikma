@@ -23,14 +23,16 @@ export default function AdminDashboard() {
           { icon: Activity, label: t.activity, action: () => toast.info("Activity logs coming soon") },
           { icon: Settings, label: t.settings, action: () => toast.info("System settings coming soon") },
         ].map(({ icon: Icon, label, action }) => (
-          <Card key={label} className="cursor-pointer hover:border-primary transition-colors" onClick={action}>
-            <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
-              <div className="p-3 rounded-xl bg-primary/10">
-                <Icon className="w-6 h-6 text-primary" />
-              </div>
-              <p className="font-semibold">{label}</p>
-            </CardContent>
-          </Card>
+          <button key={label} type="button" onClick={action} className="block w-full rounded-xl bg-transparent p-0 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            <Card className="hover:border-primary transition-colors">
+              <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
+                <div className="p-3 rounded-xl bg-primary/10">
+                  <Icon className="w-6 h-6 text-primary" />
+                </div>
+                <p className="font-semibold">{label}</p>
+              </CardContent>
+            </Card>
+          </button>
         ))}
       </div>
     </div>

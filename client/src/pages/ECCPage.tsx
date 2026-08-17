@@ -60,12 +60,14 @@ export default function ECCPage() {
             const Icon = ECC_ICONS[area.number] ?? BookOpen;
             const pct = progressPercent(area.id);
             return (
-              <Card
+              <button
                 key={area.id}
-                className="hover:border-primary transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-primary"
+                type="button"
                 onClick={() => navigate(`/ecc/${area.id}`)}
-                role="article"
+                aria-label={locale === "ar" ? area.nameAr : area.nameEn}
+                className="block w-full rounded-xl bg-transparent p-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
+              <Card className="hover:border-primary transition-colors">
                 <CardHeader className="pb-3">
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
@@ -107,6 +109,7 @@ export default function ECCPage() {
                   </Button>
                 </CardContent>
               </Card>
+              </button>
             );
           })}
         </div>
