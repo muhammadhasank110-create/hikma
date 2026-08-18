@@ -174,3 +174,7 @@
 - [x] Issue 9 — Audit and minimally correct verified accessible color-scheme defects, verify, diff-audit, document, and checkpoint without redesigning HIKMA.
 - [x] Issue 10 — Conduct a structured WCAG 2.2 review; document evidence-backed findings as separate future issues without automatically remediating them.
 - [x] Issue 11 — Update only factual, verified HIKMA documentation after the corresponding behavior is implemented and tested.
+- [x] Audit every existing HIKMA branding/logo render location, direct asset reference, shared logo component, favicon/app icon, and responsive constraint against the supplied official logo assets.
+- [x] Install the supplied official cream/forest and forest/white assets as the canonical logo variants and update only the existing shared logo source to use them without changing behavior.
+- [x] Replace only verified existing logo references and make minimal logo-specific sizing/positioning corrections where required to preserve aspect ratio and layout on desktop, mobile, and RTL.
+- [x] Add focused coverage and verify official-asset selection, accessible logo naming, light/dark/high-contrast visibility, RTL non-mirroring, desktop/mobile containment, type/unit/browser suites; record evidence and publish.

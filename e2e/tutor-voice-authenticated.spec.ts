@@ -95,10 +95,10 @@ test.describe("authenticated tutor narration", () => {
     const brand = page.getByRole("link", { name: "Hikma home" });
     await expect(brand).toBeVisible();
     const logo = brand.locator('[data-hikma-logo="compact"] img');
-    await expect(logo).toHaveAttribute("src", /hikma-icon-white\.png/);
+    await expect(logo).toHaveAttribute("src", /hikma-icon-forest-white_f506294e\.png/);
     const box = await logo.boundingBox();
     expect(box?.height).toBeGreaterThanOrEqual(48);
-    expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(316 / 242, 1);
+    expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(1, 1);
   });
 
   test("persists learner subject priorities from accessible Settings controls", async ({ page }) => {
