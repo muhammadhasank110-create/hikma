@@ -304,7 +304,10 @@ test.describe("authenticated tutor narration", () => {
     }));
     await page.route(/\/api\/trpc\/ecc\.units/, route => route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify([{ result: { data: { json: [{ id: 10, areaId: 1, titleEn: "Plan a journey", titleAr: "خطط لرحلة", descriptionEn: "", descriptionAr: "", lessonId: null, requiresInPersonPractice: false }] } } }]),
+      body: JSON.stringify([{ result: { data: { json: [
+        { id: 10, areaId: 1, titleEn: "Plan a journey", titleAr: "خطط لرحلة", descriptionEn: "", descriptionAr: "", lessonId: null, requiresInPersonPractice: false },
+        { id: 11, areaId: 1, titleEn: "Choose a route", titleAr: "اختر مسارًا", descriptionEn: "", descriptionAr: "", lessonId: null, requiresInPersonPractice: false },
+      ] } } }]),
     }));
     await page.route(/\/api\/trpc\/ecc\.myProgress/, route => route.fulfill({
       contentType: "application/json",
@@ -313,7 +316,15 @@ test.describe("authenticated tutor narration", () => {
 
     await page.goto("/ecc/1");
     await expect(page.getByRole("heading", { name: "Independent living" })).toBeVisible();
-    await expect(page.getByRole("tab", { name: "Plan a journey" })).toBeVisible();
+    const firstTab = page.getByRole("tab", { name: "Plan a journey" });
+    const secondTab = page.getByRole("tab", { name: "Choose a route" });
+    await expect(firstTab).toBeVisible();
+    await firstTab.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(secondTab).toBeFocused();
+    await expect(secondTab).toHaveAttribute("aria-selected", "true");
+    await page.keyboard.press("ArrowLeft");
+    await expect(firstTab).toBeFocused();
     await expect.poll(() => duplicateKeyErrors).toEqual([]);
   });
 });

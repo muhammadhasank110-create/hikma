@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, BookOpen, CheckCircle, AlertCircle } from "lucide-react";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
 
 export default function ECCAreaPage() {
@@ -22,34 +22,23 @@ export default function ECCAreaPage() {
 
   // ── All useState hooks ─────────────────────────────────────────────────────
   const [currentUnit, setCurrentUnit] = useState(0);
+  const unitTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   // ── All useCallback hooks ──────────────────────────────────────────────────
   // Keyboard: Left/Right arrows navigate between units
   const handleTabKeyDown = useCallback((e: React.KeyboardEvent, i: number) => {
+    let nextUnit = i;
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
       e.preventDefault();
-      setCurrentUnit(Math.min((units?.length ?? 1) - 1, i + 1));
+      nextUnit = Math.min((units?.length ?? 1) - 1, i + 1);
     } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
       e.preventDefault();
-      setCurrentUnit(Math.max(0, i - 1));
+      nextUnit = Math.max(0, i - 1);
+    } else {
+      return;
     }
-  }, [units?.length]);
-
-  // ── All useEffect hooks ────────────────────────────────────────────────────
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "ArrowRight" && !e.ctrlKey && !e.metaKey) {
-        setCurrentUnit(i => Math.min((units?.length ?? 1) - 1, i + 1));
-      } else if (e.key === "ArrowLeft" && !e.ctrlKey && !e.metaKey) {
-        setCurrentUnit(i => Math.max(0, i - 1));
-      } else if (e.key === "Enter") {
-        // Enter = advance to next unit
-        setCurrentUnit(i => Math.min((units?.length ?? 1) - 1, i + 1));
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    setCurrentUnit(nextUnit);
+    requestAnimationFrame(() => unitTabRefs.current[nextUnit]?.focus());
   }, [units?.length]);
 
   // ── Early returns AFTER all hooks ─────────────────────────────────────────
@@ -131,6 +120,7 @@ export default function ECCAreaPage() {
               return (
                 <button
                   key={u.id}
+                  ref={(element) => { unitTabRefs.current[i] = element; }}
                   role="tab"
                   aria-selected={i === currentUnit}
                   tabIndex={i === currentUnit ? 0 : -1}
