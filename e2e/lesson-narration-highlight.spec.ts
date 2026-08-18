@@ -171,6 +171,10 @@ test.describe("lesson narration highlighting", () => {
   });
 
   test("renders meaningful alternative text for a generated educational visual", async ({ page }) => {
+    await page.route("https://example.test/photosynthesis.png", route => route.fulfill({
+      contentType: "image/png",
+      body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64"),
+    }));
     await page.route(/\/api\/trpc\/tutor\.generateConceptVisual/, route => route.fulfill({
       contentType: "application/json",
       body: JSON.stringify([{ result: { data: { json: {
@@ -188,6 +192,33 @@ test.describe("lesson narration highlighting", () => {
     await visualMap.getByRole("button", { name: /build visual explanation/i }).click();
     await expect(visualMap.getByRole("img", { name: /high-contrast diagram showing sunlight/i })).toBeVisible();
     await expect(visualMap.getByText(/chlorophyll captures its energy/i)).toBeVisible();
+  });
+
+  test("falls back to the text explanation when a generated image fails after the response succeeds", async ({ page }) => {
+    await page.route("https://example.test/unavailable-visual.png", route => route.fulfill({
+      contentType: "image/png",
+      body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64"),
+    }));
+    await page.route(/\/api\/trpc\/tutor\.generateConceptVisual/, route => route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify([{ result: { data: { json: {
+        imageUrl: "https://example.test/unavailable-visual.png",
+        altText: "Educational visual that cannot load.",
+        description: "The written explanation remains available.",
+        cached: false,
+      } } } }]),
+    }));
+    await page.goto("/lesson/901");
+    await page.getByRole("button", { name: /more options/i }).click();
+    await page.getByRole("menuitem", { name: /concept map/i }).click();
+
+    const visualMap = page.getByRole("region", { name: /visual learning map/i });
+    await visualMap.getByRole("button", { name: /build visual explanation/i }).click();
+    const image = visualMap.getByRole("img", { name: /educational visual that cannot load/i });
+    await expect(image).toBeVisible();
+    await image.dispatchEvent("error");
+    await expect(visualMap.getByText(/The visual is unavailable right now/i)).toBeVisible();
+    await expect(visualMap.getByText(/Plants capture light energy to begin photosynthesis/i)).toBeVisible();
   });
 
   test("localizes the Visual Learning Map controls and direction for Arabic learners", async ({ page }) => {

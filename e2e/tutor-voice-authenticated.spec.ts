@@ -95,7 +95,7 @@ test.describe("authenticated tutor narration", () => {
     const brand = page.getByRole("link", { name: "Hikma home" });
     await expect(brand).toBeVisible();
     const logo = brand.locator('[data-hikma-logo="compact"] img');
-    await expect(logo).toHaveAttribute("src", /hikma-logo-official-cream-transparent_f7bb3dc5\.png/);
+    await expect(logo).toHaveAttribute("src", /hikma-logo-official-cream-transparent_c99c136d\.png/);
     const box = await logo.boundingBox();
     expect(box?.height).toBeGreaterThanOrEqual(48);
     expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(1, 1);

@@ -280,7 +280,14 @@ export default function ConceptMapSVG({ lessonTitle, sections, locale, defaultLi
                 <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-3" aria-live="polite" aria-busy={visualState.status === "loading"}>
                   {visualState.status === "ready" && visualState.visual ? (
                     <figure>
-                      <img src={visualState.visual.imageUrl} alt={visualState.visual.altText} className="max-h-72 w-full rounded-md object-cover" loading="lazy" />
+                      <img
+                        src={visualState.visual.imageUrl}
+                        alt={visualState.visual.altText}
+                        className="max-h-72 w-full rounded-md object-cover"
+                        loading="eager"
+                        decoding="async"
+                        onError={() => setVisualState({ status: "error" })}
+                      />
                       <figcaption className="mt-2 text-xs leading-relaxed text-muted-foreground">{visualState.visual.description}</figcaption>
                     </figure>
                   ) : visualState.status === "loading" ? (
