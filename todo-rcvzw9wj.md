@@ -182,8 +182,8 @@
 - [x] Create one high-resolution, tightly padded transparent official logo asset without changing legitimate logo pixels, colors, typography, proportions, or brand elements.
 - [x] Replace only the centralized logo, favicon, manifest, and social-brand references with the transparent canonical asset; preserve all non-logo application behavior and layout.
 - [x] Verify transparent edges, no visible image rectangle, asset sharpness, logo aspect ratio, light/dark/high-contrast, RTL, desktop/mobile containment, accessibility semantics, focused logo tests, and full regression; publish.
-- [ ] Extract the actual HIKMA public, learner dashboard, lesson, tutor, accessibility, bilingual, and mobile-navigation visual language for one product-experience moodboard.
-- [ ] Generate and deliver one premium HIKMA product-experience moodboard that presents real app-inspired interface scenes, not a palette-only system board, without modifying application code.
+- [x] Extract the actual HIKMA public, learner dashboard, lesson, tutor, accessibility, bilingual, and mobile-navigation visual language for one product-experience moodboard.
+- [x] Generate and deliver one premium HIKMA product-experience moodboard that presents real app-inspired interface scenes, not a palette-only system board, without modifying application code.
 - [x] Audit the complete HIKMA image pipeline across local/public assets, managed static URLs, remote/generated images, major image components, production build output, network delivery, and responsive/CSS rendering to reproduce the actual failure point.
 - [x] Isolate the verified cross-device image failure root cause and define the smallest safe correction without redesigning, refactoring, adding image infrastructure, or changing unrelated application behavior.
 - [x] Implement only the required local/static path, asset inclusion, image loading, fallback, or rendering correction; preserve visual design, accessibility semantics, and existing layouts.
