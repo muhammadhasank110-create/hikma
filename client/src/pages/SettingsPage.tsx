@@ -83,20 +83,22 @@ export default function SettingsPage() {
             </SelectContent>
           </Select>
         </Row>
-        <Row label={t("Arabic numerals", "الأرقام العربية")}>
-          <Switch
-            checked={profile.numerals === "arabic_indic"}
-            onCheckedChange={v => updateProfile({ numerals: v ? "arabic_indic" : "western" })}
-            aria-label={t("Arabic numerals", "الأرقام العربية")}
-          />
-        </Row>
-        <Row label={t("Tashkeel (vowel marks)", "التشكيل")}>
-          <Switch
-            checked={profile.tashkeel}
-            onCheckedChange={v => updateProfile({ tashkeel: v })}
-            aria-label={t("Tashkeel", "التشكيل")}
-          />
-        </Row>
+        {locale === "ar" && <>
+          <Row label="الأرقام العربية">
+            <Switch
+              checked={profile.numerals === "arabic_indic"}
+              onCheckedChange={v => updateProfile({ numerals: v ? "arabic_indic" : "western" })}
+              aria-label="الأرقام العربية"
+            />
+          </Row>
+          <Row label="التشكيل">
+            <Switch
+              checked={profile.tashkeel}
+              onCheckedChange={v => updateProfile({ tashkeel: v })}
+              aria-label="التشكيل"
+            />
+          </Row>
+        </>}
       </Section>
 
       {/* Visual */}

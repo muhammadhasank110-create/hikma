@@ -165,7 +165,7 @@
 - [x] Apply the smallest correction only to verified broken controls, preserving all current visuals, content, navigation, language, audio, and unrelated component behavior.
 - [x] Add focused regression coverage and verify accessible names, roles, states, Tab, Enter, Space, activation outcomes, dialog/menu/dropdown focus, English/Arabic RTL, desktop/mobile, type/unit/browser checks; publish only the scoped repair.
 - [x] Issue 2 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint Arabic numeral rendering without changing unrelated language behavior.
-- [ ] Issue 3 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint Arabic-only tashkeel and numeral option visibility.
+- [x] Issue 3 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint Arabic-only tashkeel and numeral option visibility.
 - [ ] Issue 4 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint intended hover read-aloud behavior without affecting unrelated audio.
 - [ ] Issue 5 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint intended keyboard-focus read-aloud behavior without replacing standard keyboard operation.
 - [ ] Issue 6 — Investigate, minimally correct if necessary, verify, diff-audit, document, and checkpoint the read-aloud on/off control.

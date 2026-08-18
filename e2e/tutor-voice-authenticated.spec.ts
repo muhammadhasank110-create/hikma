@@ -116,6 +116,17 @@ test.describe("authenticated tutor narration", () => {
     await expect.poll(() => persistedInterest).toBe(true);
   });
 
+  test("shows tashkeel and numeral preferences only in the Arabic interface", async ({ page }) => {
+    await page.goto("/settings");
+    await expect(page.getByRole("switch", { name: "Arabic numerals" })).toHaveCount(0);
+    await expect(page.getByRole("switch", { name: "Tashkeel" })).toHaveCount(0);
+
+    await page.goto("/settings?lang=ar");
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expect(page.getByRole("switch", { name: "الأرقام العربية" })).toBeVisible();
+    await expect(page.getByRole("switch", { name: "التشكيل" })).toBeVisible();
+  });
+
   test("persists an editable learning goal from the Learning preferences settings", async ({ page }) => {
     let persistedGoal = false;
     await page.route(/\/api\/trpc\/profile\.update/, route => {
