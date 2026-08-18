@@ -32,8 +32,8 @@ interface HikmaLogoProps {
 const ICON_ASPECT = 1;
 const WORDMARK_ASPECT = 1;
 
-const DARK_ICON = "/manus-storage/hikma-icon-cream-forest_7d79fd6e.png";
-const WHITE_ICON = "/manus-storage/hikma-icon-forest-white_f506294e.png";
+const DARK_ICON = "/manus-storage/hikma-logo-official-forest-transparent_95429dc9.png";
+const WHITE_ICON = "/manus-storage/hikma-logo-official-cream-transparent_c99c136d.png";
 
 const DARK_SURFACE_THEMES = new Set(["dark", "high_contrast"]);
 

@@ -178,3 +178,7 @@
 - [x] Install the supplied official cream/forest and forest/white assets as the canonical logo variants and update only the existing shared logo source to use them without changing behavior.
 - [x] Replace only verified existing logo references and make minimal logo-specific sizing/positioning corrections where required to preserve aspect ratio and layout on desktop, mobile, and RTL.
 - [x] Add focused coverage and verify official-asset selection, accessible logo naming, light/dark/high-contrast visibility, RTL non-mirroring, desktop/mobile containment, type/unit/browser suites; record evidence and publish.
+- [x] Inspect the uploaded official logo asset and every current official-brand reference for unwanted background, image bounds, transparent padding, artifacts, and existing logo-only rendering requirements.
+- [x] Create one high-resolution, tightly padded transparent official logo asset without changing legitimate logo pixels, colors, typography, proportions, or brand elements.
+- [x] Replace only the centralized logo, favicon, manifest, and social-brand references with the transparent canonical asset; preserve all non-logo application behavior and layout.
+- [x] Verify transparent edges, no visible image rectangle, asset sharpness, logo aspect ratio, light/dark/high-contrast, RTL, desktop/mobile containment, accessibility semantics, focused logo tests, and full regression; publish.

@@ -21,7 +21,7 @@ test.describe("public entry and protected tutor", () => {
     const homeBrand = page.getByRole("link", { name: "Hikma home" });
     await expect(homeBrand).toBeVisible();
     const logo = homeBrand.locator('[data-hikma-logo="compact"] img');
-    await expect(logo).toHaveAttribute("src", /hikma-icon-cream-forest_7d79fd6e\.png/);
+    await expect(logo).toHaveAttribute("src", /hikma-logo-official-forest-transparent_a59646b1\.png/);
     const box = await logo.boundingBox();
     expect(box?.height).toBeGreaterThanOrEqual(40);
     expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(1, 1);
@@ -37,7 +37,7 @@ test.describe("public entry and protected tutor", () => {
       const logo = testInfo.project.name === "mobile"
         ? brand.locator("img")
         : brand.locator('[data-hikma-logo="compact"] img');
-      await expect(logo).toHaveAttribute("src", /hikma-icon-forest-white_f506294e\.png/);
+      await expect(logo).toHaveAttribute("src", /hikma-logo-official-cream-transparent_f7bb3dc5\.png/);
       const box = await logo.boundingBox();
       expect(box?.height).toBeGreaterThanOrEqual(testInfo.project.name === "mobile" ? 44 : 52);
       expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(1, 1);
