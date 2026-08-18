@@ -172,5 +172,5 @@
 - [x] Issue 7 — Audit keyboard navigation, isolate each confirmed defect, remediate only authorized confirmed defects, verify, diff-audit, document, and checkpoint.
 - [x] Issue 8 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint appropriate sound-effect behavior and controls.
 - [x] Issue 9 — Audit and minimally correct verified accessible color-scheme defects, verify, diff-audit, document, and checkpoint without redesigning HIKMA.
-- [ ] Issue 10 — Conduct a structured WCAG 2.2 review; document evidence-backed findings as separate future issues without automatically remediating them.
-- [ ] Issue 11 — Update only factual, verified HIKMA documentation after the corresponding behavior is implemented and tested.
+- [x] Issue 10 — Conduct a structured WCAG 2.2 review; document evidence-backed findings as separate future issues without automatically remediating them.
+- [x] Issue 11 — Update only factual, verified HIKMA documentation after the corresponding behavior is implemented and tested.
