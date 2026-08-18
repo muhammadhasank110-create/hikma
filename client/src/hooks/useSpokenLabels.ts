@@ -60,6 +60,20 @@ function isInteractive(el: Element): boolean {
   );
 }
 
+export function getInteractiveAncestor(target: EventTarget | null): Element | null {
+  let current = target && typeof (target as Element).getAttribute === "function" ? target as Element : null;
+  while (current) {
+    if (isInteractive(current)) return current;
+    current = current.parentElement;
+  }
+  return null;
+}
+
+export function leavesInteractiveControl(target: EventTarget | null, relatedTarget: EventTarget | null) {
+  const current = getInteractiveAncestor(target);
+  return !!current && current !== getInteractiveAncestor(relatedTarget);
+}
+
 export function useSpokenLabels() {
   const { locale } = useProfile();
   const [enabled, setEnabled] = useState(() => {
@@ -104,14 +118,17 @@ export function useSpokenLabels() {
     };
 
     const handlePointerOver = (e: PointerEvent) => {
-      const el = e.target as Element;
+      const el = getInteractiveAncestor(e.target);
+      const previous = getInteractiveAncestor(e.relatedTarget);
+      if (!el || el === previous) return;
       if (!isInteractive(el)) return;
       const label = resolveLabel(el);
       if (label) announce(label);
     };
 
-    // Stop audio immediately when pointer leaves an element (user moved away)
-    const handlePointerOut = () => {
+    // Stop audio only after leaving the current interactive control, not while moving across its children.
+    const handlePointerOut = (e: PointerEvent) => {
+      if (!leavesInteractiveControl(e.target, e.relatedTarget)) return;
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
         debounceRef.current = null;
