@@ -58,9 +58,9 @@
     --accent-foreground: 255 255 255;
     --destructive:     220 38 38;
     --destructive-foreground: 255 255 255;
-    --success:         22 163 74;
+    --success:         21 128 61;
     --success-foreground: 255 255 255;
-    --warning:         202 138 4;
+    --warning:         161 98 7;
     --warning-foreground: 255 255 255;
     --ring:            var(--forest);
     --radius: 0.5rem;
