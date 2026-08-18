@@ -111,10 +111,17 @@ export function useSpokenLabels() {
     if (!enabled) return;
 
     const handleFocusIn = (e: FocusEvent) => {
-      const el = e.target as Element;
-      if (!isInteractive(el)) return;
+      const el = getInteractiveAncestor(e.target);
+      const previous = getInteractiveAncestor(e.relatedTarget);
+      if (!el || el === previous) return;
       const label = resolveLabel(el);
       if (label) announce(label);
+    };
+
+    const handleFocusOut = (e: FocusEvent) => {
+      if (leavesInteractiveControl(e.target, e.relatedTarget)) {
+        lastLabel.current = "";
+      }
     };
 
     const handlePointerOver = (e: PointerEvent) => {
@@ -138,10 +145,12 @@ export function useSpokenLabels() {
     };
 
     document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
     document.addEventListener("pointerover", handlePointerOver);
     document.addEventListener("pointerout", handlePointerOut);
     return () => {
       document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
       document.removeEventListener("pointerover", handlePointerOver);
       document.removeEventListener("pointerout", handlePointerOut);
       if (debounceRef.current) clearTimeout(debounceRef.current);

@@ -29,6 +29,12 @@ describe("spoken-label hover target resolution", () => {
     expect(leavesInteractiveControl(icon as unknown as EventTarget, label as unknown as EventTarget)).toBe(false);
   });
 
+  it("resolves a nested focus target to its interactive control", () => {
+    const button = element("button");
+    const label = element("span", {}, button);
+    expect(getInteractiveAncestor(label as unknown as EventTarget)).toBe(button);
+  });
+
   it("stops only when the pointer leaves the interactive control", () => {
     const button = element("button");
     const icon = element("svg", {}, button);
