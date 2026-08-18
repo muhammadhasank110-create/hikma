@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, Volume2, Mic, MicOff, Trophy, RotateCcw, ArrowRight, CheckCircle2, XCircle, Sparkles, Lightbulb } from "lucide-react";
 import { useCheckState } from "@/hooks/useCheckState";
+import { formatHikmaNumber } from "@/lib/formatNumber";
+import { useProfile } from "@/contexts/ProfileContext";
 
 // ── Confetti burst (CSS-only, 12 particles) ───────────────────────────────────
 function ConfettiBurst() {
@@ -73,8 +75,10 @@ function RippleButton({ children, onClick, className, disabled, role, "aria-chec
 export default function CheckPage() {
   const [, params] = useRoute("/check/:lessonId");
   const lessonId = parseInt(params?.lessonId ?? "0");
+  const { locale, profile } = useProfile();
   const s = useCheckState(lessonId);
-  const { t, locale, navigate } = s;
+  const formatNumber = (value: number, options?: Intl.NumberFormatOptions) => formatHikmaNumber(value, locale, profile.numerals, options);
+  const { t, navigate } = s;
   const prefersReducedMotion = useReducedMotion();
 
   // Keyboard shortcuts
@@ -162,10 +166,10 @@ export default function CheckPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: "spring", stiffness: 150, damping: 15, delay: 0.4 }}
           >
-            {pct}%
+            {formatNumber(pct)}%
           </motion.div>
           <motion.p className="text-muted-foreground" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
-            {t(`You scored ${s.score} out of ${s.totalMarks} marks`, `حصلت على ${s.score} من ${s.totalMarks} درجة`)}
+            {t(`You scored ${formatNumber(s.score)} out of ${formatNumber(s.totalMarks)} marks`, `حصلت على ${formatNumber(s.score)} من ${formatNumber(s.totalMarks)} درجة`)}
           </motion.p>
           <motion.div initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }} transition={{ delay: 0.6, duration: 0.6 }} style={{ originX: 0 }}>
             <AnimatedProgress value={pct} className="h-3 rounded-full" />
@@ -199,8 +203,8 @@ export default function CheckPage() {
       {/* Header */}
       <motion.div className="space-y-2" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center justify-between">
-          <Badge variant="outline">{t(`Question ${s.currentIndex + 1} of ${s.questions.length}`, `سؤال ${s.currentIndex + 1} من ${s.questions.length}`)}</Badge>
-          <Badge variant="secondary">{t(`${s.score}/${s.totalMarks} marks`, `${s.score}/${s.totalMarks} درجة`)}</Badge>
+          <Badge variant="outline">{t(`Question ${formatNumber(s.currentIndex + 1)} of ${formatNumber(s.questions.length)}`, `سؤال ${formatNumber(s.currentIndex + 1)} من ${formatNumber(s.questions.length)}`)}</Badge>
+          <Badge variant="secondary">{t(`${formatNumber(s.score)}/${formatNumber(s.totalMarks)} marks`, `${formatNumber(s.score)}/${formatNumber(s.totalMarks)} درجة`)}</Badge>
         </div>
         <AnimatedProgress value={s.progressPct} className="h-2" aria-label={t("Quiz progress", "تقدم الاختبار")} />
       </motion.div>
@@ -223,7 +227,7 @@ export default function CheckPage() {
                   <p className="text-lg font-medium leading-relaxed">
                     {locale === "ar" ? (s.currentQ.questionAr ?? s.currentQ.question) : s.currentQ.question}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">{s.currentQ.marks} {t("mark(s)", "درجة")}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formatNumber(s.currentQ.marks)} {t("mark(s)", "درجة")}</p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={s.readQuestion} aria-label={t("Read question aloud", "اقرأ السؤال بصوت")}>
                   <Volume2 className="w-4 h-4" />
@@ -262,7 +266,7 @@ export default function CheckPage() {
                         >
                           <span className="flex items-center gap-3">
                             <span className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all ${isSelected && !isSubmitted ? "border-primary bg-primary text-foreground" : "border-border"}`}>
-                              {idx + 1}
+                              {formatNumber(idx + 1)}
                             </span>
                             <span className="flex-1">{opt}</span>
                             {isSubmitted && isThisCorrect && <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />}

@@ -164,3 +164,13 @@
 - [x] Audit existing buttons and interactive controls to reproduce the reported screen-reader/narrator interaction defect, identifying only controls with incorrect semantics, naming, keyboard activation, state, or focus behavior.
 - [x] Apply the smallest correction only to verified broken controls, preserving all current visuals, content, navigation, language, audio, and unrelated component behavior.
 - [x] Add focused regression coverage and verify accessible names, roles, states, Tab, Enter, Space, activation outcomes, dialog/menu/dropdown focus, English/Arabic RTL, desktop/mobile, type/unit/browser checks; publish only the scoped repair.
+- [x] Issue 2 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint Arabic numeral rendering without changing unrelated language behavior.
+- [ ] Issue 3 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint Arabic-only tashkeel and numeral option visibility.
+- [ ] Issue 4 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint intended hover read-aloud behavior without affecting unrelated audio.
+- [ ] Issue 5 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint intended keyboard-focus read-aloud behavior without replacing standard keyboard operation.
+- [ ] Issue 6 — Investigate, minimally correct if necessary, verify, diff-audit, document, and checkpoint the read-aloud on/off control.
+- [ ] Issue 7 — Audit keyboard navigation, isolate each confirmed defect, remediate only authorized confirmed defects, verify, diff-audit, document, and checkpoint.
+- [ ] Issue 8 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint appropriate sound-effect behavior and controls.
+- [ ] Issue 9 — Audit and minimally correct verified accessible color-scheme defects, verify, diff-audit, document, and checkpoint without redesigning HIKMA.
+- [ ] Issue 10 — Conduct a structured WCAG 2.2 review; document evidence-backed findings as separate future issues without automatically remediating them.
+- [ ] Issue 11 — Update only factual, verified HIKMA documentation after the corresponding behavior is implemented and tested.

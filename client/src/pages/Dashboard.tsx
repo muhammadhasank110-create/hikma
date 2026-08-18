@@ -9,15 +9,16 @@ import { Bot, TrendingUp, BookOpen, ChevronRight, Zap, Star, Activity } from "lu
 import { useSpeech } from "@/contexts/SpeechContext";
 import { useHikmaMotion } from "@/hooks/useHikmaMotion";
 import { StatusSkeleton } from "@/components/StatusSkeleton";
+import { formatHikmaNumber } from "@/lib/formatNumber";
 
 // ICON_URL removed — use HikmaLogo component
 
-function AnimCounter({ to, suffix = "", reduceMotion }: { to: number; suffix?: string; reduceMotion: boolean }) {
+function AnimCounter({ to, suffix = "", reduceMotion, format }: { to: number; suffix?: string; reduceMotion: boolean; format: (value: number) => string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref as any, { once: true });
   const mv = useMotionValue(0);
   const spring = useSpring(mv, { stiffness: 60, damping: 18 });
-  const display = useTransform(spring, v => `${Math.round(v)}${suffix}`);
+  const display = useTransform(spring, v => `${format(Math.round(v))}${suffix}`);
   useEffect(() => {
     mv.set(reduceMotion || inView ? to : 0);
   }, [inView, mv, reduceMotion, to]);
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const speech = useSpeech();
   const motionConfig = useHikmaMotion();
   const t = (en: string, ar: string) => locale === "ar" ? ar : en;
+  const formatNumber = (value: number) => formatHikmaNumber(value, locale, profile.numerals);
 
   const { data: curricula, isLoading } = trpc.curriculum.list.useQuery();
   const { data: learnerSummary, isLoading: isSummaryLoading } = trpc.progress.learnerSummary.useQuery();
@@ -69,7 +71,7 @@ export default function Dashboard() {
   const stats = [
     { icon: Star, label: t("Mastered", "تم إتقانه"), value: learnerSummary?.stats.masteredConcepts ?? 0, suffix: "", color: "from-amber-100 to-amber-50 dark:from-amber-500/20 dark:to-amber-500/5", iconColor: "text-amber-600 dark:text-amber-400" },
     { icon: Activity, label: t("In Progress", "قيد التقدم"), value: learnerSummary?.stats.inProgressLessons ?? 0, suffix: "", color: "from-blue-100 to-blue-50 dark:from-blue-500/20 dark:to-blue-500/5", iconColor: "text-blue-600 dark:text-blue-400" },
-    { icon: BookOpen, label: t("Lessons complete", "دروس مكتملة"), value: learnerSummary?.stats.completedLessons ?? 0, suffix: learnerSummary?.stats.totalLessons ? `/${learnerSummary.stats.totalLessons}` : "", color: "from-emerald-100 to-emerald-50 dark:from-emerald-500/20 dark:to-emerald-500/5", iconColor: "text-emerald-600 dark:text-emerald-400" },
+    { icon: BookOpen, label: t("Lessons complete", "دروس مكتملة"), value: learnerSummary?.stats.completedLessons ?? 0, suffix: learnerSummary?.stats.totalLessons ? `/${formatNumber(learnerSummary.stats.totalLessons)}` : "", color: "from-emerald-100 to-emerald-50 dark:from-emerald-500/20 dark:to-emerald-500/5", iconColor: "text-emerald-600 dark:text-emerald-400" },
     { icon: Zap, label: t("Daily Goal", "الهدف اليومي"), value: profile?.dailyGoalMinutes ?? 20, suffix: "m", color: "from-purple-100 to-purple-50 dark:from-purple-500/20 dark:to-purple-500/5", iconColor: "text-purple-600 dark:text-purple-400" },
   ];
 
@@ -135,7 +137,7 @@ export default function Dashboard() {
                 className="text-3xl font-black text-foreground tabular-nums"
                 style={{ fontVariantNumeric: "lining-nums tabular-nums", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
               >
-                <AnimCounter to={s.value} suffix={s.suffix} reduceMotion={motionConfig.reduceMotion} />
+                <AnimCounter to={s.value} suffix={s.suffix} reduceMotion={motionConfig.reduceMotion} format={formatNumber} />
               </p>
             </motion.div>
           );
@@ -156,7 +158,7 @@ export default function Dashboard() {
           <section className="rounded-[1.5rem] border border-border bg-card/85 p-5 shadow-[0_12px_28px_rgba(21,47,30,0.05)]" aria-labelledby="review-heading">
             <h2 id="review-heading" className="mb-3 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{t("Recommended review", "مراجعة مقترحة")}</h2>
             {learnerSummary?.weakAreas.length ? <div className="space-y-2">{learnerSummary.weakAreas.map(topic => (
-              <div key={topic.topicId} className="rounded-xl border border-primary/15 bg-primary/5 px-3 py-3"><p className="text-sm font-semibold text-foreground">{locale === "ar" ? topic.titleAr : topic.titleEn}</p><p className="mt-1 text-xs text-muted-foreground">{t(`${topic.completed} of ${topic.total} lessons complete`, `${topic.completed} من ${topic.total} دروس مكتملة`)}</p></div>
+              <div key={topic.topicId} className="rounded-xl border border-primary/15 bg-primary/5 px-3 py-3"><p className="text-sm font-semibold text-foreground">{locale === "ar" ? topic.titleAr : topic.titleEn}</p><p className="mt-1 text-xs text-muted-foreground">{t(`${formatNumber(topic.completed)} of ${formatNumber(topic.total)} lessons complete`, `${formatNumber(topic.completed)} من ${formatNumber(topic.total)} دروس مكتملة`)}</p></div>
             ))}</div> : <p className="text-sm text-muted-foreground">{t("Complete a lesson to receive a focused review recommendation.", "أكمل درساً لتتلقى توصية مراجعة مركزة.")}</p>}
           </section>
         </div>
