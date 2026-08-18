@@ -168,7 +168,7 @@
 - [x] Issue 3 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint Arabic-only tashkeel and numeral option visibility.
 - [x] Issue 4 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint intended hover read-aloud behavior without affecting unrelated audio.
 - [x] Issue 5 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint intended keyboard-focus read-aloud behavior without replacing standard keyboard operation.
-- [ ] Issue 6 — Investigate, minimally correct if necessary, verify, diff-audit, document, and checkpoint the read-aloud on/off control.
+- [x] Issue 6 — Investigate, minimally correct if necessary, verify, diff-audit, document, and checkpoint the read-aloud on/off control.
 - [ ] Issue 7 — Audit keyboard navigation, isolate each confirmed defect, remediate only authorized confirmed defects, verify, diff-audit, document, and checkpoint.
 - [ ] Issue 8 — Investigate, minimally correct, verify, diff-audit, document, and checkpoint appropriate sound-effect behavior and controls.
 - [ ] Issue 9 — Audit and minimally correct verified accessible color-scheme defects, verify, diff-audit, document, and checkpoint without redesigning HIKMA.

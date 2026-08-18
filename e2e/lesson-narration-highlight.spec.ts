@@ -59,6 +59,7 @@ test.describe("lesson narration highlighting", () => {
     await expect(page.getByRole("heading", { name: "Narration test" })).toBeVisible();
 
     await page.getByRole("button", { name: /read aloud/i }).click();
+    await expect(page.getByRole("button", { name: /stop narration/i })).toHaveAttribute("aria-pressed", "true");
     const spokenWord = page.locator('mark[data-current-spoken-word="true"]');
     await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "browser-boundary");
     await expect(spokenWord).toHaveText("Alpha");
@@ -75,6 +76,7 @@ test.describe("lesson narration highlighting", () => {
     await expect(spokenWord).toHaveClass(/tts-word-focus/);
 
     await page.getByRole("button", { name: /stop narration/i }).click();
+    await expect(page.getByRole("button", { name: /read aloud/i })).toHaveAttribute("aria-pressed", "false");
     await expect(spokenWord).toHaveCount(0);
     await expect(page.locator("[data-lesson-content]")).toHaveAttribute("data-narration-sync", "idle");
   });
