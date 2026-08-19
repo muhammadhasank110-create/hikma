@@ -193,3 +193,7 @@
 - [x] Isolate the verified cross-device image failure root cause and define the smallest safe correction without redesigning, refactoring, adding image infrastructure, or changing unrelated application behavior.
 - [x] Implement only the required local/static path, asset inclusion, image loading, fallback, or rendering correction; preserve visual design, accessibility semantics, and existing layouts.
 - [x] Add focused regression coverage and verify development and production-like asset resolution, successful and failed image behavior, desktop/tablet/mobile containment, logo light/dark/RTL reliability, type/unit/browser checks, and no unrelated regression; publish.
+- [x] Audit existing onboarding, profile persistence, personalization completion, Settings, accessibility profiles, tutor context, live subject data, and English/Arabic behavior against the supplied persistent-personalization specification.
+- [x] Define the smallest additive completion and preference model using only existing profile fields and real application features, preserving defaults and existing learner data.
+- [x] Implement only verified onboarding, persistence, Settings, tutor-context, accessibility, and bilingual personalization gaps without duplicate systems or unused questions.
+- [x] Add focused regression coverage and verify new and existing learner flows, persisted preferences, Settings edits, tutor adaptation, English/Arabic RTL, keyboard/accessibility, responsive behavior, type/unit/browser suites, and final diff; publish.

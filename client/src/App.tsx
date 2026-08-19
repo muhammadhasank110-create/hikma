@@ -44,10 +44,10 @@ function AccessibilityProfileManager() {
 
 function AccessBoundary({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user, loading } = useAuth();
-  const { locale } = useProfile();
+  const { locale, isLoading: profileLoading } = useProfile();
   const isArabic = locale === "ar";
 
-  if (loading) {
+  if (loading || (user && profileLoading)) {
     return <div className="grid min-h-[50vh] place-items-center" role="status" aria-live="polite">{isArabic ? "جارٍ تحميل حسابك…" : "Loading your account…"}</div>;
   }
 

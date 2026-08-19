@@ -120,7 +120,6 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") return "en";
     return new URLSearchParams(window.location.search).get("lang") === "ar" ? "ar" : "en";
   });
-  const [isLoading, setIsLoading] = useState(false);
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
@@ -132,6 +131,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     staleTime: Infinity,
     gcTime: Infinity,
   });
+  const isLoading = false;
   const utils = trpc.useUtils();
   const updateProfileMutation = trpc.profile.update.useMutation({
     // IMPORTANT: Do NOT invalidate the profile query on success.
