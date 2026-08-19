@@ -197,3 +197,7 @@
 - [x] Define the smallest additive completion and preference model using only existing profile fields and real application features, preserving defaults and existing learner data.
 - [x] Implement only verified onboarding, persistence, Settings, tutor-context, accessibility, and bilingual personalization gaps without duplicate systems or unused questions.
 - [x] Add focused regression coverage and verify new and existing learner flows, persisted preferences, Settings edits, tutor adaptation, English/Arabic RTL, keyboard/accessibility, responsive behavior, type/unit/browser suites, and final diff; publish.
+- [x] Audit the exact approved HIKMA logo asset, centralized logo component, direct references, metadata/favicon/manifest paths, CSS containers, deployed asset responses, and every intended surface to reproduce the actual rendering failure.
+- [x] Identify the verified root cause and define the smallest centralized path, asset, MIME, CSS, or delivery correction without redesigning, replacing, recoloring, regenerating, or restructuring the logo/UI.
+- [x] Apply only the required shared logo rendering correction and preserve approved artwork, transparency, aspect ratio, accessible alternatives, existing layout, and all unrelated behavior.
+- [x] Add focused coverage and verify fresh production requests, no asset 404s/errors, desktop/mobile, light/dark/high-contrast, Arabic RTL, auth/onboarding/dashboard/nav/footer/error/loading surfaces, type/unit/browser suites, and final diff; publish.
