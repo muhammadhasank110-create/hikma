@@ -206,4 +206,4 @@
 - [x] Verify the corrected logo in fresh desktop and mobile sessions, light/dark/RTL surfaces, production deployment, browser network logs, and focused logo regressions; publish.
 - [x] Upload the user-approved cream/forest and forest/white PNG files to managed static storage and validate their delivery paths.
 - [x] Replace only the centralized logo, metadata, PWA manifest, and focused logo-contract URLs with the two approved PNG variants, mapped to their intended light and dark surfaces.
-- [ ] Verify the approved artwork retains 1:1 fit, adequate contrast, accessibility semantics, and error-free loading in representative public, authenticated, mobile, RTL, and production surfaces; publish the focused correction.
+- [x] Verify the approved artwork retains 1:1 fit, adequate contrast, accessibility semantics, and error-free loading in representative public, authenticated, mobile, RTL, and production surfaces; publish the focused correction.
