@@ -174,6 +174,11 @@
 - [x] Issue 9 — Audit and minimally correct verified accessible color-scheme defects, verify, diff-audit, document, and checkpoint without redesigning HIKMA.
 - [x] Issue 10 — Conduct a structured WCAG 2.2 review; document evidence-backed findings as separate future issues without automatically remediating them.
 - [x] Issue 11 — Update only factual, verified HIKMA documentation after the corresponding behavior is implemented and tested.
+- [x] Create and record a safe baseline checkpoint, read the complete presentation-critical specification, and audit existing dependencies, tests, and reported audio, tutor, loading, error, and responsive failures before changing code.
+- [x] Verify and repair only confirmed audio/read-aloud and text-highlighting synchronization defects using real speech/audio events and safe cleanup across pause, restart, navigation, English/Arabic, and Focus mode.
+- [x] Strengthen only verified educational tutor guidance gaps using existing conversation state and learner preferences, preserving existing tutor architecture and factual-answer behavior.
+- [x] Investigate and correct only confirmed blank, loading, failed-request, and recovery-state defects in core lesson, tutor, navigation, and authentication-dependent learner flows.
+- [x] Add focused regression coverage and validate desktop/tablet/mobile, English/Arabic RTL, accessibility profiles, keyboard, audio, tutor, loading/error recovery, type/unit/browser suites, and final diff; publish the controlled reliability pass.
 - [x] Audit every existing HIKMA branding/logo render location, direct asset reference, shared logo component, favicon/app icon, and responsive constraint against the supplied official logo assets.
 - [x] Install the supplied official cream/forest and forest/white assets as the canonical logo variants and update only the existing shared logo source to use them without changing behavior.
 - [x] Replace only verified existing logo references and make minimal logo-specific sizing/positioning corrections where required to preserve aspect ratio and layout on desktop, mobile, and RTL.
