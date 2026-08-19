@@ -201,3 +201,9 @@
 - [x] Identify the verified root cause and define the smallest centralized path, asset, MIME, CSS, or delivery correction without redesigning, replacing, recoloring, regenerating, or restructuring the logo/UI.
 - [x] Apply only the required shared logo rendering correction and preserve approved artwork, transparency, aspect ratio, accessible alternatives, existing layout, and all unrelated behavior.
 - [x] Add focused coverage and verify fresh production requests, no asset 404s/errors, desktop/mobile, light/dark/high-contrast, Arabic RTL, auth/onboarding/dashboard/nav/footer/error/loading surfaces, type/unit/browser suites, and final diff; publish.
+- [x] Reproduce the actual rendered missing-logo failure in a fresh browser session and compare browser network requests with the currently centralized managed-static asset path.
+- [x] Apply only the smallest approved-logo delivery correction needed to remove the confirmed cross-device failure mechanism without changing artwork, layout, or unrelated application behavior.
+- [x] Verify the corrected logo in fresh desktop and mobile sessions, light/dark/RTL surfaces, production deployment, browser network logs, and focused logo regressions; publish.
+- [x] Upload the user-approved cream/forest and forest/white PNG files to managed static storage and validate their delivery paths.
+- [x] Replace only the centralized logo, metadata, PWA manifest, and focused logo-contract URLs with the two approved PNG variants, mapped to their intended light and dark surfaces.
+- [ ] Verify the approved artwork retains 1:1 fit, adequate contrast, accessibility semantics, and error-free loading in representative public, authenticated, mobile, RTL, and production surfaces; publish the focused correction.

@@ -8,10 +8,10 @@ describe("HIKMA logo asset contract", () => {
   });
 
   it("uses approved contrast-safe assets for light and dark surfaces", () => {
-    expect(getHikmaLogoAsset("light", "icon")).toBe("/manus-storage/hikma-logo-official-forest-transparent_95429dc9.png");
-    expect(getHikmaLogoAsset("dark", "icon")).toBe("/manus-storage/hikma-logo-official-cream-transparent_c99c136d.png");
-    expect(getHikmaLogoAsset("light", "full")).toBe("/manus-storage/hikma-logo-official-forest-transparent_95429dc9.png");
-    expect(getHikmaLogoAsset("dark", "full")).toBe("/manus-storage/hikma-logo-official-cream-transparent_c99c136d.png");
+    expect(getHikmaLogoAsset("light", "icon")).toBe("/manus-storage/hikma_icon_cream_forest_efecb546.png");
+    expect(getHikmaLogoAsset("dark", "icon")).toBe("/manus-storage/hikma_icon_forest_white_330f7c62.png");
+    expect(getHikmaLogoAsset("light", "full")).toBe("/manus-storage/hikma_icon_cream_forest_efecb546.png");
+    expect(getHikmaLogoAsset("dark", "full")).toBe("/manus-storage/hikma_icon_forest_white_330f7c62.png");
   });
 
   it("selects the contrast-safe dark-surface asset for dark and high-contrast themes", () => {

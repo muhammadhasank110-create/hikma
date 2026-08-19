@@ -32,8 +32,8 @@ interface HikmaLogoProps {
 const ICON_ASPECT = 1;
 const WORDMARK_ASPECT = 1;
 
-const DARK_ICON = "/manus-storage/hikma-logo-official-forest-transparent_95429dc9.png";
-const WHITE_ICON = "/manus-storage/hikma-logo-official-cream-transparent_c99c136d.png";
+const LIGHT_SURFACE_ICON = "/manus-storage/hikma_icon_cream_forest_efecb546.png";
+const DARK_SURFACE_ICON = "/manus-storage/hikma_icon_forest_white_330f7c62.png";
 
 const DARK_SURFACE_THEMES = new Set(["dark", "high_contrast"]);
 
@@ -43,7 +43,7 @@ export const HIKMA_LOGO_ASPECTS = {
 } as const;
 
 export function getHikmaLogoAsset(surface: "dark" | "light", variant: "icon" | "full") {
-  return surface === "dark" ? WHITE_ICON : DARK_ICON;
+  return surface === "dark" ? DARK_SURFACE_ICON : LIGHT_SURFACE_ICON;
 }
 
 export function resolveHikmaLogoSurface(surface: Surface, theme: string): "dark" | "light" {

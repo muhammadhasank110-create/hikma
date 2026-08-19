@@ -21,12 +21,11 @@ test.describe("public entry and protected tutor", () => {
     const homeBrand = page.getByRole("link", { name: "Hikma home" });
     await expect(homeBrand).toBeVisible();
     const logo = homeBrand.locator('[data-hikma-logo="compact"] img');
-    await expect(logo).toHaveAttribute("src", /hikma-logo-official-forest-transparent_95429dc9\.png/);
+    await expect(logo).toHaveAttribute("src", /hikma_icon_cream_forest_efecb546\.png/);
     const box = await logo.boundingBox();
     expect(box?.height).toBeGreaterThanOrEqual(40);
     const renderedRatio = (box?.height ?? 0) / (box?.width ?? 1);
-    expect(renderedRatio).toBeGreaterThan(1.1);
-    expect(renderedRatio).toBeLessThan(1.35);
+    expect(renderedRatio).toBeCloseTo(1, 1);
   });
 
   test("keeps the shared authentication brand substantial and contrast-safe", async ({ page }, testInfo) => {
@@ -39,7 +38,7 @@ test.describe("public entry and protected tutor", () => {
       const logo = testInfo.project.name === "mobile"
         ? brand.locator("img")
         : brand.locator('[data-hikma-logo="compact"] img');
-      await expect(logo).toHaveAttribute("src", /hikma-logo-official-cream-transparent_c99c136d\.png/);
+      await expect(logo).toHaveAttribute("src", /hikma_icon_forest_white_330f7c62\.png/);
       const box = await logo.boundingBox();
       expect(box?.height).toBeGreaterThanOrEqual(testInfo.project.name === "mobile" ? 44 : 52);
       expect((box?.height ?? 0) / (box?.width ?? 1)).toBeCloseTo(1, 1);
